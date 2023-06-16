@@ -6,7 +6,6 @@ VAR_GLOBAL
 	EngineExecuteList : ARRAY[1..5] OF STRING;
 	bSettingsAutoSaveElozo: BOOL;
 	bSettingsAutoSave: BOOL;
-	bTesztValtozo: BOOL;
 	
 	//Temp
 //	bTempInputs AT %I*: ARRAY [0..15] OF BOOL;
