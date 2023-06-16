@@ -1,0 +1,482 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <POU Name="KAMERAREMOTE" Id="{93e44746-d075-4a91-a691-96c2d391fe76}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM KAMERAREMOTE
+VAR
+	KameraSocketClose: FB_SocketClose;
+	KameraSocketOpen: FB_SocketConnect;
+	KameraSocketReceive: FB_SocketReceive;
+	KameraSocketSend: FB_SocketSend;
+	baReceivedByteArray: ARRAY[0..265] OF BYTE;
+	baSendByteArray: ARRAY[0..9] OF BYTE;
+	bCloseBusy: BOOL;
+	bCloseError: BOOL;
+	bConnectBusy: BOOL;
+	bConnectError: BOOL;
+	bDelayTimePassed: BOOL;
+	bReceiveBusy: BOOL;
+	bReceiveError: BOOL;
+	index: INT;
+	bKameraCommOpen : BOOL := FALSE;
+	bKameraSocketCloseEnable: BOOL := FALSE;
+	bKameraSocketOpenEnable: BOOL := FALSE;
+	bKameraSocketReceiveEnable: BOOL := FALSE;
+	bKameraSocketSendEnable: BOOL := FALSE;
+	bSendBusy: BOOL;
+	bSendError: BOOL;
+	bStartDelay: BOOL := FALSE;
+	Delay: TON;
+	hKameraSocket: T_HSOCKET;
+	iOpenTrials: INT;
+	nCloseErrId: UDINT;
+	nConnectErrId: UDINT;
+	nReceiveErrId: UDINT;
+	nKameraReceivedBytesNum: UDINT;
+	nSendErrId: UDINT;
+	sKameraRemoteHost: STRING := '192.168.2.40';
+	tDelay: TIME;
+	uSendByteLen: UDINT := 0;	
+	iErrorID: UINT;
+	iState2: INT;
+	bStartChecker: BOOL;
+	FB_Start_Checker: NT_StartProcess;
+	bCheckerBusy: BOOL;
+	bCheckerErr: BOOL;
+	nCheckerErr: UDINT;
+END_VAR
+VAR_INPUT
+	bKameraSetOffline: BOOL;
+END_VAR
+
+VAR_OUTPUT
+	//Kamera output
+	bKameraTriggerReady: BOOL;
+	bKameraTriggerAck: BOOL;
+	bKameraAcquiring: BOOL;
+	bKameraSetup: BOOL;
+	bKameraOnline: BOOL;
+	bKameraInspecting: BOOL;
+	bKameraInspectToggle: BOOL;
+	bKameraResultsAvble: BOOL;
+	bKameraJobLoaded: BOOL;
+	bKameraGeneralFault: BOOL;
+	bKameraPartDetect: BOOL;
+	bKameraAllPass: BOOL;
+	bKameraAnyFail: BOOL;
+	bKameraOut00: BOOL;
+	bKameraOut01: BOOL;
+	bKameraOut02: BOOL;
+	bKameraOut03: BOOL;
+	bKameraOut04: BOOL;
+	bKameraOut05: BOOL;
+	bKameraOut06: BOOL;
+	bKameraOut07: BOOL;
+	
+	bIsError : BOOL;
+	iState: INT := 0;
+END_VAR
+
+VAR_INPUT
+	bKameraTrigger: BOOL;
+	bKameraTriggerEN: BOOL;
+	bKameraCommandSend : BOOL := FALSE;
+	bKameraCommOpenEnable : BOOL := FALSE;
+	bKameraCommCloseEnable: BOOL := FALSE;
+END_VAR
+
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[KameraSocketOpen(
+			sSrvNetId:= '', 
+			sRemoteHost:= sKameraRemoteHost, 
+			nRemotePort:= 7733, 
+			bExecute:= bKameraSocketOpenEnable, 
+			tTimeout:= T#45S, 
+			bBusy=> bConnectBusy, 
+			bError=> bConnectError, 
+			nErrId=> nConnectErrId, 
+			hSocket=> hKameraSocket);
+			
+KameraSocketSend(
+			sSrvNetId:= '', 
+			hSocket:= hKameraSocket, 
+			cbLen:= uSendByteLen, 
+			pSrc:= ADR(baSendByteArray), 
+			bExecute:= bKameraSocketSendEnable, 
+			tTimeout:= T#5S, 
+			bBusy=> bSendBusy, 
+			bError=> bSendError, 
+			nErrId=> nSendErrId);
+		
+KameraSocketReceive(
+			sSrvNetId:= '', 
+			hSocket:= hKameraSocket, 
+			cbLen:= 266,
+			pDest:= ADR(baReceivedByteArray), 
+			bExecute:= bKameraSocketReceiveEnable, 
+			tTimeout:= T#5S, 
+			bBusy=> bReceiveBusy, 
+			bError=> bReceiveError, 
+			nErrId=> nReceiveErrId, 
+			nRecBytes=> nKameraReceivedBytesNum);		
+		
+KameraSocketClose(
+			sSrvNetId:= '', 
+			hSocket:= hKameraSocket, 
+			bExecute:= bKameraSocketCloseEnable, 
+			tTimeout:= T#5S, 
+			bBusy=> bCloseBusy, 
+			bError=> bCloseError, 
+			nErrId=> nCloseErrId);
+			
+//Kommunikáció nyitás
+IF (bKameraCommOpenEnable = TRUE) AND (bKameraCommOpen = FALSE) AND (iState <= 0) THEN
+	iState:=1;
+	iOpenTrials:=0;
+	bIsError:=FALSE;
+END_IF;
+
+//Parancs küldés
+IF (bKameraCommandSend = TRUE) AND (bKameraCommOpen=TRUE) AND(iState <= 0) THEN
+	iState:=11;
+	bIsError:=FALSE;
+END_IF;
+
+//Kommunikáció zárás
+IF (bKameraCommCloseEnable = TRUE) AND (bKameraCommOpen = TRUE) AND (iState <= 0) THEN
+	iState:=31;
+	bIsError:=FALSE;
+END_IF;
+
+//Parancs összeállítás
+
+baSendByteArray[0]:=16#AE;
+baSendByteArray[1]:=16#01;
+
+//IF bKameraTriggerEN = TRUE AND bKameraTrigger = FALSE AND bKameraSetOffline = FALSE THEN
+//	baSendByteArray[2]:=1;
+//ELSIF bKameraTriggerEN = TRUE AND bKameraTrigger =TRUE AND bKameraSetOffline = FALSE THEN
+//	baSendByteArray[2]:=3;
+//ELSIF bKameraSetOffline = TRUE THEN
+//	baSendByteArray[2]:=baSendByteArray[2] OR 128;
+//ELSE
+//	baSendByteArray[2]:=0;
+//END_IF
+
+baSendByteArray[2].0:=bKameraTriggerEN;
+baSendByteArray[2].1:=bKameraTrigger;
+baSendByteArray[2].7:=bKameraSetOffline;
+
+FOR index:=3 TO 9 DO
+	baSendByteArray[index]:=0;
+END_FOR
+
+
+CASE iState OF
+	
+	1:	//Kommunikáció nyitás
+		bKameraSocketOpenEnable:=TRUE;
+		iState:=2;
+	
+	2:
+		IF bConnectBusy = TRUE THEN
+			iState:=3;
+		END_IF
+		
+	3:
+		IF bConnectBusy = FALSE THEN
+			iState:=4;
+		END_IF 
+		
+	4:
+		IF bConnectError =FALSE THEN
+			//Minden OK
+			bKameraCommOpen:=TRUE;
+			bIsError:=FALSE;
+			iState:=0;
+		ELSE
+			//HIBA
+			iOpenTrials:=iOpenTrials+1;
+			bKameraCommOpen:=FALSE;
+			IF iOpenTrials<6 THEN
+				bConnectError:=FALSE;
+				iState:=5;
+				bStartDelay:=TRUE;
+				tDelay:=T#3S;
+			ELSE
+				iOpenTrials:=0;
+				bStartDelay:=FALSE;
+				bIsError:=TRUE;
+				iErrorID:=340;
+				iState:=0;
+			END_IF
+		END_IF
+		bKameraCommOpenEnable := FALSE;
+		bKameraSocketOpenEnable:=FALSE;
+		
+	5:
+		IF bDelayTimePassed=TRUE THEN
+			bStartDelay:=FALSE;
+			iState:=1;
+		END_IF
+
+	11: //Parancs küldés
+		uSendByteLen := 10;//INT_TO_UDINT(LEN(baSendByteArray));
+		//MEMSET(ADR(baReceivedByteArray), 0, 265);
+		iState:=12;
+		
+	12:
+		bKameraSocketSendEnable:=TRUE;
+		iState:=13;
+		
+	13:
+		IF bSendBusy = TRUE THEN
+			iState:=14;
+		END_IF
+		
+	14:
+		IF bSendBusy = FALSE THEN
+			iState:=15;
+		END_IF
+		
+	15:
+		IF bSendError =FALSE THEN
+			//Minden OK
+			bIsError:= FALSE;
+			iState:=21;
+		ELSE
+			//HIBA
+			bIsError:=TRUE;
+			iErrorID:=341;
+			iState:=0;
+		END_IF
+		bKameraCommandSend:=FALSE;
+		bKameraSocketSendEnable:=FALSE;
+
+	21:	//Adatfogadás
+		//nKameraReceivedBytesNum:=0;
+		bKameraSocketReceiveEnable:=TRUE;
+		iState:=22;
+		
+	22:
+		IF bReceiveBusy = TRUE THEN
+			iState:=23;
+		END_IF
+		
+	23:
+		IF bReceiveBusy = FALSE THEN
+			iState:=24;
+		END_IF 
+		
+	24:
+		IF bReceiveError =FALSE THEN
+			//Minden OK
+			bIsError:= FALSE;
+			iState:=25;
+		ELSE
+			//HIBA
+			bIsError:= TRUE;
+			iErrorID:=342;
+			iState:=0;	
+		END_IF
+		bKameraSocketReceiveEnable:=FALSE;
+		
+	25:
+		IF (nKameraReceivedBytesNum <> 0) THEN
+			iState:=0;
+		ELSE
+			bIsError:= TRUE;
+			iErrorID:=347;
+			iState:=0;
+		END_IF
+		
+	31:	//Kommunikáció zárás
+		bKameraSocketCloseEnable:=TRUE;
+		iState:=32;
+		
+	32:
+		IF bCloseBusy = TRUE THEN
+			iState:=33;
+		END_IF
+		
+	33:
+		IF bCloseBusy = FALSE THEN
+			iState:=34;
+		END_IF
+		
+	34:
+		IF bCloseError =FALSE THEN
+			//Minden OK
+			bIsError:=FALSE;
+			bKameraCommOpen:=FALSE;
+		ELSE
+			//HIBA
+			bIsError:=TRUE;
+			iErrorID:=343;
+			bKameraCommOpen:=FALSE;	//még át kell gondolni
+		END_IF
+		bKameraCommCloseEnable := FALSE;
+		bKameraSocketCloseEnable:=FALSE;
+		iState:=0;
+	
+END_CASE
+
+IF bIsError = FALSE THEN
+	iErrorID:=0;
+END_IF
+
+//Eredmény kiértékelés
+
+bKameraTriggerReady:=(baReceivedByteArray[0] AND 1)=1;
+bKameraTriggerAck:=(baReceivedByteArray[0] AND 2)=2;
+bKameraAcquiring:=(baReceivedByteArray[0] AND 4)=4;
+bKameraSetup:=(baReceivedByteArray[0] AND 16)=16;
+bKameraOnline:=(baReceivedByteArray[0] AND 128)=128;
+
+bKameraInspecting:=(baReceivedByteArray[1] AND 1)=1;
+bKameraInspectToggle:=(baReceivedByteArray[1] AND 2)=2;
+bKameraResultsAvble:=(baReceivedByteArray[1] AND 8)=8;
+bKameraJobLoaded:=(baReceivedByteArray[1] AND 32)=32;
+bKameraGeneralFault:=(baReceivedByteArray[1] AND 128)=128;
+
+bKameraPartDetect:=(baReceivedByteArray[2] AND 1)=1;
+bKameraAllPass:=(baReceivedByteArray[2] AND 2)=2;
+bKameraAnyFail:=(baReceivedByteArray[2] AND 4)=4;
+
+bKameraOut00:=(baReceivedByteArray[3] AND 1)=1;
+bKameraOut01:=(baReceivedByteArray[3] AND 2)=2;
+bKameraOut02:=(baReceivedByteArray[3] AND 4)=4;
+bKameraOut03:=(baReceivedByteArray[3] AND 8)=8;
+bKameraOut04:=(baReceivedByteArray[3] AND 16)=16;
+bKameraOut05:=(baReceivedByteArray[3] AND 32)=32;
+bKameraOut06:=(baReceivedByteArray[3] AND 64)=64;
+bKameraOut07:=(baReceivedByteArray[3] AND 128)=128;
+
+Delay(IN:=bStartDelay, PT:=tDelay, Q=>bDelayTimePassed, ET=>);
+
+CASE iState2 OF
+	0:	// Várakozás parancsra
+		IF (bStartChecker=TRUE) THEN
+			iState2:=1;
+		END_IF
+	1:
+		IF (bCheckerBusy=TRUE) THEN
+			iState2:=2;
+		END_IF
+	2:
+		IF (bCheckerBusy=FALSE) THEN
+			bStartChecker:=FALSE;
+			iState2:=0;
+		END_IF
+END_CASE
+
+// Kamera saját szoftverének indítása
+FB_Start_Checker(
+					NETID:='',
+					PATHSTR:='C:\Program Files\Cognex\Checker Vision Sensors 4.1\Checker.exe',
+					DIRNAME:='C:\Program Files\Cognex\Checker Vision Sensors 4.1\',
+					COMNDLINE:='',
+					START:=bStartChecker,
+					TMOUT:=T#30S,
+					BUSY => bCheckerBusy,
+					ERR => bCheckerErr,
+					ERRID => nCheckerErr
+					);]]></ST>
+    </Implementation>
+    <LineIds Name="KAMERAREMOTE">
+      <LineId Id="6" Count="40" />
+      <LineId Id="1037" Count="5" />
+      <LineId Id="5100" Count="0" />
+      <LineId Id="1044" Count="4" />
+      <LineId Id="5101" Count="0" />
+      <LineId Id="1050" Count="0" />
+      <LineId Id="1055" Count="0" />
+      <LineId Id="1051" Count="2" />
+      <LineId Id="5102" Count="0" />
+      <LineId Id="1056" Count="0" />
+      <LineId Id="1225" Count="0" />
+      <LineId Id="1227" Count="0" />
+      <LineId Id="1466" Count="0" />
+      <LineId Id="1230" Count="0" />
+      <LineId Id="1465" Count="0" />
+      <LineId Id="1479" Count="0" />
+      <LineId Id="1475" Count="3" />
+      <LineId Id="5097" Count="0" />
+      <LineId Id="5096" Count="0" />
+      <LineId Id="1482" Count="0" />
+      <LineId Id="1481" Count="0" />
+      <LineId Id="1473" Count="0" />
+      <LineId Id="5205" Count="0" />
+      <LineId Id="5207" Count="1" />
+      <LineId Id="5206" Count="0" />
+      <LineId Id="1474" Count="0" />
+      <LineId Id="1471" Count="0" />
+      <LineId Id="1343" Count="0" />
+      <LineId Id="1468" Count="0" />
+      <LineId Id="1483" Count="0" />
+      <LineId Id="1058" Count="9" />
+      <LineId Id="5112" Count="0" />
+      <LineId Id="1068" Count="8" />
+      <LineId Id="5119" Count="0" />
+      <LineId Id="5121" Count="0" />
+      <LineId Id="1078" Count="11" />
+      <LineId Id="5103" Count="1" />
+      <LineId Id="1090" Count="4" />
+      <LineId Id="5113" Count="0" />
+      <LineId Id="1095" Count="7" />
+      <LineId Id="1113" Count="1" />
+      <LineId Id="1116" Count="8" />
+      <LineId Id="5114" Count="0" />
+      <LineId Id="1125" Count="3" />
+      <LineId Id="5115" Count="0" />
+      <LineId Id="1129" Count="0" />
+      <LineId Id="1131" Count="2" />
+      <LineId Id="5122" Count="0" />
+      <LineId Id="1135" Count="2" />
+      <LineId Id="5098" Count="0" />
+      <LineId Id="1138" Count="4" />
+      <LineId Id="5110" Count="0" />
+      <LineId Id="1158" Count="7" />
+      <LineId Id="5111" Count="0" />
+      <LineId Id="1166" Count="8" />
+      <LineId Id="5123" Count="0" />
+      <LineId Id="1176" Count="3" />
+      <LineId Id="5109" Count="0" />
+      <LineId Id="1180" Count="5" />
+      <LineId Id="1979" Count="0" />
+      <LineId Id="5287" Count="0" />
+      <LineId Id="1980" Count="0" />
+      <LineId Id="5286" Count="0" />
+      <LineId Id="1197" Count="4" />
+      <LineId Id="5116" Count="0" />
+      <LineId Id="1202" Count="0" />
+      <LineId Id="1204" Count="2" />
+      <LineId Id="5117" Count="0" />
+      <LineId Id="1207" Count="3" />
+      <LineId Id="5118" Count="0" />
+      <LineId Id="1211" Count="0" />
+      <LineId Id="1213" Count="1" />
+      <LineId Id="4875" Count="0" />
+      <LineId Id="1215" Count="3" />
+      <LineId Id="5108" Count="0" />
+      <LineId Id="4873" Count="0" />
+      <LineId Id="1219" Count="5" />
+      <LineId Id="5124" Count="3" />
+      <LineId Id="1964" Count="8" />
+      <LineId Id="1999" Count="0" />
+      <LineId Id="1973" Count="3" />
+      <LineId Id="1985" Count="0" />
+      <LineId Id="1995" Count="0" />
+      <LineId Id="1986" Count="2" />
+      <LineId Id="2000" Count="0" />
+      <LineId Id="1989" Count="1" />
+      <LineId Id="2102" Count="0" />
+      <LineId Id="1991" Count="0" />
+      <LineId Id="2104" Count="2" />
+      <LineId Id="2316" Count="1" />
+      <LineId Id="5365" Count="16" />
+      <LineId Id="5386" Count="11" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="fb_RobotStatusToBools" Id="{cd065c85-7eb4-4e77-839f-3233ef6844ad}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_RobotStatusToBools
+VAR_INPUT
+	statusstring : STRING;
+END_VAR
+VAR_OUTPUT
+	baTemp : ARRAY[0..20] OF BOOL;
+END_VAR
+VAR
+	byTemp : BYTE;
+	iTemp : INT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR iTemp := 0 TO LEN(statusstring) BY 1 DO
+	IF statusstring[iTemp] = 16#30 THEN
+		baTemp[iTemp] := FALSE;
+	ELSE
+		baTemp[iTemp] := TRUE;
+	END_IF
+END_FOR]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

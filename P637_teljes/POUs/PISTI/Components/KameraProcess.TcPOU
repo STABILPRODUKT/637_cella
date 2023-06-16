@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <POU Name="KameraProcess" Id="{ee20dbd2-e19e-4049-80ad-aced0ec34c65}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM KameraProcess
+
+VAR
+	iState : UDINT := 0;
+	b_WaitEnable : BOOL := FALSE;
+	b_WaitTime : TIME := T#25MS;
+	b_WaitQ : BOOL;
+	T_Ticker : TON;
+	n_OutErrId: UINT := 0;
+END_VAR
+VAR_INPUT
+	bKameraRun: BOOL;
+END_VAR
+VAR
+	iState2: INT;
+	iPartDetectTrials: INT;
+	iNotFoundTrials: INT;
+	bKameraInspectToggle_Prev: BOOL;
+	T_Ticker_2: TON;
+	b_WaitEnable_2: BOOL;
+	b_WaitTime_2: TIME := T#5s;
+	b_WaitQ_2: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bKameraRun=TRUE THEN
+	IF (iState=0 OR iState=1) (*AND n_OutErrId=0*) THEN
+		b_WaitEnable:=TRUE;
+		iState:=1;
+		n_OutErrId:=0;
+	END_IF
+ELSIF bKameraRun=FALSE AND (iState=0 OR iState=1) THEN
+	b_WaitEnable:=FALSE;
+END_IF
+
+//IF b_WaitQ=TRUE THEN
+	CASE iState OF
+		1:	// Kommunikáció kezdeményezése
+			IF KAMERAREMOTE.bKameraCommOpen = FALSE THEN
+				KAMERAREMOTE.bKameraCommOpenEnable:=TRUE;
+			END_IF
+			iState := 2;
+		2:	// Ha létrejött a kommunikáció
+			IF (KAMERAREMOTE.iState = 0) THEN
+				IF KAMERAREMOTE.bKameraCommOpen = TRUE AND KAMERAREMOTE.bIsError = FALSE THEN
+					iState := 3;
+				ELSE
+					n_OutErrId:=KAMERAREMOTE.iErrorID;
+					iState := 7;
+				END_IF;
+			END_IF
+		3:	// Parancs küldés
+			KAMERAREMOTE.bKameraCommandSend := TRUE;
+			iState := 4;
+		4:	// Ha sikerült a küldés
+			IF (KAMERAREMOTE.iState=0) THEN
+				IF KAMERAREMOTE.bIsError = FALSE THEN
+					iState := 7;
+				ELSE
+					n_OutErrId := KAMERAREMOTE.iErrorID;
+					iState := 7;
+				END_IF
+			END_IF;
+//		5:	// Online állapot ellenőrzése
+//			IF KAMERAREMOTE.bKameraOnline = TRUE THEN
+//				iState := 7;
+//			ELSE
+//				n_OutErrId := 344;
+//				iState := 7;
+//			END_IF
+//		6:	//  Trigger Ready ellenőrzése
+//			IF KAMERAREMOTE.bKameraTriggerReady = TRUE THEN
+//				iState := 7;			
+//			ELSE
+//				n_OutErrId := 345;
+//				iState := 7;
+//			END_IF
+		7:	// Kommunikáció lezárása
+			KAMERAREMOTE.bKameraCommCloseEnable:=TRUE;
+			iState := 8;
+		8:	// Ha sikerült...
+			IF (KAMERAREMOTE.iState=0) THEN
+				IF KAMERAREMOTE.bKameraCommOpen = FALSE AND KAMERAREMOTE.bIsError = FALSE THEN
+					IF bKameraRun=TRUE THEN
+						iState := 9;
+					ELSE
+						iState := 0;
+					END_IF;
+				ELSE
+					n_OutErrId := KAMERAREMOTE.iErrorID;
+					iState := 0;
+				END_IF;
+			END_IF;
+		9:	// Következő tick
+			IF b_WaitQ THEN
+				iState := 1;
+				b_WaitEnable := FALSE;
+			END_IF
+	END_CASE
+//END_IF
+
+T_Ticker(IN:= b_WaitEnable, PT:= b_WaitTime, Q=> b_WaitQ, ET=> );
+T_Ticker_2(IN:= b_WaitEnable_2, PT:= b_WaitTime_2, Q=> b_WaitQ_2, ET=> );
+//IF b_WaitQ = TRUE THEN
+//	b_WaitEnable := FALSE;
+//END_IF
+
+IF AUTOMATA.bKameraTrig=TRUE AND bKameraRun=TRUE AND iState2=0 AND n_OutErrId=0 AND GVL.bPtKameraBe=TRUE THEN
+	iState2:=1;
+ELSIF GVL.bPtKameraBe=FALSE THEN
+	iState2:=0;
+END_IF
+
+IF NOT b_WaitQ_2 THEN
+	CASE iState2 OF
+		1:
+			AUTOMATA.bKameraTrig:=FALSE;
+			iPartDetectTrials:=0;
+			iNotFoundTrials:=0;
+			b_WaitEnable_2:=TRUE;
+			iState2:=2;
+		2:
+			bKameraInspectToggle_Prev:=KAMERAREMOTE.bKameraInspectToggle;
+			KAMERAREMOTE.bKameraTrigger:=TRUE;
+			IF KAMERAREMOTE.bKameraTriggerAck=TRUE THEN
+				iState2:=4;
+				KAMERAREMOTE.bKameraTrigger:=FALSE;
+			END_IF
+			
+		4:
+			IF bKameraInspectToggle_Prev<>KAMERAREMOTE.bKameraInspectToggle THEN
+				iState2:=5;
+			END_IF
+		5:
+			IF KAMERAREMOTE.bKameraPartDetect=TRUE THEN
+				iState2:=6;
+			ELSE
+				iPartDetectTrials:=iPartDetectTrials+1;
+				IF iPartDetectTrials<3 THEN
+					iState2:=100;
+				ELSE
+					n_OutErrId := 344;
+					iState2:=0;
+				END_IF
+			END_IF
+		6:
+			IF KAMERAREMOTE.bKameraOut04=TRUE OR KAMERAREMOTE.bKameraOut05=TRUE THEN
+				iState2:=7;
+			ELSE
+				iNotFoundTrials:=iNotFoundTrials+1;
+				IF iNotFoundTrials<4 THEN
+					iState2:=100;
+				ELSE
+					n_OutErrId := 345;
+					iState2:=0;
+				END_IF
+			END_IF
+		7:
+			IF KAMERAREMOTE.bKameraTriggerReady=TRUE THEN
+				bKameraRun:=FALSE;
+				iState2:=0;
+			END_IF
+		
+		
+		100: //Ha nem talált Part-ot a kamera, vagy talált, de adaptert vagy kappét nem, újrapróbáljuk 10-szer, csak utána lesz hiba
+			IF KAMERAREMOTE.bKameraTriggerReady=TRUE THEN
+				iState2:=2;
+			END_IF
+	END_CASE
+ELSE
+	iState2:=0;
+	b_WaitEnable_2:=FALSE;
+	KameraProcess.n_OutErrId:=348;
+END_IF
+
+IF n_OutErrId<>0 THEN
+	bKameraRun:=FALSE;
+	b_WaitEnable:=FALSE;
+	b_WaitEnable_2:=FALSE;
+	KAMERAREMOTE.bKameraTrigger:=FALSE;
+	AUTOMATA.bKameraTrig:=FALSE;
+END_IF
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="KameraProcess">
+      <LineId Id="1237" Count="82" />
+      <LineId Id="1461" Count="1" />
+      <LineId Id="1320" Count="0" />
+      <LineId Id="1324" Count="1" />
+      <LineId Id="1394" Count="0" />
+      <LineId Id="1326" Count="0" />
+      <LineId Id="1428" Count="0" />
+      <LineId Id="1425" Count="0" />
+      <LineId Id="1422" Count="1" />
+      <LineId Id="1432" Count="0" />
+      <LineId Id="1429" Count="0" />
+      <LineId Id="1327" Count="0" />
+      <LineId Id="1436" Count="0" />
+      <LineId Id="1399" Count="0" />
+      <LineId Id="1328" Count="3" />
+      <LineId Id="1426" Count="0" />
+      <LineId Id="1340" Count="0" />
+      <LineId Id="1342" Count="2" />
+      <LineId Id="1346" Count="32" />
+      <LineId Id="1380" Count="1" />
+      <LineId Id="1395" Count="1" />
+      <LineId Id="1398" Count="0" />
+      <LineId Id="1434" Count="0" />
+      <LineId Id="1397" Count="0" />
+      <LineId Id="1382" Count="3" />
+      <LineId Id="1437" Count="0" />
+      <LineId Id="1386" Count="0" />
+      <LineId Id="1435" Count="0" />
+      <LineId Id="1387" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

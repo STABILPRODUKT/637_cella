@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <DUT Name="ST_RobotState" Id="{fb5b667b-0e27-49c3-a9d1-23dc757316fc}">
+    <Declaration><![CDATA[TYPE ST_RobotState :
+STRUCT
+	sResult: STRING;
+	bVakuumSzippantoFent: BOOL;
+	bVakuumSzippantoLent: BOOL;
+	bCsipeszNyitva: BOOL;
+	bCsipeszZarva: BOOL;
+	bVakuumA: BOOL;
+	bVakuumB: BOOL;
+	rX: REAL;
+	rY: REAL;
+	rZ: REAL;
+	rU: REAL;
+	sHand: STRING;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

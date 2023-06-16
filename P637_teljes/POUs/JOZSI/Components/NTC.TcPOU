@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="NTC" Id="{d96a8f16-5a6d-416c-99a8-798f4bc06d4e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM NTC
+VAR_INPUT
+	bVagashoz : BOOL := FALSE;
+
+	//Gombok funkcióváltása
+	bVagasGombbal : BOOL;
+	bVagoFelLeGombbal : BOOL;
+END_VAR
+VAR
+	
+	//IO
+	bZoldGomb AT %I*: BOOL;
+	bPirosGomb AT %I*: BOOL;
+	bNTCLaberzekeloBal AT %I*: BOOL;
+	bNTCLaberzekeloJobb AT %I*: BOOL;
+	bNTCFekBal AT %Q*: BOOL := FALSE;
+	bNTCFekJobb AT %Q*: BOOL := FALSE;
+	
+	
+	//MOTOR
+	bZeroSpeed AT %I*: BOOL;
+	bSpeedReached AT %I*: BOOL;
+	bReady AT %I*: BOOL;
+	bAlarm AT %I*: BOOL;
+	bServoON AT %Q*: BOOL := TRUE;
+	bReverseRotationStart AT %Q*: BOOL := FALSE;
+	bForwardRotationStart AT %Q*: BOOL := FALSE;
+	bSpeed1 AT %Q*: BOOL := TRUE;
+	bReset AT %Q*: BOOL := FALSE;
+	
+	//VARS
+	bInternalState : BOOL := FALSE;
+	iDelayFor : INT := 0;
+	iTemp : INT := 0;
+	bJogPlus : BOOL := FALSE;
+	bJogMinus : BOOL := FALSE;
+	bElozoLab : BOOL := FALSE;
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (bVagasGombbal=FALSE) AND (bVagoFelLeGombbal=FALSE) THEN
+	IF ((bZoldGomb=TRUE OR bJogPlus=TRUE) AND bAlarm=TRUE AND bServoON=TRUE AND bReady=TRUE) THEN
+		bForwardRotationStart := TRUE;
+		bReverseRotationStart := FALSE;
+		bVagashoz:=FALSE;
+		bInternalState:=FALSE;
+	ELSE
+		IF bInternalState=FALSE THEN
+			bForwardRotationStart := FALSE;
+		END_IF
+	END_IF
+	IF ((bPirosGomb=TRUE OR bJogMinus=TRUE) AND bAlarm=TRUE AND bServoON=TRUE AND bReady=TRUE) THEN
+		bReverseRotationStart := TRUE;
+		bForwardRotationStart := FALSE;
+		bVagashoz:=FALSE;
+		bInternalState:=FALSE;
+	ELSE
+		IF bInternalState=FALSE THEN
+			bReverseRotationStart := FALSE;
+		END_IF
+	END_IF
+ELSIF (bVagoFelLeGombbal=TRUE) AND (NTCProcess.s_InCommand='')
+		AND ((bZoldGomb=TRUE) OR (bPirosGomb=TRUE)) THEN
+	NTCProcess.s_InCommand:='VAGO_FEL-LE';
+ELSIF (bZoldGomb=TRUE) AND (NTCProcess.s_InCommand='') THEN
+	NTCProcess.s_InCommand:='VAGAS';
+ELSIF (bPirosGomb=TRUE) AND (NTCProcess.s_InCommand='') THEN
+	NTCProcess.s_InCommand:='NTC_ELENGED';
+END_IF;
+
+(*// Új NTC pozícionáló algoritmus (két lábérzékelő + két fék)	
+IF (bVagashoz=TRUE AND bAlarm=TRUE AND bServoON=TRUE AND bReady=TRUE) THEN
+	bInternalState := TRUE;
+	bVagashoz:=FALSE;
+	IF (bNTCLaberzekeloBal=TRUE) AND (bNTCLaberzekeloJobb=TRUE) THEN
+		bElozoLab := TRUE;
+	END_IF
+END_IF
+		
+IF bInternalState=TRUE THEN
+//	IF (bNTCLaberzekeloBal=TRUE) AND (bNTCLaberzekeloJobb=TRUE) THEN		
+	IF (bNTCFekBal=TRUE) AND (bNTCFekJobb=TRUE) THEN		
+		bNTCFekBal:=FALSE;
+		bNTCFekJobb:=FALSE;
+		IF bElozoLab=FALSE THEN
+			bForwardRotationStart := FALSE;
+			bInternalState := FALSE;
+		ELSE
+			bForwardRotationStart := TRUE;
+		END_IF
+	ELSIF (bNTCLaberzekeloBal=TRUE) THEN
+		bNTCFekBal:=TRUE;
+	ELSIF (bNTCLaberzekeloJobb=TRUE) THEN
+		bNTCFekJobb:=TRUE;
+	ELSE	
+		IF bElozoLab = TRUE THEN
+			bElozoLab := FALSE;
+		END_IF;
+		bForwardRotationStart := TRUE;
+	END_IF
+END_IF
+*)
+// Régi NTC pozícionáló algoritmus: csak egy lábérzékelő fékek nélkül
+IF (bVagashoz=TRUE AND bAlarm=TRUE AND bServoON=TRUE AND bReady=TRUE) THEN
+	bInternalState := TRUE;
+	bVagashoz:=FALSE;
+	IF(bNTCLaberzekeloJobb=TRUE) THEN
+		bElozoLab := TRUE;
+	END_IF
+END_IF
+		
+IF bInternalState=TRUE THEN
+	IF(bNTCLaberzekeloJobb=TRUE) THEN
+		IF bElozoLab=FALSE THEN
+			bForwardRotationStart := FALSE;
+			bInternalState := FALSE;
+		ELSE
+			bForwardRotationStart := TRUE;
+		END_IF
+	ELSE
+		IF bElozoLab = TRUE THEN
+			bElozoLab := FALSE;
+		END_IF;
+		bForwardRotationStart := TRUE;
+	END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

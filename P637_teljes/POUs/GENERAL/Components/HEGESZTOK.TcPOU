@@ -1,0 +1,298 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="HEGESZTOK" Id="{6b0cec59-875f-4d95-9f55-54fb0311fb33}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HEGESZTOK
+VAR
+	sHegesztokCommand: STRING := '';
+	bHegesztoVorwarnung AT %I*: BOOL;
+	bHegesztoElektrodenAnfordem AT %I*: BOOL;
+	bHegesztoBereit AT %I*: BOOL;
+	bHegesztoStromFehler AT %I*: BOOL;
+	bHegesztoMitStromIn AT %I*: BOOL;
+	bHegesztoNichtBereit AT %I*: BOOL;
+	bHegesztoFK AT %I*: BOOL;
+	bHegesztoProgramValasztoOutput AT %Q*:ARRAY [0..4] OF BOOL;
+	bHegesztoFejekOutput AT %Q*:ARRAY [0..3] OF BOOL;
+	bHegesztoValtoOutput AT %Q*:ARRAY [0..2] OF BOOL;
+//	bHegesztoMeldung AT %Q*: BOOL := FALSE;
+	bHegeszto3 AT %Q*: BOOL := FALSE;
+	iState: INT;
+	nHegesztoNumElozo: UINT := 1;
+END_VAR
+VAR_INPUT
+	bHegesztoStart AT %Q*: BOOL := FALSE;		
+	nHegesztoNum : UINT := 0;
+	bHegesztoMitStromOut AT %Q*: BOOL := FALSE;
+END_VAR
+VAR_OUTPUT
+	ulHegeszto1Utmero AT %I*: ULINT;
+	ulHegeszto2Utmero AT %I*: ULINT;
+	nError: INT;	
+END_VAR
+(*VAR_IN_OUT
+END_VAR*)
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iState OF
+	0:	// Új hegesztő programra vár
+		IF nHegesztoNum<>nHegesztoNumElozo
+			OR (MAIN.bLevegoOK=FALSE AND NOT (nError=0))
+			OR (MAIN.bLevegoOK=TRUE AND (nError=1)) THEN
+			iState:=1;
+		END_IF
+		IF bHegesztoStromFehler=TRUE THEN
+			nError:=2; // Áramhiba
+		END_IF
+	1:	// Levegőnyomás ellenőrzése
+		IF MAIN.bLevegoOK=TRUE THEN
+			nError:=0; // Hibakód törlése
+			iState:=2;
+		ELSE // B00000=0
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+			nError:=1; // Nincs levegő
+//			iState:=0;
+		END_IF
+	2:
+		CASE nHegesztoNum OF
+		//Semelyik
+		0:
+			bHegesztoProgramValasztoOutput[0]:=TRUE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		//Első fej
+		1:	// B00010=2
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=TRUE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=TRUE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		2:	// B00011=3
+			bHegesztoProgramValasztoOutput[0]:=TRUE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=TRUE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=TRUE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		3:	// B00100=4
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=TRUE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=TRUE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		10:	// B01011=11
+			bHegesztoProgramValasztoOutput[0]:=TRUE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=TRUE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=TRUE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=TRUE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		11:	// B01100=12
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=TRUE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=TRUE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=TRUE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		12:	// B01101=13
+			bHegesztoProgramValasztoOutput[0]:=TRUE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=TRUE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=TRUE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=TRUE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		13:	// B01110=14
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=TRUE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=TRUE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=TRUE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		//Második fej
+		4:	// B00101=5
+			bHegesztoProgramValasztoOutput[0]:=TRUE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=TRUE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=TRUE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		5:	// B00110=6
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=TRUE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=TRUE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		8:	// B01001=9
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=TRUE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=TRUE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=TRUE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		9:	// B01010=10
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=TRUE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=TRUE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		//Harmadik fej
+		6:	// B00111=7
+			bHegesztoProgramValasztoOutput[0]:=TRUE;
+			bHegesztoProgramValasztoOutput[1]:=TRUE;
+			bHegesztoProgramValasztoOutput[2]:=TRUE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=TRUE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=TRUE;
+			bHegeszto3 := TRUE;
+		7:	// B01000=8
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=TRUE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=TRUE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=TRUE;
+			bHegeszto3 := TRUE;
+		ELSE // Nem létező program
+			bHegesztoProgramValasztoOutput[0]:=FALSE;
+			bHegesztoProgramValasztoOutput[1]:=FALSE;
+			bHegesztoProgramValasztoOutput[2]:=FALSE;
+			bHegesztoProgramValasztoOutput[3]:=FALSE;
+			bHegesztoProgramValasztoOutput[4]:=FALSE;
+			bHegesztoFejekOutput[0]:=FALSE;
+			bHegesztoFejekOutput[1]:=FALSE;
+			bHegesztoFejekOutput[2]:=FALSE;
+			bHegesztoFejekOutput[3]:=FALSE;
+			bHegesztoValtoOutput[0]:=FALSE;
+			bHegesztoValtoOutput[1]:=FALSE;
+			bHegesztoValtoOutput[2]:=FALSE;
+			bHegeszto3 := FALSE;
+		END_CASE	
+		nHegesztoNumElozo:=nHegesztoNum;
+		nError:=100; // Minden rendben
+		iState:=0;
+END_CASE
+
+// Biztonság
+// Ha le kell mennie a hegesztő fejnek, és nincs még lent és benyúltak,
+// akkor menjen fel a hegesztő fej
+IF ((nHegesztoNum=6) OR (nHegesztoNum=7)) AND (GVL.bHegeszto3Lent=FALSE) THEN
+	bHegeszto3:=GVL.bFenysorompoPt;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <POU Name="KAPPE" Id="{6f91cbfe-3e87-4df5-8bec-8ca0ca998d07}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM KAPPE
+VAR_INPUT
+	s_InCommand : STRING := '';
+	s_InCommandParam1 : STRING := '';
+	s_InCommandParam2 : STRING := '';
+	s_InCommandParam3 : STRING := '';
+	s_InCommandParam4 : STRING := '';
+	s_InCommandParam5 : STRING := '';
+END_VAR
+VAR_OUTPUT
+	n_OutErrId: UINT;
+END_VAR
+VAR
+	bKappeFelLe AT %Q*: BOOL := 0;
+	bKappeBalFelLe AT %Q*: BOOL := 0;
+	bKappeJobbFelLe AT %Q*: BOOL := 0;
+	bKappeNincsLegalul AT %I*: BOOL;
+	bKappeFent AT %I*: BOOL;
+	bKappeBalFent AT %I*: BOOL;
+	bKappeBalLent AT %I*: BOOL;
+	bKappeJobbFent AT %I*: BOOL;
+	bKappeJobbLent AT %I*: BOOL;
+	iState: INT;
+	WAIT: TON;
+	bStartWait: BOOL := FALSE;
+	bIdoLejart: BOOL := FALSE;
+	tDelay: TIME := T#2000MS;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (iState=0) AND (KAPPE.s_InCommand='START') THEN
+	iState:=1;
+ELSIF (iState<20) AND (KAPPE.s_InCommand='RESET') THEN
+	iState:=20;
+END_IF
+	IF iState<>0 THEN
+		CASE iState OF
+		// Kappe fej leeresztése
+		1:	KAPPE.bKappeFelLe:=TRUE;
+			iState:=2;
+		// Ha leérkezett a Kappe fej, akkor várakozik a nyugvópontra
+		2:	IF (GVL.bKappepresNincsLegalul=FALSE) THEN
+				tDelay:=T#200MS;
+				bStartWait:=TRUE;
+				n_OutErrId := 0;
+				iState:=3;
+			ELSE
+				IF MAIN.bLevegoOK=FALSE THEN
+					n_OutErrId:=5;
+				ELSE
+					n_OutErrId:=94;
+				END_IF
+			END_IF
+		// Ha lejárt a várakozási idő és a kappézó ujjak ki vannak nyitva,
+		// akkor zárja be az ujjakat!
+		3:	IF (bIdoLejart=TRUE) AND (KAPPE.bKappeBalFent=TRUE) 
+				AND (KAPPE.bKappeBalLent=FALSE) AND (KAPPE.bKappeJobbFent=TRUE)
+				AND (KAPPE.bKappeJobbLent=FALSE) THEN
+				bStartWait:=FALSE;
+				KAPPE.bKappeBalFelLe:=TRUE;
+				KAPPE.bKappeJobbFelLe:=TRUE;
+				n_OutErrId := 0;
+				iState:=4;
+			ELSIF MAIN.bLevegoOK=FALSE THEN
+				n_OutErrId:=5;
+			ELSIF (KAPPE.bKappeBalFent=FALSE) THEN
+				n_OutErrId:=101;
+			ELSIF (KAPPE.bKappeBalLent=TRUE) THEN
+				n_OutErrId:=104;
+			ELSIF (KAPPE.bKappeJobbFent=FALSE) THEN
+				n_OutErrId:=99;
+			ELSIF (KAPPE.bKappeJobbLent=TRUE) THEN
+				n_OutErrId:=98;
+			END_IF
+		// Ha megnyomta a Kappét, várjon egy kicsit!
+		4:	IF (KAPPE.bKappeBalFent=FALSE) AND (KAPPE.bKappeBalLent=TRUE)
+				AND (KAPPE.bKappeJobbFent=FALSE) AND (KAPPE.bKappeJobbLent=TRUE) THEN
+				tDelay:=T#1000MS;
+				bStartWait:=TRUE;
+				n_OutErrId := 0;
+				iState:=5;
+			ELSIF MAIN.bLevegoOK=FALSE THEN
+				n_OutErrId:=5;
+			ELSIF (KAPPE.bKappeBalFent=TRUE) THEN
+				n_OutErrId:=102;
+			ELSIF (KAPPE.bKappeBalLent=FALSE) THEN
+				n_OutErrId:=103;
+			ELSIF (KAPPE.bKappeJobbFent=TRUE) THEN
+				n_OutErrId:=100;
+			ELSIF (KAPPE.bKappeJobbLent=FALSE) THEN
+				n_OutErrId:=97;
+			END_IF
+		// A várakozás után nyissa ki a kappézó ujjakat!
+		5:	IF (bIdoLejart=TRUE) THEN
+				bStartWait:=FALSE;
+				KAPPE.bKappeBalFelLe:=FALSE;
+				KAPPE.bKappeJobbFelLe:=FALSE;
+				iState:=6;				
+			END_IF
+		// Ha kinyíltak a kappézó ujjak, akkor Kappe fej fel
+		6:	IF (KAPPE.bKappeBalFent=TRUE) AND (KAPPE.bKappeBalLent=FALSE)
+				AND (KAPPE.bKappeJobbFent=TRUE) AND (KAPPE.bKappeJobbLent=FALSE) THEN
+				KAPPE.bKappeFelLe:=FALSE;
+				tDelay:=T#2000MS;
+				bStartWait:=TRUE;
+				n_OutErrId := 0;
+				iState:=7;
+			ELSIF MAIN.bLevegoOK=FALSE THEN
+				n_OutErrId:=5;
+			ELSIF (KAPPE.bKappeBalFent=FALSE) THEN
+				n_OutErrId:=101;
+			ELSIF (KAPPE.bKappeBalLent=TRUE) THEN
+				n_OutErrId:=104;
+			ELSIF (KAPPE.bKappeJobbFent=FALSE) THEN
+				n_OutErrId:=99;
+			ELSIF (KAPPE.bKappeJobbLent=TRUE) THEN				
+				n_OutErrId:=98;
+			END_IF
+		// Ha felemelkedett a Kappe fej, akkor vége a folyamatnak
+		7:	IF (GVL.bKappePresFent=TRUE) THEN
+				bStartWait:=FALSE;				
+				n_OutErrId:=0;
+				iState:=0;
+				KAPPE.s_InCommand:='';
+			ELSIF MAIN.bLevegoOK=FALSE THEN
+				n_OutErrId:=5;
+			ELSIF (GVL.bKappePresFent=FALSE) THEN
+				n_OutErrId:=205;
+			END_IF
+		// Reset: nyissa ki a kappézó ujjakat!
+		20:	bStartWait:=FALSE;
+			KAPPE.bKappeBalFelLe:=FALSE;
+			KAPPE.bKappeJobbFelLe:=FALSE;
+			iState:=21;				
+		// Ha kinyíltak a kappézó ujjak, akkor Kappe fej fel
+		21:	IF (KAPPE.bKappeBalFent=TRUE) AND (KAPPE.bKappeBalLent=FALSE)
+				AND (KAPPE.bKappeJobbFent=TRUE) AND (KAPPE.bKappeJobbLent=FALSE) THEN
+				KAPPE.bKappeFelLe:=FALSE;
+				tDelay:=T#2000MS;
+				bStartWait:=TRUE;
+				n_OutErrId := 0;
+				iState:=22;
+			ELSIF MAIN.bLevegoOK=FALSE THEN
+				n_OutErrId:=5;
+			ELSIF (KAPPE.bKappeBalFent=FALSE) THEN
+				n_OutErrId:=101;
+			ELSIF (KAPPE.bKappeBalLent=TRUE) THEN
+				n_OutErrId:=104;
+			ELSIF (KAPPE.bKappeJobbFent=FALSE) THEN
+				n_OutErrId:=99;
+			ELSIF (KAPPE.bKappeJobbLent=TRUE) THEN				
+				n_OutErrId:=98;
+			END_IF
+		// Ha felemelkedett a Kappe fej, akkor vége a folyamatnak
+		22:	IF (GVL.bKappePresFent=TRUE) THEN
+				bStartWait:=FALSE;				
+				n_OutErrId:=0;
+				iState:=0;
+				KAPPE.s_InCommand:='';
+			ELSIF MAIN.bLevegoOK=FALSE THEN
+				n_OutErrId:=5;
+			ELSIF (GVL.bKappePresFent=FALSE) THEN
+				n_OutErrId:=205;
+			END_IF
+		END_CASE
+	END_IF	
+WAIT(IN:=bStartWait,PT:=tDelay,Q=>bIdoLejart,ET=>);]]></ST>
+    </Implementation>
+    <LineIds Name="KAPPE">
+      <LineId Id="3" Count="135" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

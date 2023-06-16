@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetNTCMinTempFromRes" Id="{95ef4b27-caa2-4cb2-abd6-5b36e0635d6e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetNTCMinTempFromRes : REAL
+VAR_INPUT
+	rRes : REAL;
+END_VAR
+VAR
+	rTemp : REAL := 0;
+	rTempTemp : REAL := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF rRes<>0 THEN 
+	rTempTemp := rRes/1000;
+	rTempTemp := LN(rTempTemp);
+	f_GetNTCMinTempFromRes := rTempTemp*rTempTemp*rTempTemp*(-0.1522);
+	f_GetNTCMinTempFromRes := f_GetNTCMinTempFromRes + rTempTemp*rTempTemp*(2.7581);
+	f_GetNTCMinTempFromRes := f_GetNTCMinTempFromRes - rTempTemp*(33.077);
+	f_GetNTCMinTempFromRes := f_GetNTCMinTempFromRes + 89.119;
+ELSE
+	f_GetNTCMinTempFromRes := 0;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

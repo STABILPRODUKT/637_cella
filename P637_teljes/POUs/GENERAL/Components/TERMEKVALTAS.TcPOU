@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <POU Name="TERMEKVALTAS" Id="{3d8606fe-ae76-4e51-8976-23c1616cae36}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM TERMEKVALTAS
+VAR_INPUT
+	iState: INT := 1;
+	bStart: BOOL := FALSE;
+END_VAR
+VAR_OUTPUT
+	bOK: BOOL := FALSE;
+	bBusy: BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iState OF
+	1:
+		IF (GVL.iPreviousSelectedProductType<>GVL.iSelectedProductType) OR
+			(bStart=TRUE) THEN
+			bOK:=FALSE;
+			bBusy:=TRUE;
+			iState:=2;
+			GVL.iCurrentProductType:=-3; // Kérje az etalonokat!
+		END_IF
+	2:
+		IF NOT(GVL.iSelectedProductType=8) THEN
+			IF(GVL.iSelectedProductType<8) THEN
+				Laser.s_InCommand:='SETJOB_637';
+			ELSE
+				CASE GVL.iSelectedProductType OF
+					9, 11, 13, 15: Laser.s_InCommand:='SETJOB_745900';
+					10, 12, 14, 16: Laser.s_InCommand:='SETJOB_745910';
+				END_CASE
+(*			ELSIF GVL.iSelectedProductType=9 THEN
+				Laser.s_InCommand:='SETJOB_745900';
+			ELSIF GVL.iSelectedProductType=10 THEN
+				Laser.s_InCommand:='SETJOB_745910';*)
+			END_IF;
+			GVL.bKameraBe := TRUE;
+			GVL.bHajlitasBe := TRUE;
+			GVL.bHegesztes1Be := TRUE;
+			GVL.bHegesztes2Be := TRUE;
+			GVL.bHegesztes3Be := TRUE;
+			GVL.bHegesztes4Be := TRUE;
+			GVL.bHegesztes5Be := TRUE;
+			GVL.bKameraVegBe := FALSE;
+			GVL.bHegesztes6Be := TRUE;
+			GVL.bHegesztes7Be := TRUE;
+			GVL.bPtKameraBe := TRUE;
+			GVL.bRobotKappeBe := FALSE;
+			GVL.bKappeBe := TRUE;
+			GVL.bMeresBe := TRUE;
+			IF (GVL.iSelectedProductType>8) THEN
+				GVL.bHimbaBe := TRUE;
+			ELSE
+				GVL.bHimbaBe := FALSE;
+			END_IF
+			GVL.bJelolesBe := TRUE;	
+			iState:=3;
+		ELSIF GVL.iSelectedProductType=8 THEN
+			Laser.s_InCommand:='SETJOB_521';
+			GVL.bKameraBe := FALSE;
+			GVL.bHajlitasBe := FALSE;
+			GVL.bHegesztes1Be := FALSE;
+			GVL.bHegesztes2Be := FALSE;
+			GVL.bHegesztes3Be := FALSE;
+			GVL.bHegesztes4Be := FALSE;
+			GVL.bHegesztes5Be := FALSE;
+			GVL.bKameraVegBe := FALSE;
+			GVL.bHegesztes6Be := FALSE;
+			GVL.bHegesztes7Be := FALSE;
+			GVL.bPtKameraBe := FALSE;
+			GVL.bRobotKappeBe := FALSE;
+			GVL.bKappeBe := FALSE;
+			GVL.bMeresBe := FALSE;
+			GVL.bHimbaBe := FALSE;
+			GVL.bJelolesBe := TRUE;	
+			iState:=4;
+		ELSE
+			iState:=1;
+			GVL.iSelectedProductType:=GVL.iPreviousSelectedProductType;
+			bOK:=FALSE;
+			bBusy:=FALSE;
+		END_IF
+	3:
+		IF Laser.s_InCommand='' THEN
+			Laser.s_InCommand:='SETTYPE';
+			iState:=4;
+		END_IF
+	4:
+		IF Laser.s_InCommand='' THEN
+			iState:=1;
+			bOK:=TRUE;
+			bBusy:=FALSE;
+			bStart:=FALSE;
+			GVL.iPreviousSelectedProductType:=GVL.iSelectedProductType;
+		ELSIF Laser.s_InCommand<>'SETTYPE' THEN
+			iState:=1;
+			bOK:=FALSE;
+			bBusy:=FALSE;
+			bStart:=FALSE;
+			GVL.iPreviousSelectedProductType:=GVL.iSelectedProductType;
+		END_IF	
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="TERMEKVALTAS">
+      <LineId Id="3" Count="35" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="98" Count="2" />
+      <LineId Id="39" Count="17" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="57" Count="27" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <Task Name="PlcTask" Id="{59f13a39-9dae-469c-828b-09a5e71047f9}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>12</Priority>
+    <PouCall>
+      <Name>MAIN</Name>
+    </PouCall>
+    <PouCall>
+      <Name>Laser</Name>
+    </PouCall>
+    <PouCall>
+      <Name>VEGMERO</Name>
+    </PouCall>
+    <PouCall>
+      <Name>HAJLITOK</Name>
+    </PouCall>
+    <PouCall>
+      <Name>NTCProcess</Name>
+    </PouCall>
+    <PouCall>
+      <Name>KAPPE</Name>
+    </PouCall>
+    <PouCall>
+      <Name>AUTOMATA</Name>
+    </PouCall>
+    <PouCall>
+      <Name>HEGESZTOFEJTISZTITAS</Name>
+    </PouCall>
+    <PouCall>
+      <Name>INIT</Name>
+    </PouCall>
+    <PouCall>
+      <Name>LOGGING</Name>
+    </PouCall>
+    <PouCall>
+      <Name>TERMEKVALTAS</Name>
+    </PouCall>
+    <PouCall>
+      <Name>KAMERA</Name>
+    </PouCall>
+    <PouCall>
+      <Name>HIMBA</Name>
+    </PouCall>
+    <PouCall>
+      <Name>KameraProcess</Name>
+    </PouCall>
+    <PouCall>
+      <Name>KAMERAREMOTE</Name>
+    </PouCall>
+    <TaskFBGuid>{bd8ddbe1-9eda-442a-bc37-dd40dd6746ff}</TaskFBGuid>
+    <Fb_init>{2285c08c-c925-43c6-ad82-a07bc8080912}</Fb_init>
+    <Fb_exit>{9ad8ee21-b4b6-4bae-b8e4-457ed31f9496}</Fb_exit>
+    <CycleUpdate>{7a7efeab-e14a-4dfb-af0b-44e183005ca2}</CycleUpdate>
+    <PostCycleUpdate>{51a767d7-a75f-404e-a883-704939544088}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

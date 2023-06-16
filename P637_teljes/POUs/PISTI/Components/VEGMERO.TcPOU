@@ -1,0 +1,993 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="VEGMERO" Id="{07d08b04-3f6f-48d3-b403-452228c7d2cd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM VEGMERO
+VAR_INPUT
+	s_InCommand : STRING := '';
+	s_InCommandParam1 : STRING := '';
+	s_InCommandParam2 : STRING := '';
+	s_InCommandParam3 : STRING := '';
+	s_InCommandParam4 : STRING := '';
+	s_InCommandParam5 : STRING := '';
+	bLezertakaro AT %Q*: BOOL;
+	iState : INT := 0;
+END_VAR
+VAR_OUTPUT
+	n_OutErrId: UINT;
+END_VAR
+VAR
+	//Platni
+	bPlatniFelLe AT %Q*: BOOL;
+	bPlatniBalraJobbra AT %Q*: BOOL;
+	bHutesOn AT %Q*: BOOL;
+	bPlatniFent AT %I*: BOOL;
+	bPlatniLent AT %I*: BOOL;
+	bNagyFeszMerotuLent AT %I*: BOOL;
+	bPlatniBalon AT %I*: BOOL;
+	bPlatniJobbon AT %I*: BOOL;
+	bLezertakaroNyitva AT %I*: BOOL;
+	bLezertakaroZarva AT %I*: BOOL;
+	bHutes: BOOL:=FALSE;
+	bAutoHutes: BOOL;
+	bKeziHutes: BOOL;
+	bHutesTiltas: BOOL := TRUE;
+	tHutes: TIME := T#1S;
+	TP_hutes: TP;
+	
+	
+	//Merotuk
+	bMerotukBeKi AT %Q*: BOOL;
+	bMerotukBent AT %I*: BOOL;
+	bMerotukKint AT %I*: BOOL;
+	bRL_ISOL AT %Q*: BOOL;
+	b600VBe AT %Q*: BOOL;
+	PT_SOKK48V AT %Q*: BOOL;
+	U12V AT %I*: INT;
+	U600VExt AT %I*: INT;
+	U600V AT %I*: INT;
+	UISOL AT %I*: INT;
+	PTRES AT %I*: INT;
+	NTRES AT %I*: INT;
+	NTRES2 AT %I*: INT;
+	U48V AT %I*: INT;
+	
+	
+	//FedelLecsukásÉrzékelő
+	bFedelNyitva AT %I*: BOOL;
+	
+	//Hőszenzor
+	iHorzekelo AT %I*: INT;
+	
+	//Értékek
+	U12V_TRANS : REAL := 0;
+	U600VExt_TRANS : REAL := 0;
+	U600V_TRANS : REAL := 0;
+	UISOL_TRANS : REAL := 0;
+	PTRES_TRANS : REAL := 997.8/6617.5; // Rcal/Rcal_PTDIG: a teljes rendszer átvitele!
+	NTRES_TRANS : REAL := 9955/16464; // Rcal/Rcal_NTC1DIG: a teljes rendszer átvitele!
+	NTRES2_TRANS : REAL := 9955/16391; // Rcal/Rcal_NTC2DIG: a teljes rendszer átvitele!
+	U48V_TRANS : REAL := 48.11/28640; // 48V_mert/48V_DIG
+	PTRES_SCALE : REAL := 997.8/6617.5; // Rcal/Rcal_PTDIG: a teljes rendszer átvitele!
+	NTRES_SCALE : REAL := 9955.0/16464; // Rcal/Rcal_NTC1DIG: a teljes rendszer átvitele!
+	NTRES2_SCALE : REAL := 9955.0/16391; // Rcal/Rcal_NTC2DIG: a teljes rendszer átvitele!
+	U48V_SCALE : REAL := 48.11/28640; // 48V_mert/48V_DIG
+	U12V_SCALE : REAL := 12.114/19101; // 48V_mert/48V_DIG
+	U48V_CAL : REAL;
+	U12V_CAL : REAL;
+	rHoerzekelo_TRANS : REAL := 0;
+	PTRES_OC : REAL :=4800;
+	NTRES_OC : REAL :=18000;
+	
+	//Kalkulációhoz
+	PTRES_AMPLIFIER : REAL := 4.05;//2.0121/0.5012; //PT1000 erősítő értéke
+	NTCRES_AMPLIFIER : REAL := 1.0001;//5.049/5.039; //NTC erősítő értéke
+	NTCRES2_AMPLIFIER : REAL := 1.0132;//5.080/5.014; //NTC erősítő értéke
+	PTRES_CURRENT : REAL := 0.5005/1005;//0.5mA-os áramgenerátor, feltételezhetően
+	NTCRES_CURRENT : REAL := 5.041/10025;//0.5mA-os áramgenerátor, feltételezhetően
+	NTCRES2_CURRENT : REAL := 5.014/9955;//0.5mA-os áramgenerátor, feltételezhetően
+	PTRES_CALC : REAL := 0.0;
+	PTRES_MIN : REAL := 0.0;
+	PTRES_MAX : REAL := 0.0;
+	NTCRES_MIN : REAL := 0.0;
+	NTCRES_MAX : REAL := 0.0;
+	NTCRES2_MIN : REAL := 0.0;
+	NTCRES2_MAX : REAL := 0.0;
+//	PTRES_SOKK_MAX : REAL := 2000.0;
+	PTRES_MAXIdoallando : REAL := 0.0;
+	NTRES_CALC : REAL := 0.0;
+	NTRES2_CALC : REAL := 0.0;
+	NTCTEMP_MAX : REAL := 0.0;
+	NTCTEMP_MIN : REAL := 0.0;
+	NTCTEMP_NOM : REAL := 0.0;
+	NTCTEMP2_MAX : REAL := 0.0;
+	NTCTEMP2_MIN : REAL := 0.0;
+	NTCTEMP2_NOM : REAL := 0.0;
+	ISOLRES_CALC : REAL := 0.0;
+	fb_GetPT1000MinMaxResFromTemp : fb_GetPT1000MinMaxResFromTemp;
+//	rTempMax : REAL := 300.0;	// Fűtőtömb hőmérséklete
+//	tIdoallandoMax : TIME :=T#6S;
+//	rIdoallandoMax : REAL :=6;
+//	rISOL_MAX : REAL := 0.97;
+	
+	//Eredmények
+	bFEDEL_ELLENORIZVE : BOOL := FALSE;
+	bPTRES_OK : BOOL := FALSE;
+	bPTRES_MERVE : BOOL;
+	bNTCRES_OK : BOOL := FALSE;
+	bNTCRES2_OK : BOOL := FALSE;
+	bNTCRES_MERVE : BOOL;
+	bNTCRES2_MERVE : BOOL;
+	bISOL_OK : BOOL := FALSE;
+	bISOL_MERVE : BOOL;
+	bIDOALLANDO_OK : BOOL := FALSE;
+	bIDOALLANDO_MERVE : BOOL;
+	bSOKK_OK : BOOL := FALSE;
+	bSOKK_MERVE : BOOL;
+	rPTRES: REAL := 0.0;
+	rNTCRES: REAL := 0.0;
+	rNTCRES2: REAL := 0.0;
+	rISOL: REAL := 0.0;
+	aPTRES: ARRAY[0..9] OF REAL;
+	aNTCRES: ARRAY[0..9] OF REAL;
+	aNTCRES2: ARRAY[0..9] OF REAL;
+	aTEMP: ARRAY[0..9] OF REAL;
+	aISOL: ARRAY[0..39] OF REAL;
+	tIdoallando : TIME := T#0MS;
+	atIdoallando : ARRAY[0..600] OF TIME;
+	raIdoallandoIdo : ARRAY[0..600] OF REAL;
+	arIdoallandoPTTEMP : ARRAY[0..600] OF REAL;
+	rPTTEMP : REAL;
+	raIdoallandoPTR : ARRAY[0..500] OF REAL;
+//	raTemperatureCurve : ARRAY[0..1,0..2000] OF REAL;
+	
+	//INTERNAL
+	nI: INT := 0;
+	s_InLCommand : STRING := '';
+	T_Ticker : TON;
+	bTickerEnable : BOOL := FALSE;
+	tTickerTimeCsatlakozas : TIME := T#1000MS;
+	tTickerTime600VKijutas : TIME := T#1000MS;
+	tTickerTimeIdoallando : TIME := T#6000MS;
+	tTickerTimeSokk : TIME := T#2000MS;
+	tTickerTimeSokkEll : TIME := T#2000MS;
+	tTickerTime : TIME := T#300MS;
+	bTickerQ : BOOL := FALSE;
+	tTickerET : TIME := T#0MS;
+	bFolyamatos : BOOL := FALSE;
+	bMasodikEllMeres : BOOL;
+	
+	rTemp: REAL;
+
+	// Mérő kapcsolás megnyitása
+	FB_Start_Schematic: NT_StartProcess;
+	bStartSchematic: BOOL;
+	bSchematicBusy: BOOL;
+	bSchematicErr: BOOL;
+	nSchematicErr: UDINT;
+	iState2: INT;
+	rIdoallandoPTTEMP: REAL;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[U12V_TRANS := U12V/3276.7;
+U600VExt_TRANS := U600VExt/3276.7;
+U600V_TRANS := U600V/3276.7;
+UISOL_TRANS := UISOL/3276.7;
+// PTRES_TRANS := PTRES/3276.7;
+// NTRES_TRANS := NTRES/3276.7;
+// NTRES2_TRANS := NTRES2/3276.7;
+// U48V_TRANS := U48V/3276.7;
+U48V_CAL := U48V*U48V_SCALE;
+U12V_CAL := U12V*U12V_SCALE;
+rHoerzekelo_TRANS := (INT_TO_REAL(iHorzekelo)/100);
+// PTRES_CALC := (PTRES_TRANS/PTRES_AMPLIFIER) / PTRES_CURRENT*0.995; // A 0.995 egy korrekciós tényező
+PTRES_CALC := PTRES*PTRES_SCALE;
+NTRES_CALC := NTRES*NTRES_SCALE;
+NTRES2_CALC := NTRES2*NTRES2_SCALE;
+
+(*IF s_InCommand <>'' AND s_InCommand[0] <> '_' AND iState = 0 THEN
+	IF (s_InCommand <>'RESET') THEN
+		s_InLCommand := s_InCommand;
+		n_OutErrId := 0;
+		iState := 1;
+	ELSE
+		s_InLCommand := '';
+		s_InCommand := '';
+	END_IF
+	bMasodikEllMeres:=FALSE;
+	bPTRES_OK := FALSE;
+	bNTCRES_OK := FALSE;
+	bSOKK_OK := FALSE;
+	bISOL_OK := FALSE;
+END_IF*)
+CASE iState OF
+	0:	// Parancsra várás
+		IF s_InCommand <>'' AND LEFT(s_InCommand,1) <> '_' THEN
+			IF (s_InCommand <>'RESET') THEN
+				s_InLCommand := s_InCommand;
+				n_OutErrId := 0;
+				iState := 1;
+			ELSE
+				iState:=20100;
+			END_IF
+			bMasodikEllMeres:=FALSE;
+			bFEDEL_ELLENORIZVE:=FALSE;
+			bPTRES_MERVE := FALSE;
+			GVL.bPTResOK := FALSE;
+			bNTCRES_MERVE := FALSE;
+			GVL.bNTCResOK := FALSE;
+			bISOL_MERVE := FALSE;
+			GVL.bIsolOK := FALSE;
+			bIDOALLANDO_MERVE := FALSE;
+			GVL.bTimeConstOK := FALSE;
+			bSOKK_MERVE := FALSE;
+			GVL.bShockOK := FALSE;			
+		END_IF
+	1:	// Alaphelyzet ellenőrzése
+		IF (bMerotukBent = TRUE AND bMerotukKint = FALSE
+			AND bPlatniLent = FALSE AND bNagyFeszMerotuLent = FALSE
+			AND bPlatniFent = TRUE) THEN
+			n_OutErrId := 0;
+			iState := 2;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF (bMerotukBent = FALSE) THEN
+			n_OutErrId:=87;
+		ELSIF bMerotukKint = TRUE THEN
+			n_OutErrId:=86;
+		ELSIF bPlatniLent = TRUE THEN
+			n_OutErrId:=84;
+		ELSIF bNagyFeszMerotuLent = TRUE THEN
+			n_OutErrId:=112;
+		ELSIF bPlatniFent = FALSE THEN
+			n_OutErrId:=81;
+		END_IF
+	2:	// Mérőtűk kitolása
+		bMerotukBeKi := TRUE;
+		iState := 3;
+	3:	// Várakozás a mérőtűk érkezésére
+		IF (bMerotukBent = FALSE AND bMerotukKint = TRUE) THEN
+			n_OutErrId := 0;
+			iState := 4;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bMerotukBent = TRUE THEN
+			n_OutErrId:=88;
+		ELSIF bMerotukKint = FALSE THEN
+			n_OutErrId:=85;
+		END_IF
+	4:	// További várakozás indítása a mérőtűk megérkezése után
+		IF bTickerEnable = TRUE THEN
+			bTickerEnable := FALSE;
+		ELSE
+			bTickerEnable := TRUE;
+			IF (s_InCommand='ETALONMERES') THEN	
+				tTickerTime := T#10000MS; //tTickerTimeCsatlakozas;
+			ELSE
+				tTickerTime := T#1000MS;
+			END_IF
+			iState := 5;
+		END_IF
+	5:	// Várakozási idő letelte
+		IF bTickerQ = TRUE THEN
+			bTickerEnable := FALSE;
+//			iState := 800;
+			iState := 6;
+		END_IF
+	6:	// Csatlakozó fedél ellenőrzése
+		GVL.bFedelOK:=(*NOT *)bFedelNyitva;
+			bFEDEL_ELLENORIZVE:=TRUE;
+		IF ((GVL.bFedelOK=(*FALSE*)TRUE) OR (GVL.iSelectedProductType>8)) OR (s_InCommand='ETALONMERES') THEN
+			iState := 800;
+		ELSE
+			s_InCommand:='_FEDELNYITVA';
+			iState:=20000;
+		END_IF
+		
+	//	Ellenállásmérés
+	30:	// Inicializálás
+		nI := 0;
+		bHutes:=TRUE;
+		IF bMasodikEllMeres=FALSE THEN	// Ha nem volt előtte sokkolás, ...
+			iState := 33;
+		ELSE
+			iState := 31;
+		END_IF			
+	31: // Sokkolás utáni várakozás indítása
+		IF bTickerEnable = TRUE THEN
+			bTickerEnable := FALSE;
+		ELSE
+			bTickerEnable := TRUE;
+			tTickerTime := tTickerTimeSokkEll;
+			iState := 32;
+		END_IF
+	32: // Letelt a sokkolás utáni várakozási idő
+		IF bTickerQ = TRUE THEN
+			iState := 33;
+			bTickerEnable := FALSE;
+		END_IF
+	33: // Várakozás a hűtés végére
+		IF (bHutesOn=FALSE) THEN
+			bHutes:=FALSE;
+			iState:=34;
+		END_IF
+	34:	// nI. mért érték beolvasása
+		aPTRES[nI] := PTRES_CALC;
+		aNTCRES[nI] := NTRES_CALC;
+		aNTCRES2[nI] := NTRES2_CALC;
+		aTEMP[nI] := rHoerzekelo_TRANS;
+		nI := nI + 1;
+		iState := 35;
+	35:	// Ha mért már 10 értéket, akkor a 10 érték átlagolása
+		IF nI > 9 THEN
+			rPTRES := 0;
+			rNTCRES := 0;
+			rNTCRES2 := 0;
+			rTemp := 0;
+			FOR nI := 0 TO 9 BY 1 DO
+				rPTRES := rPTRES + aPTRES[nI];
+				rNTCRES := rNTCRES + aNTCRES[nI];
+				rNTCRES2 := rNTCRES2 + aNTCRES2[nI];
+				rTemp := rTemp + aTEMP[nI];
+			END_FOR
+			rNTCRES := rNTCRES / 10;
+			rNTCRES2 := rNTCRES2 / 10;
+			rPTRES := rPTRES / 10;
+			rTemp := rTemp / 10;
+			iState := 36;
+		ELSE
+			iState := 34;
+		END_IF
+	36:	// Ellenállásmérési eredmények kiértékelése
+//		fb_GetPT1000MinMaxResFromTemp(rTemp:= rHoerzekelo_TRANS, rResMin=> PTRES_MIN, rResMax=> PTRES_MAX);
+		PTRES_MIN:=f_GetPtMinR(rTemp:=rTemp);
+		PTRES_MAX:=f_GetPtMaxR(rTemp:=rTemp);
+		IF GVL.iCurrentProductType>=0 THEN
+			NTCRES_MIN:=f_GetNTCMinR(rTemp:=rTemp,nProd:=0,rNTCDev:=GVL.rNTCDev);
+			NTCRES_MAX:=f_GetNTCMaxR(rTemp:=rTemp,nProd:=0,rNTCDev:=GVL.rNTCDev);
+		ELSE
+			NTCRES_MIN:=f_GetNTCMinR(rTemp:=rTemp,nProd:=0,rNTCDev:=7);
+			NTCRES_MAX:=f_GetNTCMaxR(rTemp:=rTemp,nProd:=0,rNTCDev:=7);
+		END_IF
+		NTCTEMP_MIN := f_GetNTCMinTempFromRes(rNTCRES);
+		NTCTEMP_MAX := f_GetNTCMaxTempFromRes(rNTCRES);
+		NTCTEMP_NOM := f_GetNTCNomTempFromRes(rNTCRES);
+		IF GVL.iCurrentProductType>=0 THEN
+			NTCRES2_MIN:=f_GetNTCMinR(rTemp:=rTemp,nProd:=0,rNTCDev:=GVL.rNTC2Dev);
+			NTCRES2_MAX:=f_GetNTCMaxR(rTemp:=rTemp,nProd:=0,rNTCDev:=GVL.rNTC2Dev);
+		ELSE
+			NTCRES2_MIN:=f_GetNTCMinR(rTemp:=rTemp,nProd:=0,rNTCDev:=7);
+			NTCRES2_MAX:=f_GetNTCMaxR(rTemp:=rTemp,nProd:=0,rNTCDev:=7);
+		END_IF
+		NTCTEMP2_MIN := f_GetNTCMinTempFromRes(rNTCRES2);
+		NTCTEMP2_MAX := f_GetNTCMaxTempFromRes(rNTCRES2);
+		NTCTEMP2_NOM := f_GetNTCNomTempFromRes(rNTCRES2);
+		IF (bMasodikEllMeres=FALSE) THEN
+			rPTTEMP:=f_GetPTTEMPFromRES(PTRES_CALC); // Időállandó görbe állandó szobahőm.-re
+			FOR nI:=0 TO 600 DO
+				arIdoallandoPTTEMP[nI] := rPTTEMP;
+			END_FOR
+			GVL.rTemp:=rHoerzekelo_TRANS;
+			GVL.rPtRes:=rPTRES;
+			bPTRES_MERVE := TRUE;
+			IF PTRES_MIN<=rPTRES AND PTRES_MAX>=rPTRES THEN
+				bPTRES_OK := TRUE;
+			ELSE
+				bPTRES_OK := FALSE;
+			END_IF
+			GVL.bPTResOK:=bPTRES_OK;
+			IF bPTRES_OK=TRUE THEN
+				GVL.iPTResQ:=1;
+			ELSE			
+				GVL.iPTResQ:=2;
+			END_IF
+			GVL.rNTCRes:=rNTCRES;
+			IF NTCRES_MIN<=rNTCRES AND NTCRES_MAX>=rNTCRES THEN
+				bNTCRES_OK := TRUE;
+			ELSE
+				bNTCRES_OK := FALSE;
+			END_IF;
+			bNTCRES_MERVE := TRUE;
+			IF GVL.iSelectedProductType>8 THEN // 745 esetén
+				GVL.rNTCRes2:=rNTCRES2;
+				IF NTCRES2_MIN<=rNTCRES2 AND NTCRES2_MAX>=rNTCRES2 THEN
+					bNTCRES2_OK := TRUE;
+				ELSE
+					bNTCRES2_OK := FALSE;
+				END_IF
+				bNTCRES2_MERVE := TRUE;
+			ELSE
+				rNTCRES2:=0;
+				GVL.rNTCRes2:=0;
+				bNTCRES2_MERVE := FALSE;
+			END_IF;				
+(*			IF NTCTEMP_MAX <= rHoerzekelo_TRANS AND NTCTEMP_MIN >= rHoerzekelo_TRANS THEN
+				bNTCRES_OK := TRUE;
+			ELSE
+				bNTCRES_OK := FALSE;
+			END_IF*)
+			GVL.bNTCResOK:=bNTCRES_OK;
+			IF bNTCRES_OK=TRUE THEN
+				GVL.iNTCResQ:=1;
+			ELSE	
+				GVL.iNTCResQ:=2;
+			END_IF
+			GVL.bNTCRes2OK:=bNTCRES2_OK;
+			IF bNTCRES2_OK=TRUE THEN
+				GVL.iNTC2ResQ:=1;
+			ELSE	
+				GVL.iNTC2ResQ:=2;
+			END_IF
+			IF (rPTRES>PTRES_OC) OR (rNTCRES>NTRES_OC) THEN
+				s_InCommand:='_SZAKADAS';
+				s_InLCommand:='';
+				iState:=20000;
+			END_IF
+		ELSE	// Ha volt előtte sokkolás
+			bSOKK_MERVE := TRUE;
+			IF GVL.PTRES_SOKK_MAX>=rPTRES THEN
+				bSOKK_OK := TRUE;
+			ELSE
+				bSOKK_OK := FALSE;
+			END_IF
+			GVL.rPtResShock:=rPTRES;
+			GVL.bShockOK:=bSOKK_OK;
+			IF bSOKK_OK=TRUE THEN
+				GVL.iShockQ:=1;
+			ELSE
+				GVL.iShockQ:=2;
+			END_IF
+		END_IF
+		IF (s_InCommand='TELJESMERES') OR (s_InCommand='ETALONMERES') THEN
+			iState := 800;
+		ELSE				
+			iState := 20000;
+		END_IF
+		
+	//ÁTÜTÉS
+	50:	// Platni fordítása szigetelésvizsgálathoz
+		bPlatniBalraJobbra := TRUE;
+		bRL_ISOL := TRUE;
+		iState := 51;
+	51:	// Várakozás a platni befordulására
+		IF bPlatniBalon = TRUE AND bPlatniJobbon = FALSE THEN
+			n_OutErrId := 0;
+			iState := 54;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniBalon = FALSE THEN
+			n_OutErrId:=107;
+		ELSIF bPlatniJobbon = TRUE THEN
+			n_OutErrId:=106;
+		END_IF
+	54:	// Szigetelés mérőtűk leeresztése
+		bPlatniFelLe := TRUE;
+		iState := 55;
+	55:	// Várakozás a mérőtűk megérkezésére
+		IF bPlatniFent = FALSE AND bNagyFeszMerotuLent = TRUE THEN
+			n_OutErrId := 0;
+			iState := 58;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniFent = TRUE THEN
+			n_OutErrId:=82;
+		ELSIF bNagyFeszMerotuLent = FALSE THEN
+			n_OutErrId:=111;
+		END_IF
+	58:	// 600V rákapcsolása
+		b600VBe := TRUE;
+		iState := 59;
+	59:	// 600V timeout indítása
+		IF bTickerEnable = TRUE THEN
+			bTickerEnable := FALSE;
+		ELSE
+			bTickerEnable := TRUE;
+			tTickerTime := tTickerTime600VKijutas;
+			iState := 60;
+		END_IF
+	60:	// Megjelent-e a 600V?	
+		IF bTickerQ = TRUE OR U600V_TRANS>6 THEN
+			bTickerEnable := FALSE;
+			IF U600V_TRANS>6 THEN
+				iState := 61;
+			ELSE
+				//Nem kapcsol be a 600V
+				n_OutErrId := 197;
+			END_IF
+		END_IF
+	61:	// Timeout időzítő törlése, újraindítása
+		IF bTickerEnable = TRUE THEN
+			bTickerEnable := FALSE;
+		ELSE
+			bTickerEnable := TRUE;
+			tTickerTime := tTickerTime600VKijutas;
+			iState := 62;
+		END_IF
+	62:	// Megjelent-e a 600V a Kappe-n? Ha a termék zárlatos, akkor sem jelenik meg a 600V.
+		IF bTickerQ = TRUE OR U600VExt_TRANS > 4.5 OR UISOL_TRANS>GVL.rISOL_MAX THEN
+			IF bTickerQ = FALSE THEN
+				iState := 63;
+			ELSE
+				//Nem megy ki a 600V A kappéra
+				n_OutErrId := 199;
+			END_IF
+			bTickerEnable := FALSE;
+		END_IF
+	63: // Szigetelés vizsgálat inicializálása
+		nI := 0;
+		iState := 64;
+	64:	// Szigetelési érték olvasása
+		aISOL[nI] := UISOL_TRANS;
+		nI := nI + 1;
+		iState := 65;
+	65:	// Ha van már 40 mérés, akkor átlagolás
+		IF nI > 39 THEN
+			rISOL := 0;
+			FOR nI := 0 TO 39 BY 1 DO
+				rISOL := rISOL + aISOL[nI];
+			END_FOR
+			rISOL := rISOL / 40;
+			iState := 66;
+		ELSE
+			iState := 64;
+		END_IF
+	66:	// Szigetelés vizsgálat kiértékelése
+		bISOL_MERVE := TRUE;
+		IF rISOL < GVL.rISOL_MAX THEN
+			bISOL_OK := TRUE;
+		ELSE //Átütéses			
+			bISOL_OK := FALSE;
+		END_IF
+		iState := 20100;
+		GVL.bIsolOK:=bISOL_OK;
+		IF bISOL_OK=TRUE THEN
+			GVL.iIsolQ:=1;
+		ELSE	
+			GVL.iIsolQ:=2;
+		END_IF
+
+	// Időállandó mérése		
+	100: // Ha a jelenlegi ellenállásérték nem haladja meg a várt végértéket, ...
+//		fb_GetPT1000MinMaxResFromTemp(rTemp:= rHoerzekelo_TRANS, rResMin=> , rResMax=> PTRES_MAXIdoallando);
+		rPTTEMP:=f_GetPTTEMPFromRES(PTRES_CALC); // Időállandó görbe állandó szobahőm.-re
+		FOR nI:=0 TO 600 DO
+			arIdoallandoPTTEMP[nI] := rPTTEMP;
+		END_FOR
+		PTRES_MAXIdoallando:=f_GetPtMaxR(rHoerzekelo_TRANS);
+		IF PTRES_MAXIdoallando>=rPTRES THEN
+			bPlatniBalraJobbra := FALSE;
+			iState := 101;
+		ELSE //Túl meleg PT1000
+			iState := 20000;
+		END_IF
+	101: // Platni leengedése
+		IF bPlatniBalon = FALSE AND bPlatniJobbon = TRUE THEN
+			bPlatniFelLe := TRUE;
+			n_OutErrId := 0;
+			iState := 102;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniBalon = TRUE THEN
+			n_OutErrId:=108;
+		ELSIF bPlatniJobbon = FALSE THEN
+			n_OutErrId:=105;
+		END_IF
+	102: // Várakozás a platni érkezésére
+		IF bPlatniFent = FALSE AND bPlatniLent = TRUE THEN
+			n_OutErrId := 0;
+			iState := 103;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniFent = TRUE THEN
+			n_OutErrId:=82;
+		ELSIF bPlatniLent = FALSE THEN
+			n_OutErrId:=83;
+		END_IF
+	103: // Időállandó mérés inicializálása
+		nI:=0;
+		iState := 104;
+	104: // Timeout timer indítása (6s)
+		IF bTickerEnable = TRUE THEN
+			bTickerEnable := FALSE;
+		ELSE
+			bTickerEnable := TRUE;
+			tTickerTime := tTickerTimeIdoallando;
+			iState := 105;
+		END_IF
+	105: // Van-e timeout vagy túlfutás?
+		IF bTickerQ = TRUE OR nI = 600 THEN
+			bTickerEnable := FALSE;
+			tIdoallando := T#6100MS;
+			GVL.rTimeConst:=TIME_TO_REAL(tIdoallando)/1000;
+			bIDOALLANDO_MERVE := TRUE;
+			bIDOALLANDO_OK := FALSE;
+			GVL.bTimeConstOK:=bIDOALLANDO_OK;
+			iState := 108;
+		ELSE	// Mérési pont felvétele, mentése
+			atIdoallando[nI] := tTickerET;
+			raIdoallandoIdo[nI] := TIME_TO_REAL(tTickerET)/1000.0;
+//			raTemperatureCurve[0,nI] := TIME_TO_REAL(tTickerET)/1000.0;
+			raIdoallandoPTR[nI]:=PTRES_CALC;
+			rIdoallandoPTTEMP:=f_GetPTTEMPFromRES(PTRES_CALC);
+			arIdoallandoPTTEMP[nI] := f_GetPTTEMPFromRES(PTRES_CALC);
+//			raTemperatureCurve[1,nI] := f_GetPTTEMPFromRES(PTRES_CALC);
+			iState := 106;
+		END_IF
+	106: // Leállási feltétel vizsgálata
+		IF arIdoallandoPTTEMP[nI]>=((GVL.rTempMax-arIdoallandoPTTEMP[0])*0.63+arIdoallandoPTTEMP[0]) THEN
+			iState := 107; // Leállás
+			bTickerEnable := FALSE;
+		ELSE
+			nI:=nI+1;
+			iState := 105; // Újabb mérési pont
+		END_IF
+	107: // Időállandó mérés kiértékelése
+		tIdoallando := atIdoallando[nI]-atIdoallando[0];
+		bIDOALLANDO_MERVE := TRUE;
+		IF tIdoallando<REAL_TO_TIME(GVL.rIdoallandoMax*1000) THEN
+			bIDOALLANDO_OK := TRUE;
+		ELSE
+			bIDOALLANDO_OK := FALSE;
+		END_IF
+		GVL.rTimeConst:=TIME_TO_REAL(tIdoallando)/1000;
+		GVL.bTimeConstOK:=bIDOALLANDO_OK;
+		IF bIDOALLANDO_OK=TRUE THEN
+			GVL.iTimeConstQ:=1;
+		ELSE	
+			GVL.iTimeConstQ:=2;
+		END_IF
+		iState := 108;
+	108: // Platni felemelése
+		bPlatniFelLe := FALSE;
+		iState:=109;
+	109: // Várakozás a platni érkezésére
+		IF bPlatniFent = TRUE AND bPlatniLent = FALSE THEN
+			bPlatniBalraJobbra := TRUE;
+			n_OutErrId := 0;
+			iState := 110;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniFent = FALSE THEN
+			n_OutErrId:=81;
+		ELSIF bPlatniLent = TRUE THEN
+			n_OutErrId:=84;
+		END_IF
+	110: // Várakozás a platni elfordulására
+		IF bPlatniBalon = TRUE AND bPlatniJobbon = FALSE THEN
+			n_OutErrId := 0;
+			iState := 20200;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniBalon = FALSE THEN
+			n_OutErrId:=107;
+		ELSIF bPlatniJobbon = TRUE THEN
+			n_OutErrId:=106;
+		END_IF
+
+	// Sokkolás	
+	200: // 48V meglétének ellenőrzése
+		IF U48V_CAL>47.5 THEN
+			iState := 201;
+		ELSE
+			n_OutErrId := 201;
+		END_IF
+	201: // 48V rákapcsolása
+		PT_SOKK48V := TRUE;
+		iState := 202;
+	202: // Sokkolás idejének indítása
+		IF bTickerEnable = TRUE THEN
+			bTickerEnable := FALSE;
+		ELSE
+			bTickerEnable := TRUE;
+			tTickerTime := tTickerTimeSokk;
+			iState := 203;
+		END_IF
+	203: // Letelt a sokkolás ideje
+		IF bTickerQ = TRUE THEN
+			iState := 204;
+			bTickerEnable := FALSE;
+		END_IF
+	204: // 48V lekapcsolása
+		PT_SOKK48V := FALSE;
+		IF (s_InCommand='TELJESMERES') THEN
+			iState := 800;
+		ELSE				
+			iState := 20000;
+		END_IF
+
+	// Ellenállás etalon mérése		
+	300: // Etalonmérés inicializálása
+		nI := 0;
+		iState := 301;
+	301: // Mérési pont felvétele
+		aPTRES[nI] := PTRES_CALC;
+		aNTCRES[nI] := NTRES_CALC;
+		nI := nI + 1;
+		iState := 302;
+	302: // Megvan-e a 10 mérési pont?
+		IF nI > 9 THEN
+			rPTRES := 0;
+			rNTCRES := 0;
+			FOR nI := 0 TO 9 BY 1 DO
+				rPTRES := rPTRES + aPTRES[nI];
+				rNTCRES := rNTCRES + aNTCRES[nI];
+			END_FOR
+			rNTCRES := rNTCRES / 10;
+			rPTRES := rPTRES / 10;
+			iState := 303;
+		ELSE
+			iState := 301;
+		END_IF
+	303: // Etalonmérés kiértékelése
+		fb_GetPT1000MinMaxResFromTemp(rTemp:= 0, rResMin=> PTRES_MIN, rResMax=> PTRES_MAX);
+		NTCTEMP_MIN := f_GetNTCMinTempFromRes(rNTCRES);
+		NTCTEMP_MAX := f_GetNTCMaxTempFromRes(rNTCRES);
+		NTCTEMP_NOM := f_GetNTCNomTempFromRes(rNTCRES);
+		IF PTRES_MIN<=rPTRES AND PTRES_MAX>=rPTRES THEN
+			bPTRES_OK := TRUE;
+		ELSE
+			bPTRES_OK := FALSE;
+		END_IF
+		IF NTCTEMP_MAX <= 25 AND NTCTEMP_MIN >= 25 THEN
+			bNTCRES_OK := TRUE;
+		ELSE
+			bNTCRES_OK := FALSE;
+		END_IF
+		iState := 20000;
+		
+	800: // Parancsértelmezés
+		IF s_InCommand = 'TELJESMERES' THEN
+			IF s_InLCommand = 'TELJESMERES' THEN
+				s_InLCommand:='ELLENALLAS';
+				bMasodikEllMeres:=FALSE;
+			ELSIF s_InLCommand = 'ELLENALLAS' THEN
+				s_InLCommand:='ATUTES';
+			ELSIF s_InLCommand = 'ATUTES' THEN
+				s_InLCommand:='IDOALLANDO';
+			ELSIF s_InLCommand = 'IDOALLANDO' THEN
+				s_InLCommand:='SOKK';
+			ELSIF s_InLCommand = 'SOKK' THEN
+				s_InCommand:='ELLENALLAS';
+				s_InLCommand:='ELLENALLAS';
+				bMasodikEllMeres:=TRUE;
+			END_IF
+		ELSIF s_InCommand = 'ETALONMERES' THEN
+			IF s_InLCommand = 'ETALONMERES' THEN
+				s_InLCommand:='ELLENALLAS';
+				bMasodikEllMeres:=FALSE;
+			ELSIF s_InLCommand = 'ELLENALLAS' THEN
+				s_InLCommand:='ATUTES';
+			ELSIF s_InLCommand = 'ATUTES' THEN
+				s_InLCommand:='IDOALLANDO';
+				s_InCommand:='IDOALLANDO';
+			END_IF
+		END_IF
+		IF s_InLCommand = 'ELLENALLAS' THEN
+//			bPTRES_OK := FALSE;
+//			bNTCRES_OK := FALSE;
+//			bSOKK_OK := FALSE;
+			PTRES_CALC := 0;
+			NTRES_CALC := 0;
+			iState := 30;
+		ELSIF s_InLCommand = 'ATUTES' THEN
+//			bISOL_OK := FALSE;
+			ISOLRES_CALC := 0;
+			iState := 50;
+		ELSIF s_InLCommand = 'IDOALLANDO' THEN
+			tIdoallando := T#0MS;
+			bIDOALLANDO_OK := FALSE;
+			iState := 100;
+		ELSIF s_InLCommand = 'SOKK' THEN
+			iState := 200;
+		ELSIF s_InLCommand = 'ELLENALLASETALON' THEN
+//			bPTRES_OK := FALSE;
+//			bNTCRES_OK := FALSE;
+			PTRES_CALC := 0;
+			NTRES_CALC := 0;
+			iState := 300;
+		ELSE
+			iState := 20000;
+		END_IF
+		
+	900:
+		IF s_InLCommand = 'ELLENALLAS' THEN
+			bPTRES_OK := FALSE;
+			bNTCRES_OK := FALSE;
+			PTRES_CALC := 0;
+			NTRES_CALC := 0;
+			iState := 30;
+		ELSE
+			iState := 901;
+		END_IF
+	901:
+		IF s_InLCommand = 'ATUTES' THEN
+			bISOL_OK := FALSE;
+			ISOLRES_CALC := 0;
+			iState := 50;
+		ELSE
+			iState := 902;
+		END_IF
+	902:
+		IF s_InLCommand = 'IDOALLANDO' THEN
+			tIdoallando := T#0MS;
+			bIDOALLANDO_OK := FALSE;
+			iState := 100;
+		ELSE
+			iState := 903;
+		END_IF
+	903:
+		IF s_InLCommand = 'SOKK' THEN
+			iState := 200;
+		ELSE
+			iState := 904;
+		END_IF
+	904:
+		IF s_InLCommand = 'ELLENALLASETALON' THEN
+			bPTRES_OK := FALSE;
+			bNTCRES_OK := FALSE;
+			PTRES_CALC := 0;
+			NTRES_CALC := 0;
+			iState := 300;
+		ELSE
+			iState := 20000;
+		END_IF
+		
+	// Lecsatlakozás
+	20000:
+		bPlatniFelLe:=FALSE;
+		bMerotukBeKi := FALSE;
+		iState:=20005;
+	20005:
+		IF (bMerotukBent = TRUE AND bMerotukKint = FALSE) THEN
+			IF LEFT(s_InCommand,1)<>'_' AND s_InCommand<>'RESET' THEN
+				iState := 30000;
+			ELSE
+				iState := 0;
+				s_InCommand:='';
+			END_IF
+			IF LEFT(s_InCommand,1)<>'_' THEN
+				s_InCommand := '';
+				s_InLCommand := '';
+			END_IF
+			n_OutErrId := 0;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bMerotukBent = FALSE THEN
+			n_OutErrId:=87;
+		ELSIF bMerotukKint = TRUE THEN
+			n_OutErrId:=86;
+		END_IF
+		
+	//Leállítási procedúrák
+	//Izoláció leállítás
+	20100:
+		b600VBe := FALSE;
+		iState := 20101;
+	20101:
+		IF U600V_TRANS<0.5 THEN
+			n_OutErrId := 0;
+			iState := 20102;
+		ELSE
+			n_OutErrId:=203;
+		END_IF
+	20102:
+		bRL_ISOL := FALSE;
+		bPlatniFelLe := FALSE;
+		iState := 20103;
+	20103:
+		IF bPlatniLent = FALSE AND bNagyFeszMerotuLent = FALSE
+			AND bPlatniFent = TRUE THEN
+			n_OutErrId := 0;
+			iState := 20104;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniLent = TRUE THEN
+			n_OutErrId:=84;
+		ELSIF bNagyFeszMerotuLent = TRUE THEN
+			n_OutErrId:=112;
+		ELSIF bPlatniFent = FALSE THEN
+			n_OutErrId:=81;
+		END_IF
+	20104:
+		bPlatniBalraJobbra := TRUE;
+		iState := 20105;
+	20105:
+		IF bPlatniBalon = TRUE AND bPlatniJobbon = FALSE THEN
+			IF (s_InCommand='TELJESMERES') OR (s_InCommand='ETALONMERES') THEN
+				iState := 800;
+			ELSE				
+				iState := 20000;
+			END_IF
+			n_OutErrId := 0;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniBalon = FALSE THEN
+			n_OutErrId:=107;
+		ELSIF bPlatniJobbon = TRUE THEN
+			n_OutErrId:=106;
+		END_IF
+		
+	//Iőállandó leállítás
+	20200:
+		bPlatniFelLe := FALSE;
+		iState := 20205;
+	20205: // Várakozás a platni felemelkedésére
+		IF (bPlatniLent = FALSE AND bNagyFeszMerotuLent = FALSE
+			AND bPlatniFent = TRUE) THEN
+			bPlatniBalraJobbra:=TRUE;
+			n_OutErrId := 0;
+			iState:=20210;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniLent = TRUE THEN
+			n_OutErrId:=84;
+		ELSIF bNagyFeszMerotuLent = TRUE THEN
+			n_OutErrId:=112;
+		ELSIF bPlatniFent = FALSE THEN
+			n_OutErrId:=81;
+		END_IF
+	20210: // Várakozás a platni elfordulására
+		IF (bPlatniBalon = TRUE AND bPlatniJobbon = FALSE) THEN
+			IF (s_InCommand='TELJESMERES') THEN
+				iState := 800;
+			ELSE				
+				iState := 20000;
+			END_IF
+			n_OutErrId := 0;
+		ELSIF MAIN.bLevegoOK=FALSE THEN
+			n_OutErrId:=5;
+		ELSIF bPlatniBalon = FALSE THEN
+			n_OutErrId:=107;
+		ELSIF bPlatniJobbon = TRUE THEN
+			n_OutErrId:=106;
+		END_IF
+
+	// Logol
+	30000:
+		iState := 0;
+//		LOGGING.s_InCommand:='LOGOLAS';
+	// Leállít
+	30001:
+		iState := 0;
+
+END_CASE
+T_Ticker(IN:= bTickerEnable, PT:= tTickerTime, Q=> bTickerQ, ET=> tTickerET);
+TP_hutes(IN:=bHutes, PT:=tHutes, Q=> bAutoHutes, ET=>);
+bHutesOn:=(bKeziHutes OR bAutoHutes) AND NOT bHutesTiltas;
+
+CASE iState2 OF
+	0:	// Várakozás parancsra
+		IF (bStartSchematic=TRUE) THEN
+			iState2:=1;
+		END_IF
+	1:
+		IF (bSchematicBusy=TRUE) THEN
+			iState2:=2;
+		END_IF
+	2:
+		IF (bSchematicBusy=FALSE) THEN
+			bStartSchematic:=FALSE;
+			iState2:=0;
+		END_IF
+END_CASE
+
+// Mérő kapcsolás megnyitása
+FB_Start_Schematic(
+					NETID:='',
+					PATHSTR:='C:\Program Files\Adobe\Reader 11.0\Reader\AcroRd32.exe',
+					DIRNAME:='C:\637\',
+					COMNDLINE:='"C:\637\590-637-745int-1.pdf"',
+					START:=bStartSchematic,
+					TMOUT:=T#30S,
+					BUSY => bSchematicBusy,
+					ERR => bSchematicErr,
+					ERRID => nSchematicErr
+					);]]></ST>
+    </Implementation>
+    <LineIds Name="VEGMERO">
+      <LineId Id="3" Count="812" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="Laser_old" Id="{ca4aac8a-7b24-49eb-9aaa-e460bedd6950}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Laser_old
+VAR_INPUT
+	s_InCommand : STRING :='';
+	s_TypeCode : STRING :='0';	
+END_VAR
+VAR
+	//LaserComm
+	sLaserRemoteHost: STRING := '192.168.1.99';
+//	sLaserRemoteHost: STRING := '192.168.1.22';
+	LaserSocketOpen: FB_SocketConnect;
+	bLaserSocketbusy: BOOL;
+	bLaserSocketError: BOOL;
+	nLaserSocketErrId: UDINT;
+	hLaserSocket: T_HSOCKET;
+	bLaserSocketOpenEnable: BOOL := FALSE;
+	LaserSocketClose: FB_SocketClose;
+	bLaserSocketCloseEnable: BOOL := FALSE;
+	LaserSocketSend: FB_SocketSend;
+	bLaserSocketSendEnable: BOOL := FALSE;
+	sLaserSendData: STRING;
+	uSendByteLen: UDINT := 0;
+	baSendByteArray: ARRAY[0..255] OF BYTE;
+	bLaserSocketReceiveEnable: BOOL := FALSE;
+	bLaserSocketReceiveRequest: BOOL := FALSE;
+	baReceivedByteArray: ARRAY[0..255] OF BYTE;
+	sLaserSend: STRING :='';
+	sLaserReceived: STRING :='';
+	bLaserSendReady: BOOL := TRUE;
+	bLaserSendOK: BOOL := FALSE;
+	bEvenCycle: BOOL := FALSE;
+	LaserSocketReceive: FB_SocketReceive;
+	nLaserReceivedBytesNum: UDINT;
+	bLogin: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Kommunikáció nyitás
+IF NOT(GVL.bLaserCommOpen) THEN
+	LaserSocketOpen(
+		sSrvNetId:= '', 
+		sRemoteHost:= sLaserRemoteHost, 
+		nRemotePort:= 20001, 
+		bExecute:= bLaserSocketOpenEnable, 
+		tTimeout:= T#45S, 
+		bBusy=> bLaserSocketbusy, 
+		bError=> bLaserSocketError, 
+		nErrId=> nLaserSocketErrId, 
+		hSocket=> hLaserSocket);
+	IF bLaserSocketOpenEnable THEN
+		IF (NOT(bLaserSocketError) AND NOT(bLaserSocketError) AND NOT(bLaserSocketbusy)) THEN
+			bLaserSocketOpenEnable := FALSE;
+			GVL.bLaserCommOpen:=TRUE;
+			LaserSocketOpen(
+				sSrvNetId:= '', 
+				sRemoteHost:= sLaserRemoteHost, 
+				nRemotePort:= 5000, 
+				bExecute:= FALSE, 
+				tTimeout:= T#45S, 
+				bBusy=> bLaserSocketbusy, 
+				bError=> bLaserSocketError, 
+				nErrId=> nLaserSocketErrId, 
+				hSocket=> hLaserSocket);
+		ELSE
+			IF NOT(bLaserSocketbusy) THEN
+				bLaserSocketOpenEnable:=FALSE;
+			END_IF
+		END_IF
+	ELSE
+		bLaserSocketOpenEnable:=TRUE;
+	END_IF
+END_IF
+
+// Parancsfordítások a lézer számára
+IF bLaserSendReady=TRUE THEN				// a parancsküldés befejeződött,
+	IF s_InCommand='GETJOB' THEN
+		sLaserSend:='GetJob;';
+	END_IF
+	IF s_InCommand='START' THEN
+		sLaserSend:='Start;';
+	END_IF
+	IF s_InCommand='SETTYPE' THEN
+		s_TypeCode:=TO_STRING(GVL.iSelectedProductType);
+		sLaserSend:=CONCAT('SetVars;TypeCode;',CONCAT(s_TypeCode,';'));
+	END_IF
+	IF s_InCommand='GETSTATUS' THEN
+		sLaserSend:='GetStatus;';
+	END_IF
+	IF s_InCommand='RECEIVE' THEN
+		bLaserSocketReceiveRequest:=TRUE;
+		bLaserSendReady:=FALSE;
+		sLaserReceived:='';
+	END_IF
+END_IF
+
+// Csak akkor próbáljon kommunikálni, ha már megnyílt a kapcsolat
+IF GVL.bLaserCommOpen=TRUE THEN
+	// Adatküldés, ha van mit küldeni
+	IF sLaserSend<>'' THEN
+		IF bLaserSocketSendEnable THEN
+			bLaserSocketSendEnable:=FALSE;
+			sLaserSend:='';
+			bLaserSocketReceiveRequest:=TRUE; // Választ is várunk majd a lézertől.
+		ELSE
+			MEMSET(ADR(baReceivedByteArray), 0, 256);
+			MEMSET(ADR(baSendByteArray), 0, 256);
+			baSendByteArray := MAXSTRING_TO_BYTEARR(sLaserSend);
+			uSendByteLen := INT_TO_UDINT(LEN(sLaserSend));
+			baSendByteArray[uSendByteLen]:=16#D;
+			baSendByteArray[uSendByteLen+1]:=16#A;
+			bLaserSocketSendEnable:=TRUE;
+			bLaserSendReady:=FALSE;
+			sLaserReceived:='';
+		END_IF;
+		LaserSocketSend(
+			sSrvNetId:= '', 
+			hSocket:= hLaserSocket, 
+			cbLen:= uSendByteLen + 2, 
+			pSrc:= ADR(baSendByteArray), 
+			bExecute:= bLaserSocketSendEnable, 
+			tTimeout:= T#5S, 
+			bBusy=> bLaserSocketbusy, 
+			bError=> bLaserSocketError, 
+			nErrId=> nLaserSocketErrId);
+	END_IF
+	// Ha van adatfogadási igény, akkor minden páros ciklusnál indítson adatfogadást
+	IF (bLaserSocketReceiveRequest=TRUE) AND (bEvenCycle=TRUE) THEN
+		bLaserSocketReceiveEnable:=TRUE;
+	ELSE
+		bLaserSocketReceiveEnable:=FALSE;		
+	END_IF
+	//Adatfogadás, ha van rá parancs
+	LaserSocketReceive(
+		sSrvNetId:= '', 
+		hSocket:= hLaserSocket, 
+		cbLen:= 255, 
+		pDest:= ADR(baReceivedByteArray), 
+		bExecute:= bLaserSocketReceiveEnable, 
+		tTimeout:= T#5S, 
+		bBusy=> bLaserSocketbusy, 
+		bError=> bLaserSocketError, 
+		nErrId=> nLaserSocketErrId, 
+		nRecBytes=> nLaserReceivedBytesNum);
+	IF baReceivedByteArray[0]>0 THEN // Ha érkezett válasz a lézertől, akkor
+		nLaserReceivedBytesNum:=0;	// töröljük, hogy ne lépjen be ide újra,
+		bLaserSocketReceiveRequest:=FALSE;	// ne várjon több válaszra,		
+		bLaserSendReady:=TRUE;				// a parancsküldés befejeződött, töröljük a parancsot, és
+		bLaserSendOK:=(baReceivedByteArray[0]=16#6); // ha ACK jel jött, akkor OK.
+		sLaserReceived := BYTEARR_TO_MAXSTRING(baReceivedByteArray);
+		IF sLaserReceived='$06;0000;$R$N' THEN
+			s_InCommand:='';
+		ELSE
+			s_InCommand:=CONCAT('LÉZER HIBA: ',sLaserReceived);
+		END_IF
+	END_IF
+
+	//Kommunikáció bontás
+	LaserSocketClose(
+		sSrvNetId:= '', 
+		hSocket:= hLaserSocket, 
+		bExecute:= bLaserSocketCloseEnable, 
+		tTimeout:= T#45S, 
+		bBusy=> bLaserSocketbusy, 
+		bError=> bLaserSocketError, 
+		nErrId=> nLaserSocketErrId);
+
+	bEvenCycle:=NOT bEvenCycle;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

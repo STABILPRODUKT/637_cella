@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_RobotPtTengelytolTavol" Id="{53f74da6-8f20-48c4-96d2-2e71f627c788}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_RobotPtTengelytolTavol : BOOL]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[f_RobotPtTengelytolTavol:=(GVL.stRobotStatusz.rX<-1.0) OR (GVL.stRobotStatusz.rZ>-111.0);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

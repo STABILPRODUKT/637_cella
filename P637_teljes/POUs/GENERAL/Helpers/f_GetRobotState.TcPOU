@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetRobotState" Id="{8c48d95c-6d74-49ef-96f4-e6e987fcf983}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetRobotState : ST_RobotState
+VAR_INPUT
+	sRobotValasz: STRING;
+END_VAR
+VAR
+	sTemp: STRING;
+	sRobotResult: STRING;
+	sRobotInput: STRING;
+	sRobotCoords: STRING;
+	sX: STRING;
+	sY: STRING;
+	sZ: STRING;
+	sU: STRING;
+	sHand: STRING;
+	nRobotInput: BYTE;
+	iDelimiterPos: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[sTemp := DELETE(sRobotValasz,1,1);	// Első karakter (0/1) eltávolítása
+sTemp := LEFT(sTemp,LEN(sTemp)-2);	// Utolsó két karakter ($R$N) eltávolítása
+iDelimiterPos := FIND(sTemp,',');	// Első vessző helye
+f_GetRobotState.sResult := LEFT(sTemp,iDelimiterPos-1);	// Vessző előtti szöveg
+sTemp := RIGHT(sTemp,LEN(sTemp)-iDelimiterPos); // Vessző utáni szöveg
+iDelimiterPos := FIND(sTemp,',');	// Második vessző helye
+sRobotInput := LEFT(sTemp,iDelimiterPos-1);	// Vessző előtti szöveg
+sTemp := RIGHT(sTemp,LEN(sTemp)-iDelimiterPos); // Vessző utáni szöveg			
+iDelimiterPos := FIND(sTemp,',');	// Harmadik vessző helye
+sX := LEFT(sTemp,iDelimiterPos-1);	// Vessző előtti szöveg
+sTemp := RIGHT(sTemp,LEN(sTemp)-iDelimiterPos); // Vessző utáni szöveg			
+iDelimiterPos := FIND(sTemp,',');	// Negyedik vessző helye
+sY := LEFT(sTemp,iDelimiterPos-1);	// Vessző előtti szöveg
+sTemp := RIGHT(sTemp,LEN(sTemp)-iDelimiterPos); // Vessző utáni szöveg			
+iDelimiterPos := FIND(sTemp,',');	// Ötödik vessző helye
+sZ := LEFT(sTemp,iDelimiterPos-1); // Vessző előtti szöveg
+sTemp := RIGHT(sTemp,LEN(sTemp)-iDelimiterPos); // Vessző utáni szöveg			
+iDelimiterPos := FIND(sTemp,',');	// Hatodik vessző helye
+sU := LEFT(sTemp,iDelimiterPos-1); // Vessző előtti szöveg			
+sHand := RIGHT(sTemp,LEN(sTemp)-iDelimiterPos);	// Vessző utáni szöveg
+// nRobotInput bitekre bontása:
+nRobotInput := STRING_TO_BYTE(sRobotInput);
+f_GetRobotState.bVakuumSzippantoFent:=((nRobotInput AND 1) > 0);
+f_GetRobotState.bVakuumSzippantoLent:=((nRobotInput AND 2) > 0);
+f_GetRobotState.bCsipeszNyitva:=((nRobotInput AND 4) > 0);
+f_GetRobotState.bCsipeszZarva:=((nRobotInput AND 8) > 0);
+f_GetRobotState.bVakuumA:=((nRobotInput AND 16) > 0);
+f_GetRobotState.bVakuumB:=((nRobotInput AND 32) > 0);
+// Robot koordináták:
+f_GetRobotState.rX:=STRING_TO_REAL(sX);
+f_GetRobotState.rY:=STRING_TO_REAL(sY);
+f_GetRobotState.rZ:=STRING_TO_REAL(sZ);
+f_GetRobotState.rU:=STRING_TO_REAL(sU);
+IF sHand='1' THEN
+	sHand:='/R';
+ELSIF sHand='2' THEN
+	sHand:='/L';
+ELSE
+	sHand:='/?';
+END_IF
+f_GetRobotState.sHand:=sHand;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

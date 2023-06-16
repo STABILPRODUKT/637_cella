@@ -1,0 +1,316 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="ZEBRASCANNER" Id="{162e0557-fdc7-42ef-b23d-7ae7999d4b7d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ZEBRASCANNER
+VAR
+	iState: INT := 0;
+	// I/O variables for a PC COM PORT
+	InputBuffer AT %I*: PcComInData;
+	OutputBuffer AT %Q*: PcComOutData;
+	TxBufferPcCom: COMbuffer;
+	RxBufferPcCom: COMbuffer;
+
+	// Serial line control for virtual COM port
+	fbPCComCtrl: SerialLineControlADS;
+	bConnect: BOOL := TRUE;
+//	stSerialCfg: ComSerialConfig := (ComPort := 5, DTR := COMDTRCTRL_T.DTR_CTRL_DISABLE, RTS := COMRTSCTRL_T.RTS_CTRL_ENABLE);
+	stSerialCfg: ComSerialConfig := (ComPort := 7, Baudrate:=115200, Parity:=PARITY_EVEN, DTR := COMDTRCTRL_T.DTR_CTRL_DISABLE, RTS := COMRTSCTRL_T.RTS_CTRL_ENABLE);
+	stSerialCfgZebra: ComSerialConfig := (ComPort := 5, DTR := COMDTRCTRL_T.DTR_CTRL_DISABLE, RTS := COMRTSCTRL_T.RTS_CTRL_ENABLE);
+	stSerialCfgKeyence: ComSerialConfig := (ComPort := 7, Baudrate:=115200, Parity:=PARITY_EVEN, DTR := COMDTRCTRL_T.DTR_CTRL_DISABLE, RTS := COMRTSCTRL_T.RTS_CTRL_ENABLE);
+	bPortOpened: BOOL;
+	bPcComCtrlError: BOOL;
+	ePcComCtrlErrorId: UDINT;
+	bPCComCtrlBusy: BOOL;
+	uiTxBufferCount: UDINT;
+	uiRxBufferCount: UDINT;
+	
+//	fbPCComCtrl2: SerialLineControl;
+	
+	// Receiving
+	ZebraReceiveString: ReceiveString;
+	bReset: BOOL;
+	sReceivedString: STRING;
+	bStringReceived: BOOL;
+	bBusy: BOOL;
+	cetError: ComError_t;
+	bRxTimeout: BOOL;
+	
+	// Sending
+	ZebraSendString: SendString;	
+	sStringToSend: STRING;
+	bSendBusy: BOOL;
+	eSendError: ComError_t;
+	sStartScanning: STRING := '$04$E4$04$00$00$14';
+	iSendDataLength: UDINT := 6;
+	
+	// Sending bytes
+	nSentBytes: DINT;
+	ZebraSendData: SendData;
+	
+	// Receiving bytes
+	nReceivedBytes: DINT;
+	baReceivedBytes: ARRAY[0..255] OF BYTE;
+	ZebraReceiveBytes: ReceiveByte;
+	ReceiveString255: ReceiveString255;
+	ClearComBuffer: ClearComBuffer;
+	sExpectedString: T_MaxString;
+	
+	GetTime: NT_GetTime;
+	bStartGetTime: BOOL;
+	bGetTimeBusy: BOOL;
+	bGetTimeError: BOOL;
+	nGetTimeError: UDINT;
+	sYear: STRING;
+	sMonth: STRING;
+	sDay: STRING;
+	tstDateTime: TIMESTRUCT;
+	sTypeCode: STRING;
+	Timer: TON;
+	bStart: BOOL;
+	tTimeOut: TIME := T#3S;
+	bTimeOut: BOOL;
+	tElapsedTime: TIME;
+	bKeyence: BOOL;
+	iInd: INT;
+END_VAR
+
+VAR_INPUT
+	bStartSend: BOOL;	
+END_VAR
+
+VAR_OUTPUT
+	sReceivedString255: T_MaxString;
+	nReceivedStringLength: DINT;
+	bReadReady: BOOL := FALSE;	
+END_VAR
+
+(*VAR_IN_OUT
+	sExpectedString: T_MaxString;
+END_VAR*)
+
+VAR CONSTANT
+	baStartScanning: ARRAY[0..5] OF BYTE := [16#4, 16#E4, 16#4, 16#0, 16#FF, 16#14];
+	baStartScanningKeyence: ARRAY[0..3] OF BYTE := [16#4C, 16#4F, 16#4E, 16#0D];
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbPCComCtrl(
+	Connect:=bConnect,
+	SerialCfg:=stSerialCfg,
+	NetId:='',
+	Timeout:=T#2s,
+	PortOpened=>bPortOpened,
+	Error=>bPCComCtrlError,
+	ErrorId=>ePCComCtrlErrorId,
+	Busy=>bPCComCtrlBusy,
+	TxBufCount=>uiTxBufferCount,
+	RxBufCount=>uiRxBufferCount,
+	TxBuffer:=TxBufferPcCom,
+	RxBuffer:=RxBufferPcCom);
+
+REPEAT
+	ZebraReceiveBytes(Rxbuffer:=RxBufferPcCom);
+	IF ZebraReceiveBytes.ByteReceived THEN
+		IF nReceivedBytes=0 THEN
+			FOR nReceivedBytes:=0 TO 255 DO
+				baReceivedBytes[nReceivedBytes]:=0;
+			END_FOR
+			nReceivedBytes:=0;
+		END_IF
+		baReceivedBytes[nReceivedBytes]:=ZebraReceiveBytes.ReceivedByte;
+		nReceivedBytes:=nReceivedBytes+1;
+	END_IF
+UNTIL NOT ZebraReceiveBytes.ByteReceived
+END_REPEAT;
+
+(*REPEAT
+	ReceiveString255(Suffix:='$R',
+					Timeout:=T#10MS,
+					RxTimeout=>bRxTimeout, StringReceived=>bStringReceived,
+					ReceivedString:=sReceivedString255,
+					Rxbuffer:=RxBufferPcCom);
+UNTIL bStringReceived OR bRxTimeout
+END_REPEAT;*)
+
+(*IF bStringReceived THEN
+	iState:=1;
+END_IF*)
+
+IF nReceivedBytes>0 THEN
+	FOR iInd:=0 TO 255 DO
+		baReceivedBytes[iInd]:=0;
+	END_FOR
+	IF (GVL.iSelectedProductType<8) THEN // Ha 6379XX termék
+		FOR iInd:=0 TO 26 DO
+			baReceivedBytes[iInd]:=RxBufferPcCom.Buffer[iInd];
+		END_FOR
+	ELSE // Ha 521950 vagy 7459XX termék: 1 karakterrel kevesebb
+		FOR iInd:=0 TO 25 DO
+			baReceivedBytes[iInd]:=RxBufferPcCom.Buffer[iInd];
+		END_FOR
+	END_IF
+	sReceivedString255:=BYTEARR_TO_MAXSTRING(baReceivedBytes);
+	IF LEFT(sReceivedString255,5)='ERROR' THEN
+		sReceivedString255:='ERROR';
+	END_IF
+	nReceivedStringLength:=LEN(sReceivedString255);
+	IF nReceivedStringLength>20 THEN
+		iState:=1;
+	END_IF
+	nReceivedBytes:=0;
+END_IF
+
+(*ZebraReceiveString(
+	Prefix:='',
+	Suffix:='',
+	Timeout:=T#1S,
+	Reset:=bReset,
+	StringReceived=>bStringReceived,
+	Busy=>bBusy,
+	Error=>cetError,
+	RxTimeout=>bRxTimeout,
+	ReceivedString:=sReceivedString,
+	Rxbuffer:=RxBufferPcCom);*)
+
+IF iState=0 AND (bStartSend=TRUE OR bSendBusy=TRUE) THEN
+	IF bStartSend=TRUE THEN
+//		sStringToSend:=sStartScanning;
+		sReceivedString255:='';
+		nReceivedStringLength:=0;
+		bReadReady:=FALSE;
+		GVL.bMarkingOK:=FALSE;
+		GVL.iMarkingQ:=0;
+		bStart:=TRUE;
+	END_IF
+(*	IF NOT bKeyence THEN
+		ZebraSendData(
+			pSendData:=ADR(baStartScanning),
+			Length:=6,
+			Busy=>bSendBusy,
+			Error=>eSendError,
+			TXbuffer:=TxBufferPcCom);
+	ELSE
+		ZebraSendData(
+			pSendData:=ADR(baStartScanningKeyence),
+			Length:=4,
+			Busy=>bSendBusy,
+			Error=>eSendError,
+			TXbuffer:=TxBufferPcCom);
+	END_IF*)
+	ClearComBuffer(Buffer:=RxBufferPcCom);
+	nReceivedBytes:=0;
+	ZebraSendData(
+		pSendData:=ADR(baStartScanningKeyence),
+		Length:=4,
+		Busy=>bSendBusy,
+		Error=>eSendError,
+		TXbuffer:=TxBufferPcCom);
+	bStartSend:=FALSE;
+END_IF;
+
+IF bTimeOut=TRUE THEN
+	bStart:=FALSE;
+	bReadReady:=TRUE;
+END_IF
+
+(*IF bStartSend=TRUE OR bSendBusy=TRUE THEN
+	IF bStartSend=TRUE THEN
+		sStringToSend:=sStartScanning;
+	END_IF
+	ZebraSendString(
+		SendString:=sStringToSend,
+		Busy=>bSendBusy,
+		Error=>eSendError,
+		TXbuffer:=TxBufferPcCom);
+	bStartSend:=FALSE;
+END_IF;*)
+
+IF iState>0 THEN
+	CASE iState OF
+		1:	// Időpont beolvasása
+			bStartGetTime:=TRUE;
+			iState:=2;
+		2:	// Várakozás a busy jelre
+			IF bGetTimeBusy=TRUE THEN
+				iState:=3;
+			END_IF
+		3:	// Várakozás az időpont beolvasás befejeztére
+			IF bGetTimeBusy=FALSE THEN
+				bStartGetTime:=FALSE;
+				iState:=4;
+			END_IF
+		4:	// Időpont beolvasás sikerességének vizsgálata
+			IF bGetTimeError=FALSE THEN
+				iState:=5;
+			ELSE
+				iState:=100;
+			END_IF
+		5:	// Szövegek előállítása (pl. a rendszeridőből)
+			IF sReceivedString255<>'$04Ð' THEN
+				iState:=6;
+			END_IF
+		6:	// Szövegek előállítása (pl. a rendszeridőből)
+			sYear:=WORD_TO_STRING(tstDateTime.wYear);
+			sMonth:=WORD_TO_STRING(tstDateTime.wMonth);
+			IF tstDateTime.wMonth<10 THEN
+				sMonth:=CONCAT('0',sMonth);
+			END_IF;
+			sDay:=WORD_TO_STRING(tstDateTime.wDay);
+			IF tstDateTime.wDay<10 THEN
+				sDay:=CONCAT('0',sDay);
+			END_IF;
+			sExpectedString:=CONCAT('#',
+							 CONCAT(sYear,
+							 CONCAT(sMonth,sDay)));
+			IF (GVL.iSelectedProductType<8) THEN // Ha 6379XX termék
+				sTypeCode:=TO_STRING(GVL.iSelectedProductType);
+				sExpectedString:=CONCAT('25268941000000A##',
+									CONCAT(sTypeCode,sExpectedString));
+			ELSIF (GVL.iSelectedProductType>8) THEN // Ha 7459XX termék
+				CASE GVL.iSelectedProductType OF
+					9, 10: sTypeCode:='0'; //745900 és 745910
+					11, 12: sTypeCode:='1'; //745905 és 745915
+					13, 14: sTypeCode:='2'; //745906 és 745916
+					15, 16: sTypeCode:='3'; //745907 és 745917
+				END_CASE
+				IF LEFT(GVL.saProductTypes[GVL.iSelectedProductType],5)='74590' THEN
+					sExpectedString:=CONCAT('2529534000000A##',
+									CONCAT(sTypeCode,sExpectedString));
+				ELSE
+					sExpectedString:=CONCAT('2529594000000A##',
+									CONCAT(sTypeCode,sExpectedString));
+				END_IF;
+			ELSE
+				sExpectedString:=CONCAT('2526894000000A##0',sExpectedString);
+			END_IF
+			GVL.bMarkingOK:=(sExpectedString=sReceivedString255); // '$04Ð'
+			IF GVL.bMarkingOK=TRUE THEN
+				GVL.iMarkingQ:=1;
+			ELSE	
+				GVL.iMarkingQ:=2;
+			END_IF
+			bReadReady:=TRUE;
+			bStart:=FALSE;
+			iState:=0;
+	END_CASE;
+END_IF
+
+Timer(
+		IN:=bStart,
+		PT:=tTimeOut,
+		Q=>bTimeOut,
+		ET=>tElapsedTime);
+		
+GetTime(
+		NETID:='',
+		START:=bStartGetTime,
+		TMOUT:=T#1S,
+		BUSY=>bGetTimeBusy,
+		ERR=>bGetTimeError,
+		ERRID=>nGetTimeError,
+		TIMESTR=>tstDateTime
+		);
+		
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

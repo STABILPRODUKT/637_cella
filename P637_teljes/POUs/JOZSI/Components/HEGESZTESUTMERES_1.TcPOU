@@ -1,0 +1,356 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="HEGESZTESUTMERES_1" Id="{bd3861f1-d74c-4b23-80e6-ed066580196b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HEGESZTESUTMERES_1
+VAR
+	ulDistanceTreshold: ULINT := 141232;
+	bMitStromSetting: BOOL;
+	bMitStromRestore: BOOL;
+//	bAutomaticWeldingStop4: BOOL;
+//	bAutomaticWeldingStop5: BOOL;
+//	nWeldingStopDistance4: DINT := 320;
+//	nWeldingStopDistance5: DINT := 320;
+	nMaxWeldingDistance: DINT := 0;
+	nWeldingDeformation4: DINT;
+	nWeldingDeformation5: DINT;
+	nWeldingNum: UINT;
+	nDistances: ARRAY[0..2000] OF DINT;
+	nTimePoints: ARRAY[0..2000] OF DINT;
+	sDistance: STRING(4);
+	sTimePoint: STRING(4);
+	Timer: TON;
+	Timer2: TON;
+	bStart: BOOL:=FALSE;
+	tMaxTime: TIME := T#1.8S;
+	tDelayTime: TIME;
+	bTimePassed: BOOL;
+	tElapsedTime: TIME;
+	nI: UINT;
+	
+	// Idő lekérdezése
+	GetTime: NT_GetTime;
+	bStartGetTime: BOOL;
+	bGetTimeBusy: BOOL;
+	bGetTimeError: BOOL;
+	nGetTimeError: UDINT;
+	tstDateTime: TIMESTRUCT;
+	dtDateTime: DT;
+	
+	// Fájlnyitás
+	bLogOpenExecute: BOOL := FALSE;
+	LogOpen: fb_FileOpen;
+	nLogOpenMode: DWORD;
+	bLogOpenBusy: BOOL;
+	bLogOpenError: BOOL;
+	nLogOpenError: UDINT;
+	hLogFile: UINT;
+	
+	// Fájlírás
+	LogPutStr: fb_FilePuts;
+	bLogPutStrExecute: BOOL;
+	bLogPutStrBusy: BOOL;
+	bLogPutStrError: BOOL;
+	nLogPutStrError: UDINT;
+	LogWriteStr: fb_FileWrite;
+//	saLogInfos: ARRAY[0..2002] OF STRING(11);
+	saLogInfos: ARRAY[0..2002] OF STRING(10);
+	bLogWriteExecute: BOOL;
+	bLogWriteBusy: BOOL;
+	bLogWriteError: BOOL;
+	nLogWriteError: UDINT;
+	cbLogWriteLen: UDINT;
+	
+	// Fájlzárás
+	LogClose: fb_FileClose;
+	bLogCloseExecute: BOOL;
+	bLogCloseBusy: BOOL;
+	bLogCloseError: BOOL;
+	nLogCloseError: UDINT;
+	
+	
+	sLogFilePath: T_MaxString;
+//	sFolder: T_MaxString:='S:\Zoli\637\';
+	sFolder: T_MaxString:='C:\Log\';
+	sInfoToLog: T_MaxString;
+//	sHeader1: STRING(11) := ' Idö [ms] ;';
+//	sHeader2: STRING(11) := ' Táv [um]$R$N';
+	sHeader1: STRING(10) := ' Idö [ms];';
+	sHeader2: STRING(10) := ' Táv [um]$N';
+	sDateTime: STRING(255);
+	bError: BOOL := FALSE;
+	bStart2: BOOL;
+	tDelayTime2: TIME;
+	bTimePassed2: BOOL;
+	tElapsedTime2: TIME;
+	tDelay: TIME;
+END_VAR
+VAR_INPUT
+	iState: INT := 1;	
+	bHegesztoMitStromOut AT %Q*: BOOL := FALSE;
+END_VAR
+
+
+VAR CONSTANT
+	nAlarmFillColor: DWORD := 16#FF0000;
+	nNormalFillColor: DWORD := 16#FFFFFF;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF iState<>0 THEN
+	CASE iState OF
+		1:	// Indítójelre várás, majd időzítés indítása
+			IF ((HEGESZTOK.nHegesztoNum=4) OR (HEGESZTOK.nHegesztoNum=5)) 
+				AND (HEGESZTOK.bHegesztoStart=TRUE) THEN
+				bMitStromSetting:=HEGESZTOK.bHegesztoMitStromOut; // Megjegyezzük az eredeti
+				nWeldingNum:=HEGESZTOK.nHegesztoNum;	// árambeállítást
+				IF (nWeldingNum=4) AND (GVL.bAutomaticWeldingStop4=TRUE) // Ha automata hegesztés leállítás van,
+					OR (nWeldingNum=5) AND (GVL.bAutomaticWeldingStop5=TRUE) THEN // akkor be is kapcsoljuk
+					HEGESZTOK.bHegesztoMitStromOut:=TRUE;	// automatikusan az áramot.
+				END_IF
+				bStart:=TRUE;	// Ez a mérés időtartamának kezdete
+				tDelay:=T#0s;
+				tDelayTime:=tMaxTime;	// tMaxTime-ig mérünk
+				nI:=0;
+				nMaxWeldingDistance:=0;
+				saLogInfos[0]:=sHeader1;	// A log file első sora
+				saLogInfos[1]:=sHeader2;
+//				saLogInfos[0]:=' Idö [ms];';	// A log file első sora
+//				saLogInfos[1]:=' Táv [um]$N';
+				iState:=2;				
+			END_IF
+		2:	// Mért pont felvétele; Relatív elmozdulás mikronban
+			nTimePoints[nI]:=TIME_TO_DINT(tElapsedTime);	// Mérés pillanata
+			IF (nI=0) THEN	// Az első mért távolság legyen nulla távolság/deformáció
+				ulDistanceTreshold:=HEGESZTOK.ulHegeszto2Utmero;
+			END_IF
+			// Mért távolság/deformáció mikronban:
+			nDistances[nI]:=REAL_TO_DINT(ULINT_TO_REAL(ulDistanceTreshold-HEGESZTOK.ulHegeszto2Utmero)*0.368);
+			nMaxWeldingDistance:=MAX(nDistances[nI],nMaxWeldingDistance); // Az eddigi legnagyobb távolság/deformáció
+			// 4 karakteres mérési időpont szövegmező előállítása, a kezdő 0-k helyett szóközök
+			IF nTimePoints[nI]<10 THEN
+				sTimePoint:=CONCAT('   ',DINT_TO_STRING(nTimePoints[nI]));
+			ELSIF nTimePoints[nI]<100 THEN
+				sTimePoint:=CONCAT('  ',DINT_TO_STRING(nTimePoints[nI]));
+			ELSIF nTimePoints[nI]<1000 THEN
+				sTimePoint:=CONCAT(' ',DINT_TO_STRING(nTimePoints[nI]));
+			ELSE
+				sTimePoint:=DINT_TO_STRING(nTimePoints[nI]);
+			END_IF
+			// 4 karakteres mért távolság/deformáció szövegmezőjének előállítása,
+			// a kezdő 0-k helyett szóközök
+			IF nDistances[nI]<10 THEN
+				sDistance:=CONCAT('   ',DINT_TO_STRING(nDistances[nI]));
+			ELSIF nDistances[nI]<100 THEN
+				sDistance:=CONCAT('  ',DINT_TO_STRING(nDistances[nI]));
+			ELSIF nDistances[nI]<1000 THEN
+				sDistance:=CONCAT(' ',DINT_TO_STRING(nDistances[nI]));
+			ELSE
+				sDistance:=DINT_TO_STRING(nDistances[nI]);
+			END_IF
+			IF (nI>1000)	// 1000 ms után kapcsolja be a hegesztő az áramot, innentől
+				// kell mérni a hegesztési deformációt
+				// Ha 4. hegesztés és autostop,
+				AND ((GVL.bAutomaticWeldingStop4=TRUE) AND (nWeldingNum=4)
+				AND (nDistances[nI]-nDistances[401]>=GVL.nWeldingStopDistance4)	
+				// vagy ha 5. hegesztés és autostop,
+				OR (GVL.bAutomaticWeldingStop5=TRUE) AND (nWeldingNum=5)
+				AND (nDistances[nI]-nDistances[401]>=GVL.nWeldingStopDistance5)) THEN
+				// akkor a kívánt deformációnál kapcsolja ki az áramot!
+				HEGESZTOK.bHegesztoMitStromOut:=FALSE;
+			END_IF
+			// nI. mérés log sora:
+			saLogInfos[nI+2]:=CONCAT(sTimePoint,
+							CONCAT(';',
+//							CONCAT(sDistance,'$R$N')));
+							CONCAT(sDistance,'$N')));
+			// Ha betelt a log tömb vagy letelt az 1,5 másodperc, akkor vége a mérésnek,
+			IF (nI>1999) OR (tElapsedTime>T#1.5S) THEN
+//				cbLogWriteLen:=(nI+2)*12; // A mentendő tömb mérete
+				cbLogWriteLen:=(nI+2)*11; // A mentendő tömb mérete
+				// Hegesztési deformáció kiszámítása
+				IF (nWeldingNum=4) THEN
+					nWeldingDeformation4:=nMaxWeldingDistance-nDistances[401];
+				ELSIF (nWeldingNum=5) THEN
+					nWeldingDeformation5:=nMaxWeldingDistance-nDistances[401];
+				END_IF
+				iState:=3;
+			// egyébként a következő mérési pont jön
+			ELSE
+				nI:=nI+1;
+			END_IF;
+		3:	// Mérés leállítása
+			bStart:=FALSE;
+			iState:=4;
+		4:	// Időpont beolvasása log file-hoz
+			bStartGetTime:=TRUE;
+			iState:=5;
+		5:	// Várakozás a busy jelre
+			IF bGetTimeBusy=TRUE THEN
+				iState:=6;
+			END_IF
+		6:	// Várakozás az időpont beolvasás befejeztére
+			IF bGetTimeBusy=FALSE THEN
+				bStartGetTime:=FALSE;
+				iState:=7;
+			END_IF
+		7:	// Időpont beolvasás sikerességének vizsgálata
+			IF bGetTimeError=FALSE THEN
+				iState:=8;
+			ELSE
+				iState:=100;
+			END_IF
+		8:	// Fájlnév előállítása, fájlnyitás kezdeményezése
+			sDateTime:=REPLACE(REPLACE(REPLACE(DELETE(SYSTEMTIME_TO_STRING(tstDateTime),4,20),'-',1,11),'.',1,14),'.',1,17);
+			sLogFilePath:=	CONCAT(sFolder,
+							CONCAT(sDateTime,'.csv'));
+			bLogOpenExecute:=TRUE;
+			nLogOpenMode:=FOPEN_MODETEXT OR FOPEN_MODEWRITE;
+			iState:=9;
+		9:	// Várakozás a busy jelre
+			IF bLogOpenBusy=TRUE THEN
+				iState:=10;
+			END_IF
+		10:	// Várakozás a fájlnyitás befejeztére
+			IF bLogOpenBusy=FALSE THEN
+				bLogOpenExecute:=FALSE;
+				iState:=11;
+			END_IF
+		11:	// Fájlnyitás sikerességének vizsgálata
+			IF bLogOpenError=FALSE THEN
+				iState:=12;
+			ELSE
+				iState:=101;
+			END_IF
+		12:	// Log fájlba írás kezdeményezése
+			bLogWriteExecute:=TRUE;
+			iState:=13;
+		13:	// Várakozás a busy jelre
+			IF bLogWriteBusy=TRUE THEN
+				iState:=14;
+			END_IF
+		14:	// Várakozás a fájlírás befejeztére
+			IF bLogWriteBusy=FALSE THEN
+				bLogWriteExecute:=FALSE;
+				iState:=15;
+			END_IF
+		15:	// Fájlírás sikerességének vizsgálata
+			IF bLogWriteError=FALSE THEN
+				iState:=16;
+			ELSE
+				iState:=103;
+			END_IF
+		16:	// Log fájl zárásának kezdeményezése
+			bLogCloseExecute:=TRUE;
+			iState:=17;
+		17:	// Várakozás a busy jelre
+			IF bLogCloseBusy=TRUE THEN
+				iState:=18;
+			END_IF
+		18:	// Várakozás a fájlzárás befejeztére
+			IF bLogCloseBusy=FALSE THEN
+				bLogCloseExecute:=FALSE;
+				iState:=19;
+			END_IF
+		19:	// Fájlzárás sikerességének vizsgálata
+			IF bLogCloseError=FALSE THEN
+				iState:=20;
+			ELSE
+				iState:=104;
+			END_IF
+		20: // Várakozás a hegesztő program végére
+			IF (HEGESZTOK.nHegesztoNum=0) THEN
+				iState:=1;
+				// Visszakapcsoljuk az eredeti árambeállítást
+				HEGESZTOK.bHegesztoMitStromOut:=bMitStromSetting;
+			END_IF
+	END_CASE
+	bError:=(iState>=100);
+END_IF
+
+Timer(
+		IN:=bStart,
+		PT:=tDelayTime,
+		Q=>bTimePassed,
+		ET=>tElapsedTime);
+		
+LogOpen(
+		sNetId:='',
+		sPathName:=sLogFilePath,
+		nMode:=nLogOpenMode,
+		ePath:=PATH_GENERIC,
+		bExecute:=bLogOpenExecute,
+		tTimeout:=T#5S,
+		bBusy=>bLogOpenBusy,
+		bError=>bLogOpenError,
+		nErrId=>nLogOpenError,
+		hFile=>hLogFile
+		);
+		
+LogPutStr(
+		sNetId:='',
+		hFile:=hLogFile,
+		sLine:=sInfoToLog,
+		bExecute:=bLogPutStrExecute,
+		tTimeout:=T#1S,
+		bBusy=>bLogPutStrBusy,
+		bError=>bLogPutStrError,
+		nErrId=>nLogPutStrError);
+		
+LogWriteStr(
+		sNetId:='',
+		hFile:=hLogFile,
+		pWriteBuff:=ADR(saLogInfos),
+		cbWriteLen:=cbLogWriteLen,
+		bExecute:=bLogWriteExecute,
+		tTimeout:=T#1S,
+		bBusy=>bLogWriteBusy,
+		bError=>bLogWriteError,
+		nErrId=>nLogWriteError,
+		cbWrite=>);
+
+LogClose(
+		sNetId:='',
+		hFile:=hLogFile,
+		bExecute:=bLogCloseExecute,
+		tTimeout:=T#5S,
+		bBusy=>bLogCloseBusy,
+		bError=>bLogCloseError,
+		nErrId=>nLogCloseError
+		);
+
+GetTime(
+		NETID:='',
+		START:=bStartGetTime,
+		TMOUT:=T#1S,
+		BUSY=>bGetTimeBusy,
+		ERR=>bGetTimeError,
+		ERRID=>nGetTimeError,
+		TIMESTR=>tstDateTime
+		);
+
+// Az alábbi kóddal azt az időt mértük, ami az áram kikacsolásának
+// szoftverből indítása és a visszajelzés szoftverbe érkezése között eltelt.
+// Ennek ideje 13 ms volt.
+(*  
+IF (bStart2=FALSE) AND (HEGESZTOK.bHegesztoMitStromOut=FALSE)
+	AND (HEGESZTOK.bHegesztoMitStromIn=TRUE) THEN
+	bStart2:=TRUE;
+	tDelayTime2:=T#1H;
+	tDelay:=T#0S;
+END_IF
+
+IF (bStart2=TRUE) AND (HEGESZTOK.bHegesztoMitStromOut=FALSE)
+	AND (HEGESZTOK.bHegesztoMitStromIn=FALSE) THEN
+	bStart2:=FALSE;
+	tDelay:=tElapsedTime2;
+END_IF
+		
+Timer2(
+		IN:=bStart2,
+		PT:=tDelayTime2,
+		Q=>bTimePassed2,
+		ET=>tElapsedTime2);
+*)
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,297 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="RobotProcess" Id="{3498c47f-9fef-482f-99cd-3f60986de5a2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM RobotProcess
+VAR_INPUT
+	b_InRobotCommandSend : BOOL := FALSE;
+	s_InRobotTCPCommand : STRING := '';
+	s_InRobotCommand : STRING := '';
+	s_InRobotCommandParam1 : STRING := '';
+	s_InRobotCommandParam2 : STRING := '';
+	s_InRobotCommandParam3 : STRING := '';
+	s_InRobotCommandParam4 : STRING := '';
+	s_InRobotCommandParam5 : STRING := '';
+END_VAR
+VAR_OUTPUT
+	sRobotResult: STRING := '';
+END_VAR
+VAR
+//INTERFACE
+	b_OutCommOpen : BOOL := FALSE;
+	n_OutRobotErrId: UDINT;
+	s_OutResult : STRING := ''; 
+	
+	
+//LOCALS
+	//State
+	s_GetStatusResult : STRING := '';
+	s_sSyncFromPLCToRobot : STRING := '';
+	s_sErrorMsg : STRING := '';
+	s_iErrorNum : STRING := '';
+	n_IsStatusRequest : UDINT := 0;
+	iState : UDINT := 0;
+	b_WaitEnable : BOOL := FALSE;
+	b_WaitTime : TIME := T#500MS;
+	b_WaitQ : BOOL;
+	T_Ticker : TON;
+	bStatusRead: BOOL;
+	baStatus : ARRAY[0..20] OF BOOL;
+	fb_RobotStatusToBools: fb_RobotStatusToBools;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fb_RobotStatusToBools(statusstring:= s_GetStatusResult, baTemp=> baStatus);
+// Parancsok értelmezése
+IF (s_InRobotCommand='INIT') THEN
+	s_InRobotCommand:='BUSY';
+	iState:=1;
+END_IF
+CASE iState OF
+	//Login
+	1:	// Kommunikáció kezdeményezése
+		ROBOTREMOTE.bRobotCommOpenEnable:=TRUE;
+		iState := 2;
+	2:	// Ha létrejött a kommunikáció
+		IF (ROBOTREMOTE.iState=0) THEN
+ 			IF(ROBOTREMOTE.bRobotCommOpen = TRUE) THEN
+				iState := 3;
+//			ELSE
+//				iState := 100;	
+			END_IF;
+		END_IF
+	3:	// Belépés
+		ROBOTREMOTE.sRobotCommand := 'Login';
+		ROBOTREMOTE.sRobotCommandParam1 := '2119';
+		ROBOTREMOTE.bRobotCommandSend := TRUE;
+		iState := 4;
+	4:	// Ha sikerült a belépés...
+		IF (ROBOTREMOTE.iState=0) THEN
+			IF (ROBOTREMOTE.sRobotCommand='') THEN
+				IF NOT(ROBOTREMOTE.bIsError) THEN
+					iState := 5;
+//				ELSE
+//					iState := 100;
+				END_IF
+			END_IF
+		END_IF;
+	5:	// Robot resetelése
+		ROBOTREMOTE.sRobotCommand := 'Reset';
+		ROBOTREMOTE.bRobotCommandSend := TRUE;
+		iState := 6;
+	6:	// Ha sikerült a reset...
+		IF (ROBOTREMOTE.iState=0) THEN
+			IF (ROBOTREMOTE.sRobotCommand='') THEN
+				IF NOT(ROBOTREMOTE.bIsError) THEN
+					iState := 7;
+//				ELSE
+//					iState := 100;
+				END_IF
+			END_IF
+		END_IF
+	7:	// Robot státuszának lekérdezése
+		ROBOTREMOTE.sRobotCommand := 'GetStatus';
+		ROBOTREMOTE.bRobotCommandSend := TRUE;
+		iState := 8;
+	8:	// Ha sikerült...
+		IF (ROBOTREMOTE.iState=0) THEN
+			IF (ROBOTREMOTE.sRobotCommand='') THEN
+				IF NOT(ROBOTREMOTE.bIsError) THEN
+					iState := 9;
+				ELSE
+					iState := 100;
+				END_IF
+			END_IF
+		END_IF;
+	9:	// Státusz feldolgozása
+		s_GetStatusResult := ROBOTREMOTE.sErrorOrResult;
+		fb_RobotStatusToBools(statusstring:= s_GetStatusResult, baTemp=> baStatus);
+		GVL.bRobotPaused:=RobotProcess.baStatus[8];
+		iState := 10;
+	10:	// Státusz értékelése
+		IF RobotProcess.baStatus[9] = TRUE THEN
+			ROBOTREMOTE.sRobotCommand := 'Stop';
+			ROBOTREMOTE.bRobotCommandSend := TRUE;
+			iState := 11;
+		ELSE
+			IF RobotProcess.baStatus[7] = TRUE THEN
+				iState := 7;
+			ELSE
+				iState := 16;
+			END_IF
+		END_IF
+	11:
+		IF (ROBOTREMOTE.sRobotCommand='') THEN
+			IF NOT(ROBOTREMOTE.bIsError) THEN
+				iState := 12;
+			ELSE
+				iState := 100;
+			END_IF
+		END_IF
+	12:
+		ROBOTREMOTE.sRobotCommand := 'GetStatus';
+		ROBOTREMOTE.bRobotCommandSend := TRUE;
+		iState := 13;
+	13:
+		IF (ROBOTREMOTE.iState=0) THEN
+			IF (ROBOTREMOTE.sRobotCommand='') THEN
+				IF NOT(ROBOTREMOTE.bIsError) THEN
+					iState := 14;
+				ELSE
+					iState := 100;
+				END_IF
+			END_IF
+		END_IF;
+	14:
+		s_GetStatusResult := ROBOTREMOTE.sErrorOrResult;
+		fb_RobotStatusToBools(statusstring:= s_GetStatusResult, baTemp=> baStatus);
+		GVL.bRobotPaused:=RobotProcess.baStatus[8];
+		iState := 15;
+	15:
+		IF RobotProcess.baStatus[9] = TRUE THEN
+			iState := 16;
+		ELSE
+			iState := 12;
+		END_IF
+	16:	// Robot indítása
+		ROBOTREMOTE.sRobotCommand := 'Start';
+		ROBOTREMOTE.sRobotCommandParam1 := '0';
+		ROBOTREMOTE.bRobotCommandSend := TRUE;
+		iState := 17;
+	17:
+		IF (ROBOTREMOTE.iState=0) THEN
+			IF (ROBOTREMOTE.sRobotCommand='') THEN
+				IF NOT(ROBOTREMOTE.bIsError) THEN
+					iState := 18;
+				ELSE
+					iState := 100;
+				END_IF
+			END_IF
+		END_IF;
+		
+	18: // Robotparancs kommunikáció indítása
+		ROBOTCOMMAND.bRobotCommOpenEnable := TRUE;
+		iState := 19;
+	
+	19:	// Ha létrejött a kommunikáció...
+		IF (ROBOTCOMMAND.iState=0) THEN
+			IF ROBOTCOMMAND.bRobotCommOpen = TRUE THEN
+				s_InRobotTCPCommand:='STATUSZ';
+				iState := 30;
+			ELSE
+				iState := 100;	
+			END_IF
+		END_IF;
+		
+	30:	
+		IF (b_InRobotCommandSend=TRUE OR s_InRobotTCPCommand<>'') AND n_IsStatusRequest=0 THEN
+			IF b_InRobotCommandSend = TRUE THEN
+				ROBOTREMOTE.sRobotCommand := s_InRobotCommand;
+				ROBOTREMOTE.sRobotCommandParam1 := s_InRobotCommandParam1;
+				ROBOTREMOTE.sRobotCommandParam2 := s_InRobotCommandParam2;
+				ROBOTREMOTE.sRobotCommandParam3 := s_InRobotCommandParam3;
+				ROBOTREMOTE.sRobotCommandParam4 := s_InRobotCommandParam4;
+				ROBOTREMOTE.sRobotCommandParam5 := s_InRobotCommandParam5;
+				ROBOTREMOTE.bRobotCommandSend := TRUE;
+				iState := 31;
+			ELSE
+				ROBOTCOMMAND.sRobotCommand := s_InRobotTCPCommand;
+				sRobotResult:='';
+				ROBOTCOMMAND.bRobotCommandSend := TRUE;
+				iState := 40;
+			END_IF
+		
+		ELSE
+			
+			IF b_WaitQ AND ROBOTREMOTE.sRobotCommand='' THEN
+				ROBOTREMOTE.sRobotCommand := 'GetStatus';
+				ROBOTREMOTE.bRobotCommandSend := TRUE;
+				n_IsStatusRequest := 1;
+				iState := 31;
+			END_IF
+		END_IF
+		
+	31:
+		IF (ROBOTREMOTE.iState=0) THEN
+			IF (ROBOTREMOTE.sRobotCommand='') THEN
+				IF NOT(ROBOTREMOTE.bIsError) THEN
+					iState := 32;
+				ELSE
+					iState := 101;
+				END_IF
+			END_IF
+		END_IF
+	32:
+		CASE n_IsStatusRequest OF
+			0:
+				s_OutResult := ROBOTREMOTE.sErrorOrResult;
+			1:
+				s_GetStatusResult := ROBOTREMOTE.sErrorOrResult;
+				n_IsStatusRequest:=0;
+		END_CASE
+		b_InRobotCommandSend := FALSE;
+		s_InRobotCommand := '';
+		s_InRobotCommandParam1 := '';
+		s_InRobotCommandParam2 := '';
+		s_InRobotCommandParam3 := '';
+		s_InRobotCommandParam4 := '';
+		s_InRobotCommandParam5 := '';
+		iState := 30;
+	40:
+//		IF (ROBOTCOMMAND.sRobotCommand='') THEN
+		IF (ROBOTCOMMAND.iState=0) THEN
+			iState := 30;
+			s_InRobotTCPCommand:='';
+			sRobotResult := ROBOTCOMMAND.sRobotResult;
+		ELSE (* Robotművelet közben is ellenőrízze a robot státuszát! *)
+			IF b_WaitQ AND ROBOTREMOTE.sRobotCommand='' AND bStatusRead THEN
+				bStatusRead:=FALSE;
+				ROBOTREMOTE.sRobotCommand := 'GetStatus';
+				ROBOTREMOTE.bRobotCommandSend := TRUE;
+				n_IsStatusRequest := 1;
+			ELSIF (ROBOTREMOTE.iState=0) AND (ROBOTREMOTE.sRobotCommand='')
+				AND NOT(ROBOTREMOTE.bIsError) AND NOT bStatusRead THEN			
+				s_GetStatusResult := ROBOTREMOTE.sErrorOrResult;
+				fb_RobotStatusToBools(statusstring:= s_GetStatusResult, baTemp=> baStatus);
+				GVL.bRobotPaused:=RobotProcess.baStatus[8];
+				bStatusRead:=TRUE;
+			END_IF
+		END_IF
+	200:
+		ROBOTCOMMAND.bRobotCommCloseEnable := TRUE;
+		iState := 201;
+	201:
+		IF (ROBOTCOMMAND.iState=0) THEN
+			IF (ROBOTCOMMAND.bRobotCommOpen = FALSE)  THEN
+				iState := 202;
+			END_IF
+		END_IF;
+		
+	202: // Kilépés
+		ROBOTREMOTE.sRobotCommand := 'Logout';
+		ROBOTREMOTE.bRobotCommandSend := TRUE;
+		iState := 203;
+	203:
+		IF (ROBOTREMOTE.iState=0) THEN	
+			ROBOTREMOTE.bRobotCommCloseEnable := TRUE;
+			iState := 204;
+		END_IF
+	204:
+		IF (ROBOTREMOTE.iState=0) THEN
+			IF (ROBOTREMOTE.bRobotCommOpen = FALSE) THEN
+				iState := 0;
+			END_IF
+		END_IF;
+END_CASE
+
+T_Ticker(IN:= b_WaitEnable, PT:= b_WaitTime, Q=> b_WaitQ, ET=> );
+IF b_WaitEnable = FALSE THEN
+	b_WaitEnable := TRUE;
+END_IF
+]]></ST>
+    </Implementation>
+    <LineIds Name="RobotProcess">
+      <LineId Id="3" Count="246" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_RobotCommandTranslation" Id="{0ae1908b-1808-45de-bd29-e0395b7f3be5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_RobotCommandTranslation : STRING
+VAR_INPUT
+	sCommand : STRING;
+	sParam1 : STRING;
+	sParam2 : STRING;
+	sParam3 : STRING;
+	sParam4 : STRING;
+	sParam5 : STRING;
+END_VAR
+VAR
+	uLength : INT := 0;
+	tempTranslation : STRING := '';
+	nDollarPosition : INT := 0;
+	sDollarString : STRING := ' ';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//IF sCommand='Login' THEN
+//	f_RobotCommandTranslation := CONCAT(' Login,',sParam1);
+//END_IF
+//IF sCommand='LOGOUT' THEN
+//	f_RobotCommandTranslation:=' Logout';
+//END_IF
+//Kezdő $ karakter
+sDollarString[0] := 16#24;
+tempTranslation := CONCAT(' ',sCommand);
+tempTranslation[0] := 16#24;
+
+//Ha van Paraméter1 akkor berakjuk
+IF sParam1<>'' THEN
+	tempTranslation := CONCAT(tempTranslation,',');
+	tempTranslation := CONCAT(tempTranslation,sParam1);
+END_IF
+
+//Ha van Paraméter2 akkor berakjuk
+IF sParam2<>'' THEN
+	tempTranslation := CONCAT(tempTranslation,',');
+	tempTranslation := CONCAT(tempTranslation,sParam2);
+END_IF
+
+//Ha van Paraméter3 akkor berakjuk
+IF sParam3<>'' THEN
+	tempTranslation := CONCAT(tempTranslation,',');
+	tempTranslation := CONCAT(tempTranslation,sParam3);
+END_IF
+
+//Ha van Paraméter4 akkor berakjuk
+IF sParam4<>'' THEN
+	tempTranslation := CONCAT(tempTranslation,',');
+	tempTranslation := CONCAT(tempTranslation,sParam4);
+END_IF
+
+//Ha van Paraméter5 akkor berakjuk
+IF sParam5<>'' THEN
+	tempTranslation := CONCAT(tempTranslation,',');
+	tempTranslation := CONCAT(tempTranslation,sParam5);
+END_IF
+
+//Add CRLF to end
+tempTranslation := CONCAT(tempTranslation,'  ');
+tempTranslation[LEN(tempTranslation)-2]:=16#D;
+tempTranslation[LEN(tempTranslation)-1]:=16#A;
+nDollarPosition := FIND(tempTranslation,'dollar');
+IF nDollarPosition > 0 THEN
+	tempTranslation := DELETE(tempTranslation,6,nDollarPosition);
+	tempTranslation := INSERT(tempTranslation,sDollarString,nDollarPosition-1);
+END_IF
+f_RobotCommandTranslation:=tempTranslation;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,453 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="LOGGING" Id="{935e8332-fce5-4cf6-b305-f845814e9726}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM LOGGING
+VAR
+	
+	// Idő lekérdezése
+	GetTime: NT_GetTime;
+	bStartGetTime: BOOL;
+	bGetTimeBusy: BOOL;
+	bGetTimeError: BOOL;
+	nGetTimeError: UDINT;
+	tstDateTime: TIMESTRUCT;
+	dtDateTime: DT;
+	
+	// Stringek előállítása a logolnivalóhoz
+	sLogFilePath: STRING;
+	sYear: STRING;
+	wWeekOfTheYear: WORD;
+	sWeekOfTheYear: STRING;
+	sDateTime: STRING;
+	sProductType: STRING := '637900';
+	sHeaderLine: STRING(255) :=
+		'Datum;Zeitpunkt;Produkt;Ref Temp [C];R-Pt1000 [Ohm];Pt1000 Q;R-NTC [Ohm];NTC Q;Zeitkonstant [s];Isolation;Belastungstest Pt1000;DMC Prüfung;Qualifizierung$R$N';
+	sHeaderLine2: STRING(255) :=
+		'Datum;Zeitpunkt;Produkt;Ref Temp [C];R-Pt1000 [Ohm];Pt1000 Q;R-NTC [Ohm];NTC Q;R-NTC2 [Ohm];NTC2 Q;Zeitkonstant [s];Isolation;Belastungstest Pt1000;DMC Prüfung;Qualifizierung$R$N';
+	sTemp: STRING;
+	sPTRes: STRING;
+	sPtOK: STRING;
+	sNTCRes: STRING;
+	sNTC2Res: STRING;
+	sNTCOK: STRING;
+	sNTC2OK: STRING;
+	sTimeConst: STRING;
+	sIsolOK: STRING;
+	sShockOK: STRING;
+	sMarkingOK: STRING;
+	sQualOK: STRING;
+	sLogLine: STRING(255);
+	sInfoToLog: STRING(255);
+	
+	// Fájl infó lekérdezése
+	GetFileInfo: fb_EnumFindFileEntry;
+	bGetFileInfoExecute: BOOL;
+	bGetFileInfoBusy: BOOL;
+	bGetFileInfoError: BOOL;
+	nGetFileInfoError: UDINT;
+	bGetFileInfoEOE: BOOL;
+	stLogFile: ST_FindFileEntry;
+	
+	// Fájl pointer pozíció lekérdezése
+//	GetFilePointerPosition: fb_FileTell;	
+//	bStartGetPos: BOOL;
+//	bGetPosBusy: BOOL;
+//	bGetPosError: BOOL;
+//	nGetPosError: UDINT;
+//	nFilePointerPosition: DINT;
+	
+	// Fájlnyitás
+	bLogOpenExecute: BOOL := FALSE;
+	LogOpen: fb_FileOpen;
+	nLogOpenMode: DWORD;
+	bLogOpenBusy: BOOL;
+	bLogOpenError: BOOL;
+	nLogOpenError: UDINT;
+	hLogFile: UINT;
+	
+	// Fájlírás
+	LogPutStr: fb_FilePuts;
+	bLogPutStrExecute: BOOL;
+	bLogPutStrBusy: BOOL;
+	bLogPutStrError: BOOL;
+	nLogPutStrError: UDINT;
+	
+	// Fájlzárás
+	LogClose: fb_FileClose;
+	bLogCloseExecute: BOOL;
+	bLogCloseBusy: BOOL;
+	bLogCloseError: BOOL;
+	nLogCloseError: UDINT;
+	
+	// Könyvtár létrehozása
+	CreateDir: fb_CreateDir;	
+	sDirectoryName: T_MaxString;
+	bCreateDirExecute: BOOL;
+	bCreateDirBusy: BOOL;
+	bCreateDirError: BOOL;
+	nCreateDirError: UDINT;
+END_VAR
+VAR_INPUT
+	iState: INT := 0;
+	s_InCommand: STRING := '';
+	iProductType: INT :=0;
+END_VAR
+VAR_OUTPUT
+	n_OutErrId: UINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF iState=0 THEN
+	IF s_InCommand='LOGOLAS' THEN
+		iState:=1;
+	ELSE
+		s_InCommand:='';
+	END_IF
+ELSE
+	CASE iState OF
+		1:	// Időpont beolvasása
+			bStartGetTime:=TRUE;
+			iState:=2;
+		2:	// Várakozás a busy jelre
+			IF bGetTimeBusy=TRUE THEN
+				iState:=3;
+			END_IF
+		3:	// Várakozás az időpont beolvasás befejeztére
+			IF bGetTimeBusy=FALSE THEN
+				bStartGetTime:=FALSE;
+				iState:=4;
+			END_IF
+		4:	// Időpont beolvasás sikerességének vizsgálata
+			IF bGetTimeError=FALSE THEN
+				iState:=5;
+			ELSE
+				n_OutErrId:=313;
+			END_IF
+		5:	// Szövegek előállítása (pl. a rendszeridőből)
+			sYear:=WORD_TO_STRING(tstDateTime.wYear);
+			dtDateTime:=SYSTEMTIME_TO_DT(tstDateTime);
+			wWeekOfTheYear:=F_GetWeekOfTheYear(dtDateTime);
+			// Legyen kétszámjegyű a hetek száma:
+			IF wWeekOfTheYear<10 THEN
+				sWeekOfTheYear:=CONCAT('0',WORD_TO_STRING(wWeekOfTheYear));
+			ELSE
+				sWeekOfTheYear:=WORD_TO_STRING(wWeekOfTheYear);
+			END_IF
+			IF GVL.iSelectedProductType<8 THEN
+				sLogFilePath:=	CONCAT(CONCAT(CONCAT('C:\Log\',sYear),CONCAT('\','637_KW')),
+							CONCAT(sWeekOfTheYear,'.csv'));
+			ELSIF GVL.iSelectedProductType>8 THEN
+				sLogFilePath:=	CONCAT(CONCAT(CONCAT('C:\Log\',sYear),CONCAT('\','745_KW')),
+							CONCAT(sWeekOfTheYear,'.csv'));
+			END_IF				
+			sDateTime:=CONCAT(DELETE(REPLACE(SYSTEMTIME_TO_STRING(tstDateTime),';',1,11),4,20),';');
+			IF GVL.iCurrentProductType=0 THEN
+				sProductType:=CONCAT(GVL.saProductTypes[GVL.iSelectedProductType],';');
+			ELSE
+				IF GVL.iSelectedProductType<8 THEN				
+					sProductType:=CONCAT(GVL.saProductTypeNames[GVL.iCurrentProductType],';');
+				ELSIF GVL.iSelectedProductType>8 THEN
+					sProductType:=CONCAT(GVL.saProductTypeNames745[GVL.iCurrentProductType],';');
+				END_IF
+			END_IF
+			sTemp:=REAL_TO_STRING2(GVL.rTemp,2);
+			sTemp:=REPLACE(sTemp,',',1,FIND(sTemp,'.'));
+			sTemp:=CONCAT(sTemp,';');
+//			sTemp:=CONCAT(REAL_TO_STRING2(GVL.rTemp,2),';');
+			sPTRes:=REAL_TO_STRING2(GVL.rPtRes,1);
+			sPTRes:=REPLACE(sPTRes,',',1,FIND(sPTRes,'.'));
+			sPTRes:=CONCAT(sPTRes,';');
+//			sPTRes:=CONCAT(REAL_TO_STRING2(GVL.rPtRes,1),';');
+			IF GVL.iPTResQ=0 THEN
+				sPtOK:='-;';
+			ELSIF GVL.iPTResQ=1 THEN
+				sPtOK:='i.O.;';
+			ELSE
+				sPtOK:='n.i.O.;';				
+			END_IF
+			sNTCRes:=REAL_TO_STRING2(GVL.rNTCRes,0);
+			sNTCRes:=REPLACE(sNTCRes,',',1,FIND(sNTCRes,'.'));
+			sNTCRes:=CONCAT(sNTCRes,';');
+			sNTC2Res:=REAL_TO_STRING2(GVL.rNTCRes2,0);
+			sNTC2Res:=REPLACE(sNTC2Res,',',1,FIND(sNTC2Res,'.'));
+			sNTC2Res:=CONCAT(sNTC2Res,';');
+//			sNTCRes:=CONCAT(REAL_TO_STRING2(GVL.rNTCRes,0),';');
+			IF GVL.iNTCResQ=0 THEN
+				sNTCOK:='-;';
+			ELSIF GVL.iNTCResQ=1 THEN
+				sNTCOK:='i.O.;';
+			ELSE
+				sNTCOK:='n.i.O.;';				
+			END_IF
+			IF GVL.iNTC2ResQ=0 THEN
+				sNTC2OK:='-;';
+			ELSIF GVL.iNTC2ResQ=1 THEN
+				sNTC2OK:='i.O.;';
+			ELSE
+				sNTC2OK:='n.i.O.;';				
+			END_IF
+			IF GVL.iTimeConstQ=0 THEN
+				sTimeConst:='-;';
+			ELSIF GVL.iTimeConstQ=1 THEN
+				sTimeConst:=REAL_TO_STRING2(GVL.rTimeConst,2);
+				sTimeConst:=REPLACE(sTimeConst,',',1,FIND(sTimeConst,'.'));
+				sTimeConst:=CONCAT(sTimeConst,';');
+//				sTimeConst:=CONCAT(REAL_TO_STRING2(GVL.rTimeConst,2),';');
+			ELSE
+				sTimeConst:='n.i.O.;';
+			END_IF		
+			IF GVL.iIsolQ=0 THEN
+				sIsolOK:='-;';
+			ELSIF GVL.iIsolQ=1 THEN
+				sIsolOK:='i.O.;';
+			ELSE
+				sIsolOK:='n.i.O.;';				
+			END_IF
+			IF GVL.iShockQ=0 THEN
+				sShockOK:='-;';
+			ELSIF GVL.iShockQ=1 THEN
+				sShockOK:='i.O.;';
+			ELSE
+				sShockOK:='n.i.O.;';				
+			END_IF
+			IF GVL.iMarkingQ=0 THEN
+				sMarkingOK:='-;';
+			ELSIF GVL.iMarkingQ=1 THEN
+				sMarkingOK:='i.O.;';
+			ELSE
+				sMarkingOK:='n.i.O.;';				
+			END_IF
+(*			IF GVL.bPTResOK=TRUE AND GVL.bNTCResOK=TRUE
+				AND GVL.bTimeConstOK=TRUE AND GVL.bIsolOK=TRUE
+				AND (GVL.bShockOK=TRUE OR GVL.iCurrentProductType<0)
+				AND GVL.bMarkingOK=TRUE THEN*)
+			IF GVL.bProductOK=TRUE THEN
+				sQualOK:='i.O.$N';
+//				sQualOK:='i.O.$R$N';
+			ELSE
+				sQualOK:='n.i.O.$N';				
+//				sQualOK:='n.i.O.$R$N';				
+			END_IF
+			IF GVL.iSelectedProductType<8 THEN
+				sLogLine:=	CONCAT(sDateTime,
+							CONCAT(sProductType,
+							CONCAT(sTemp,
+							CONCAT(sPTRes,
+							CONCAT(sPtOK,
+							CONCAT(sNTCRes,
+							CONCAT(sNTCOK,
+							CONCAT(sTimeConst,
+							CONCAT(sIsolOK,
+							CONCAT(sShockOK,
+							CONCAT(sMarkingOK,sQualOK)))))))))));
+			ELSE
+				sLogLine:=	CONCAT(sDateTime,
+							CONCAT(sProductType,
+							CONCAT(sTemp,
+							CONCAT(sPTRes,
+							CONCAT(sPtOK,
+							CONCAT(sNTCRes,
+							CONCAT(sNTCOK,
+							CONCAT(sNTC2Res,
+							CONCAT(sNTC2OK,
+							CONCAT(sTimeConst,
+							CONCAT(sIsolOK,
+							CONCAT(sShockOK,
+							CONCAT(sMarkingOK,sQualOK)))))))))))));
+			END_IF;
+			iState:=6;
+		6:	// Log fájl megnyitásának kezdeményezése
+			bLogOpenExecute:=TRUE;
+			nLogOpenMode:=FOPEN_MODETEXT OR FOPEN_MODEAPPEND;
+			iState:=7;
+		7:	// Várakozás a busy jelre
+			IF bLogOpenBusy=TRUE THEN
+				iState:=8;
+			END_IF
+		8:	// Várakozás a fájlnyitás befejeztére
+			IF bLogOpenBusy=FALSE THEN
+				bLogOpenExecute:=FALSE;
+				iState:=9;
+			END_IF
+		9:	// Fájlnyitás sikerességének vizsgálata
+			IF bLogOpenError=FALSE THEN
+				iState:=10;
+			ELSE
+				iState:=101;
+			END_IF
+		// File méret lekérdezése
+		// Ebből állapítható meg, hogy van-e már benne fejléc.
+		10:	// File infó lekérdezésének indítása
+			bGetFileInfoExecute:=TRUE;
+			iState:=11;
+		11:	// Várakozás a busy jelre
+			IF bGetFileInfoBusy=TRUE THEN
+				iState:=12;
+			END_IF
+		12:	// Várakozás az infólekérdezés befejeztére
+			IF bGetFileInfoBusy=FALSE THEN
+				bGetFileInfoExecute:=FALSE;
+				iState:=13;
+			END_IF
+		13:	// Infólekérdezés sikerességének vizsgálata
+			IF bGetFileInfoError=FALSE AND bGetFileInfoEOE=FALSE THEN
+				iState:=14;
+			ELSE
+				n_OutErrId:=312;
+			END_IF
+		14:	// Ha most keletkezett a fájl, akkor fejlécet is írunk bele
+			IF stLogFile.fileSize.dwLowPart>0
+				OR stLogFile.fileSize.dwHighPart>0 THEN
+				sInfoToLog:=sLogLine;
+			ELSE
+				IF GVL.iSelectedProductType<8 THEN
+					sInfoToLog:=CONCAT(sHeaderLine,sLogLine);
+				ELSE
+					sInfoToLog:=CONCAT(sHeaderLine2,sLogLine);
+				END_IF
+			END_IF
+			iState:=15;
+		15:	// Log fájlba írás kezdeményezése
+			bLogPutStrExecute:=TRUE;
+			iState:=16;
+		16:	// Várakozás a busy jelre
+			IF bLogPutStrBusy=TRUE THEN
+				iState:=17;
+			END_IF
+		17:	// Várakozás a fájlírás befejeztére
+			IF bLogPutStrBusy=FALSE THEN
+				bLogPutStrExecute:=FALSE;
+				iState:=18;
+			END_IF
+		18:	// Fájlírás sikerességének vizsgálata
+			IF bLogPutStrError=FALSE THEN
+				iState:=19;
+			ELSE
+				n_OutErrId:=314;
+			END_IF
+		19:	// Log fájl zárásának kezdeményezése
+			bLogCloseExecute:=TRUE;
+			iState:=20;
+		20:	// Várakozás a busy jelre
+			IF bLogCloseBusy=TRUE THEN
+				iState:=21;
+			END_IF
+		21:	// Várakozás a fájlzárás befejeztére
+			IF bLogCloseBusy=FALSE THEN
+				bLogCloseExecute:=FALSE;
+				iState:=22;
+			END_IF
+		22:	// Fájlzárás sikerességének vizsgálata
+			IF bLogCloseError=FALSE THEN
+				iState:=0;
+				s_InCommand:='';
+				n_OutErrId:=0;
+			ELSE
+				n_OutErrId:=315;
+			END_IF
+		40:	// Könyvtár létrehozásának kezdeményezése
+			sDirectoryName:=CONCAT('C:\Log\',sYear);
+			bCreateDirExecute:=TRUE;
+			iState:=41;
+		41:	// Várakozás a busy jelre
+			IF bCreateDirBusy=TRUE THEN
+				iState:=42;
+			END_IF
+		42:	// Várakozás a fájlnyitás befejeztére
+			IF bCreateDirBusy=FALSE THEN
+				bCreateDirExecute:=FALSE;
+				iState:=43;
+			END_IF
+		43:	// Fájlnyitás sikerességének vizsgálata
+			IF bCreateDirError=FALSE THEN
+				iState:=6;
+			ELSE
+				n_OutErrId:=311;
+			END_IF
+		101: // Sikertelen fájl létrehozás esetén új könyvtár létrehozása
+			IF nLogOpenError=16#70C THEN
+				iState:=40;
+			ELSE
+				n_OutErrId:=311;
+			END_IF
+	END_CASE
+END_IF
+
+LogOpen(
+		sNetId:='',
+		sPathName:=sLogFilePath,
+		nMode:=nLogOpenMode,
+		ePath:=PATH_GENERIC,
+		bExecute:=bLogOpenExecute,
+		tTimeout:=T#5S,
+		bBusy=>bLogOpenBusy,
+		bError=>bLogOpenError,
+		nErrId=>nLogOpenError,
+		hFile=>hLogFile
+		);
+		
+LogPutStr(
+		sNetId:='',
+		hFile:=hLogFile,
+		sLine:=sInfoToLog,
+		bExecute:=bLogPutStrExecute,
+		tTimeout:=T#1S,
+		bBusy=>bLogPutStrBusy,
+		bError=>bLogPutStrError,
+		nErrId=>nLogPutStrError);
+		
+LogClose(
+		sNetId:='',
+		hFile:=hLogFile,
+		bExecute:=bLogCloseExecute,
+		tTimeout:=T#5S,
+		bBusy=>bLogCloseBusy,
+		bError=>bLogCloseError,
+		nErrId=>nLogCloseError
+		);
+		
+GetTime(
+		NETID:='',
+		START:=bStartGetTime,
+		TMOUT:=T#1S,
+		BUSY=>bGetTimeBusy,
+		ERR=>bGetTimeError,
+		ERRID=>nGetTimeError,
+		TIMESTR=>tstDateTime
+		);
+		
+//GetFilePointerPosition(
+//		sNetId:='',
+//		hFile:=hLogFile,
+//		bExecute:=bStartGetPos,
+//		tTimeout:=T#1S,
+//		bBusy=>bGetPosBusy,
+//		bError=>bGetPosError,
+//		nErrId=>nGetPosError,
+//		nSeekPos=>nFilePointerPosition
+//		);
+
+GetFileInfo(
+		sNetId:='',
+		sPathName:=sLogFilePath,
+		eCmd:=eEnumCmd_First,
+		bExecute:=bGetFileInfoExecute,
+		tTimeout:=T#1S,
+		bBusy=>bGetFileInfoBusy,
+		bError=>bGetFileInfoError,
+		nErrId=>nGetFileInfoError,
+		bEOE=>bGetFileInfoEOE,
+		stFindFile=>stLogFile);
+
+CreateDir(
+		sNetId:='',
+		sPathName:=sDirectoryName,
+		ePath:=PATH_GENERIC,
+		bExecute:=bCreateDirExecute,
+		tTimeout:=T#1S,
+		bBusy=>bCreateDirBusy,
+		bError=>bCreateDirError,
+		nErrId=>nCreateDirError);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

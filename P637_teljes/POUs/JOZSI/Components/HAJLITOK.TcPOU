@@ -1,0 +1,275 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="HAJLITOK" Id="{2dd789b7-c4a7-4e2f-8259-314725d61c73}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HAJLITOK
+	VAR_INPUT
+		s_InCommand : STRING := '';
+		s_InCommandParam1 : STRING := '';
+		s_InCommandParam2 : STRING := '';
+		s_InCommandParam3 : STRING := '';
+		s_InCommandParam4 : STRING := '';
+		s_InCommandParam5 : STRING := '';
+	END_VAR
+	VAR_OUTPUT
+		n_OutErrId: UINT;
+	END_VAR
+VAR
+	bElohajlitoFelso AT %Q*: BOOL := FALSE;
+	bElohajlitoAlso AT %Q*: BOOL := FALSE;
+	bVeghajlitoFelso AT %Q*: BOOL := FALSE;
+	bVeghajlitoAlso AT %Q*: BOOL := FALSE;
+	bElohajlitoFelsoFent AT %I*: BOOL;
+	bElohajlitoFelsoLent AT %I*: BOOL;
+	bElohajlitoAlsoFent AT %I*: BOOL;
+	bElohajlitoAlsoLent AT %I*: BOOL;
+	bVeghajlitoFelsoFent AT %I*: BOOL;
+	bVeghajlitoFelsoLent AT %I*: BOOL;
+	bVeghajlitoAlsoFent AT %I*: BOOL;
+	bVeghajlitoAlsoLent AT %I*: BOOL;
+	iState : INT := 0;
+	s_InLCommand : STRING := '';
+	T_Ticker : TON;
+	bTickerEnable : BOOL := FALSE;
+	tTickerTime : TIME := T#300MS;
+	bTickerQ : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF HAJLITOK.s_InCommand <>'' AND s_InLCommand = '' THEN
+	s_InLCommand := HAJLITOK.s_InCommand;
+END_IF
+IF s_InLCommand <> '' THEN
+	IF iState = 0 AND s_InLCommand = 'ELOHAJLITAS' THEN
+		iState := 1;
+	END_IF
+	IF iState = 0 AND s_InLCommand = 'VEGHAJLITAS' THEN
+		iState := 51;
+	END_IF
+	CASE iState OF 
+		1:
+			IF (bElohajlitoFelsoFent = TRUE AND bElohajlitoFelsoLent = FALSE
+				AND bElohajlitoAlsoFent = FALSE AND bElohajlitoAlsoLent = TRUE) THEN
+				n_OutErrId := 0;
+				iState := 2;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bElohajlitoFelsoFent = FALSE THEN
+				n_OutErrId := 147;
+			ELSIF bElohajlitoFelsoLent = TRUE THEN
+				n_OutErrId := 146;
+			ELSIF bElohajlitoAlsoFent = TRUE THEN
+				n_OutErrId := 151;
+			ELSIF bElohajlitoAlsoLent = FALSE THEN
+				n_OutErrId := 149;
+			END_IF
+		2:	// Csak akkor menjen le, ha senki nem nyúlt be
+			bElohajlitoFelso := GVL.bFenysorompoNTC;
+			iState := 3;
+		3:
+			IF (bElohajlitoFelsoFent = FALSE AND bElohajlitoFelsoLent = TRUE
+				AND bElohajlitoAlsoFent = FALSE AND bElohajlitoAlsoLent = TRUE) THEN
+				n_OutErrId := 0;
+				iState := 4;
+			ELSE
+				IF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+				ELSIF GVL.bFenysorompoNTC=FALSE THEN
+					n_OutErrId := 31;
+				ELSIF bElohajlitoFelsoFent = TRUE THEN
+					n_OutErrId := 148;
+				ELSIF bElohajlitoAlsoFent = TRUE THEN
+					n_OutErrId := 152;
+				ELSIF bElohajlitoAlsoLent = FALSE THEN
+					n_OutErrId := 149;
+				END_IF
+				bElohajlitoFelso := GVL.bFenysorompoNTC;
+			END_IF
+		4:	// Csak akkor jöjjön fel, ha senki nem nyúlt be
+			bElohajlitoAlso := GVL.bFenysorompoNTC;
+			iState := 5;
+		5:
+			IF (bElohajlitoFelsoFent = FALSE AND bElohajlitoFelsoLent = TRUE
+				AND bElohajlitoAlsoFent = TRUE AND bElohajlitoAlsoLent = FALSE) THEN
+				n_OutErrId := 0;
+				iState := 6;
+			ELSE
+				IF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+				ELSIF GVL.bFenysorompoNTC=FALSE THEN
+					n_OutErrId := 31;
+				ELSIF bElohajlitoFelsoFent = TRUE THEN
+					n_OutErrId := 148;
+				ELSIF bElohajlitoAlsoFent = TRUE THEN
+					n_OutErrId := 152;
+				ELSIF bElohajlitoAlsoLent = FALSE THEN
+					n_OutErrId := 149;
+				END_IF
+				bElohajlitoAlso := GVL.bFenysorompoNTC;
+			END_IF
+		6:
+			IF bTickerEnable = TRUE THEN
+				bTickerEnable := FALSE;
+			ELSE
+				bTickerEnable := TRUE;
+				iState := 7;
+			END_IF
+		7:
+			IF bTickerQ = TRUE THEN
+				bTickerEnable := FALSE;
+				iState := 8;
+			END_IF
+		8:
+			bElohajlitoAlso := FALSE;
+			iState := 9;
+		9:
+			IF (bElohajlitoFelsoFent = FALSE AND bElohajlitoFelsoLent = TRUE
+				AND bElohajlitoAlsoFent = FALSE AND bElohajlitoAlsoLent = TRUE) THEN
+				n_OutErrId := 0;
+				iState := 10;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+			ELSIF bElohajlitoFelsoFent = TRUE THEN
+				n_OutErrId := 148;
+			ELSIF bElohajlitoFelsoLent = FALSE THEN
+				n_OutErrId := 145;
+			ELSIF bElohajlitoAlsoFent = TRUE THEN
+				n_OutErrId := 152;
+			ELSIF bElohajlitoAlsoLent = FALSE THEN
+				n_OutErrId := 149;
+			END_IF
+		10:
+			bElohajlitoFelso := FALSE;
+			iState := 11;
+		11:
+			IF (bElohajlitoFelsoFent = TRUE AND bElohajlitoFelsoLent = FALSE
+				AND bElohajlitoAlsoFent = FALSE AND bElohajlitoAlsoLent = TRUE) THEN
+				iState := 0;
+				n_OutErrId := 0;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+			ELSIF bElohajlitoFelsoFent = FALSE THEN
+					n_OutErrId := 147;
+			ELSIF bElohajlitoFelsoLent = TRUE THEN
+					n_OutErrId := 146;
+			ELSIF bElohajlitoAlsoFent = TRUE THEN
+					n_OutErrId := 152;
+			ELSIF bElohajlitoAlsoLent = FALSE THEN
+					n_OutErrId := 149;
+			END_IF
+			
+		51:
+			IF (bVeghajlitoFelsoFent = TRUE AND bVeghajlitoFelsoLent = FALSE
+				AND bVeghajlitoAlsoFent = FALSE AND bVeghajlitoAlsoLent = TRUE) THEN
+				n_OutErrId := 0;
+				iState := 52;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+			ELSIF bVeghajlitoFelsoFent = FALSE THEN
+					n_OutErrId := 163;
+			ELSIF bVeghajlitoFelsoLent = TRUE THEN
+					n_OutErrId := 162;
+			ELSIF bVeghajlitoAlsoFent = TRUE THEN
+					n_OutErrId := 166;
+			ELSIF bVeghajlitoAlsoLent = FALSE THEN
+					n_OutErrId := 167;
+			END_IF
+		52:
+			bVeghajlitoFelso := TRUE;
+			iState := 53;
+		53:
+			IF (bVeghajlitoFelsoFent = FALSE AND bVeghajlitoFelsoLent = TRUE
+				AND bVeghajlitoAlsoFent = FALSE AND bVeghajlitoAlsoLent = TRUE) THEN
+				n_OutErrId := 0;
+				iState := 54;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+			ELSIF bVeghajlitoFelsoFent = TRUE THEN
+					n_OutErrId := 164;
+			ELSIF bVeghajlitoFelsoLent = FALSE THEN
+					n_OutErrId := 161;
+			ELSIF bVeghajlitoAlsoFent = TRUE THEN
+					n_OutErrId := 166;
+			ELSIF bVeghajlitoAlsoLent = FALSE THEN
+					n_OutErrId := 167;
+			END_IF
+		54:
+			bVeghajlitoAlso := TRUE;
+			iState := 55;
+		55:
+			IF (bVeghajlitoFelsoFent = FALSE AND bVeghajlitoFelsoLent = TRUE
+				AND bVeghajlitoAlsoFent = TRUE AND bVeghajlitoAlsoLent = FALSE) THEN
+				n_OutErrId := 0;
+				iState := 56;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+			ELSIF bVeghajlitoFelsoFent = TRUE THEN
+					n_OutErrId := 164;
+			ELSIF bVeghajlitoFelsoLent = FALSE THEN
+					n_OutErrId := 161;
+			ELSIF bVeghajlitoAlsoFent = FALSE THEN
+					n_OutErrId := 165;
+			ELSIF bVeghajlitoAlsoLent = TRUE THEN
+					n_OutErrId := 168;
+			END_IF
+		56:
+			IF bTickerEnable = TRUE THEN
+				bTickerEnable := FALSE;
+			ELSE
+				bTickerEnable := TRUE;
+				iState := 57;
+			END_IF
+		57:
+			IF bTickerQ = TRUE THEN
+				bTickerEnable := FALSE;
+				iState := 58;
+			END_IF
+		58:
+			bVeghajlitoAlso := FALSE;
+			iState := 59;
+		59:
+			IF (bVeghajlitoFelsoFent = FALSE AND bVeghajlitoFelsoLent = TRUE
+				AND bVeghajlitoAlsoFent = FALSE AND bVeghajlitoAlsoLent = TRUE) THEN
+				n_OutErrId := 0;
+				iState := 60;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bVeghajlitoFelsoFent = TRUE THEN
+				n_OutErrId := 164;
+			ELSIF bVeghajlitoFelsoLent = FALSE THEN
+				n_OutErrId := 161;
+			ELSIF bVeghajlitoAlsoFent = TRUE THEN
+				n_OutErrId := 166;
+			ELSIF bVeghajlitoAlsoLent = FALSE THEN
+				n_OutErrId := 167;
+			END_IF
+		60:
+			bVeghajlitoFelso := FALSE;
+			iState := 61;
+		61:
+			IF (bVeghajlitoFelsoFent = TRUE AND bVeghajlitoFelsoLent = FALSE
+				AND bVeghajlitoAlsoFent = FALSE AND bVeghajlitoAlsoLent = TRUE) THEN
+				iState := 0;
+				n_OutErrId := 0;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bVeghajlitoFelsoFent = FALSE THEN
+				n_OutErrId := 163;
+			ELSIF bVeghajlitoFelsoLent = TRUE THEN
+				n_OutErrId := 162;
+			ELSIF bVeghajlitoAlsoFent = TRUE THEN
+				n_OutErrId := 166;
+			ELSIF bVeghajlitoAlsoLent = FALSE THEN
+				n_OutErrId := 167;
+			END_IF
+			
+	END_CASE
+	IF iState = 0 THEN
+		HAJLITOK.s_InCommand := '';
+		s_InLCommand := '';
+	END_IF
+END_IF
+
+T_Ticker(IN:= bTickerEnable, PT:= tTickerTime, Q=> bTickerQ, ET=> );]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

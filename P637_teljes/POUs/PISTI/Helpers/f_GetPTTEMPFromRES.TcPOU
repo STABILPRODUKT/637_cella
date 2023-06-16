@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetPTTEMPFromRES" Id="{2f5b9f4b-b047-4031-bb09-ebe1ac6b445a}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetPTTEMPFromRES : REAL
+VAR_INPUT
+	rRES : REAL;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[f_GetPTTEMPFromRES := (rRES/1000)*259.74-259.74;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

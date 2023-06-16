@@ -1,0 +1,235 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <POU Name="PISTITENGELY" Id="{f24f983f-1254-47ed-8838-3bdfa1ac83ab}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM PISTITENGELY
+VAR
+	PistiHome: MC_Home;
+	bPistiHomeEnable: BOOL := FALSE;
+	bAxisBusy : BOOL := FALSE;
+	bAxisActive: BOOL := FALSE;
+	bAxisAborted: BOOL := FALSE;
+	bAxisError: BOOL := FALSE;
+	nAxisErrorID: UDINT;
+	bAxisStopDone: BOOL := FALSE;
+	bPistiHomeSwitch AT %I*: BOOL;
+	fbPistiTengelyStop: MC_Stop;
+	fbPistitengelyServo: MC_Power;
+	bPistiPosSwitch : BOOL := TRUE;
+	bPistiTengelySzabad : BOOL;
+	bOperational AT %I*: BOOL;
+	bHomeReady : BOOL := FALSE;
+	nAxisStatus AT %I*: UINT;
+	bAxisReady : BOOL;
+	bAxisOn : BOOL;
+	
+	//HOME
+	bAxisHomeDone: BOOL;
+	bAxisHomeBusy: BOOL;
+	bAxisHomeActive: BOOL;
+	bAxisHomeAborted: BOOL;
+	bAxisHomeError: BOOL;
+	nAxisHomeErrorID: UDINT;
+	
+	//MOVE
+	bAxisMoveDone: BOOL;
+	bAxisMoveBusy: BOOL;
+	bAxisMoveActive: BOOL;
+	bAxisMoveAborted: BOOL;
+	bAxisMoveError: BOOL;
+	nAxisMoveErrorID: UDINT;
+	
+	//COMMAND
+	bAxisCommandDone: BOOL;
+	bAxisCommandBusy: BOOL;
+	bAxisCommandActive: BOOL;
+	bAxisCommandAborted: BOOL;
+	bAxisCommandError: BOOL;
+	nAxisCommandErrorID: UDINT;
+	
+	
+	fbPistitengelyJOG: MC_Jog;
+	bPistiJOGPlus : BOOL := FALSE;
+	bPistiJOGMinus : BOOL := FALSE;
+	fbPistitengelyReset: MC_Reset;
+	bPistiReset: BOOL;
+	nPistiErrorCode AT %I*: UDINT;
+	lrPistiActPos AT %I*: LREAL;
+	fbPistiMoveAbolute: MC_MoveAbsolute;
+	
+	//Pozicioknak
+//	lrSzervizbox : LREAL := -5;
+//	lrHegesztoPosition1 : LREAL := -398.3;
+//	lrHegesztoPosition2 : LREAL := -404.3;
+//	lrRobotpakolasPosition : LREAL := -617.8125;
+//	lrKodolvasasPosition: LREAL := -841.54;
+//	lrKappePosition : LREAL := -837.227;
+//	lrVegmeroPosition : LREAL := -1054.776;
+	bPistiTengelySzabad_TON: TON;
+END_VAR
+VAR_INPUT
+	lrPistiPosition : LREAL := 0;
+	sPistiAxisCommand: STRING := '';
+END_VAR
+VAR_OUTPUT
+	n_OutErrId: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//bPistiTengelySzabad := GVL.bTempPistiInputs1[3] AND GVL.bTempPistiInputs2[6]
+bPistiTengelySzabad := GVL.bHegeszto3Fent AND GVL.bKappepresFent
+						AND VEGMERO.bMerotukBent AND (HIMBA.bHimba_hatul AND NOT HIMBA.bHimba_elol) AND bOperational
+//						AND ((GVL.stRobotStatusz.rX<-1.0) OR (GVL.stRobotStatusz.rZ>-111.0))
+						AND f_RobotPtTengelytolTavol()
+						AND (GVL.bFenysorompoPt
+							OR (sPistiAxisCommand='HOME')
+							OR (PISTITENGELY.lrPistiActPos>-10)
+							OR (PISTITENGELY.lrPistiActPos<-500))
+						AND NOT GVL.bBiztonsagiFold AND GVL.bBiztonsagiTap;
+bPistiTengelySzabad_TON(IN:=bPistiTengelySzabad, PT:=T#100MS);
+IF bPistiTengelySzabad_TON.Q=FALSE THEN
+	IF MAIN.bLevegoOK=FALSE THEN
+		n_OutErrId:=5;
+	ELSIF GVL.bHegeszto3Fent=FALSE THEN
+		n_OutErrId:=71;
+	ELSIF GVL.bKappepresFent=FALSE THEN
+		n_OutErrId:=109;
+	ELSIF VEGMERO.bMerotukBent=FALSE THEN
+		n_OutErrId:=87;
+	ELSIF HIMBA.bHimba_hatul=FALSE OR HIMBA.bHimba_elol=TRUE THEN
+		n_OutErrId:=339;
+	ELSIF bOperational=FALSE THEN
+		n_OutErrId:=195;
+//	ELSIF NOT ((GVL.stRobotStatusz.rX<-1.0) OR (GVL.stRobotStatusz.rZ>-111.0)) THEN
+	ELSIF NOT f_RobotPtTengelytolTavol() THEN
+		n_OutErrId:=302;
+	ELSIF (GVL.bFenysorompoPt=FALSE) THEN
+		n_OutErrId:=29;
+	ELSIF GVL.bBiztonsagiFold=TRUE THEN
+		n_OutErrId:=42;
+	ELSIF GVL.bBiztonsagiTap=FALSE THEN
+		n_OutErrId:=43;
+	END_IF
+ELSE
+	n_OutErrId := 0;
+END_IF
+bAxisReady:=nAxisStatus MOD 2 = 1;
+bAxisOn:=nAxisStatus/2 MOD 2 = 1;
+fbPistiTengelyStop(
+	Axis:= GVL.axisPistiTengely, 
+	Execute:= (NOT((GVL.bPistiPosSwitch OR sPistiAxisCommand='HOME') AND GVL.bPistiNegSwitch AND bPistiTengelySzabad_TON.Q)
+				OR sPistiAxisCommand='STOP'), 
+	Deceleration:= , 
+	Jerk:= , 
+	Options:= , 
+	Done=> PISTITENGELY.bAxisStopDone, 
+	Busy=> bAxisBusy, 
+	Active=> bAxisActive, 
+	CommandAborted=> bAxisAborted, 
+	Error=> bAxisError, 
+	ErrorID=> nAxisErrorID);
+IF (sPistiAxisCommand='STOP') AND PISTITENGELY.bAxisStopDone AND NOT bAxisError THEN
+	sPistiAxisCommand := '';
+END_IF
+IF NOT(GVL.bPistiPosSwitch OR sPistiAxisCommand='HOME') OR NOT(GVL.bPistiNegSwitch) THEN
+	GVL.bPistiServo := FALSE;
+	sPistiAxisCommand:='';
+END_IF
+fbPistitengelyServo(
+	Axis:= GVL.axisPistiTengely, 
+	Enable:= GVL.bPistiServo, 
+	Enable_Positive:= (GVL.bPistiPosSwitch OR sPistiAxisCommand='HOME'), 
+	Enable_Negative:= GVL.bPistiNegSwitch, 
+	Override:= 100, 
+	BufferMode:= , 
+	Options:= , 
+	Status=> , 
+	Busy=> , 
+	Active=> , 
+	Error=> , 
+	ErrorID=> );
+	
+	//Home
+PistiHome(
+	Axis:= GVL.axisPistiTengely, 
+	Execute:= sPistiAxisCommand='HOME' AND bPistiTengelySzabad_TON.Q, 
+	Position:= DEFAULT_HOME_POSITION, 
+	HomingMode:= MC_DefaultHoming, 
+	BufferMode:= , 
+	Options:= , 
+	bCalibrationCam:= NOT(bPistiHomeSwitch), 
+	Done=> bAxisHomeDone, 
+	Busy=> bAxisHomeBusy, 
+	Active=> bAxisHomeActive, 
+	CommandAborted=> bAxisHomeAborted, 
+	Error=> bAxisHomeError, 
+	ErrorID=> nAxisHomeErrorID);
+	//Lefutás ellenőrzése
+IF (bAxisHomeDone AND NOT(bAxisHomeBusy OR bAxisHomeActive OR bAxisHomeAborted OR bAxisHomeError)) THEN
+	lrPistiPosition:=GVL.lrPtSzervizbox;
+	sPistiAxisCommand := 'MOVE';
+	bHomeReady:=TRUE;
+END_IF
+	
+	//Move
+fbPistiMoveAbolute(
+	Axis:= GVL.axisPistiTengely, 
+	Execute:= sPistiAxisCommand='MOVE' AND bPistiTengelySzabad_TON.Q AND bHomeReady, 
+	Position:= lrPistiPosition, // -1060...0
+	Velocity:= 800, 
+	Acceleration:= 0, 
+	Deceleration:= 0, 
+	Jerk:= 0, 
+	BufferMode:= , 
+	Options:= , 
+	Done=> bAxisMoveDone, 
+	Busy=> bAxisMoveBusy, 
+	Active=> bAxisMoveActive, 
+	CommandAborted=> bAxisMoveAborted, 
+	Error=> bAxisMoveError, 
+	ErrorID=> nAxisMoveErrorID);
+	//Lefutás ellenőrzése
+IF (bAxisMoveDone AND NOT(bAxisMoveBusy OR bAxisMoveActive OR bAxisMoveAborted OR bAxisMoveError)) THEN
+	sPistiAxisCommand := '';
+END_IF
+	
+	//JOG
+	fbPistitengelyJOG(
+	Axis:= GVL.axisPistiTengely, 
+	JogForward:= bPistiJOGPlus AND bPistiTengelySzabad_TON.Q, 
+	JogBackwards:= bPistiJOGMinus AND bPistiTengelySzabad_TON.Q, 
+	Mode:= MC_JOGMODE_STANDARD_SLOW , 
+	Position:= , 
+	Velocity:= 100, 
+	Acceleration:= 0, 
+	Deceleration:= 0, 
+	Jerk:= 0, 
+	Done=> bAxisCommandDone, 
+	Busy=> bAxisCommandBusy, 
+	Active=> bAxisCommandActive, 
+	CommandAborted=> bAxisCommandAborted, 
+	Error=> bAxisCommandError, 
+	ErrorID=> nAxisCommandErrorID);
+	
+	//RESET ERROR
+	fbPistitengelyReset(
+	Axis:= GVL.axisPistiTengely, 
+	Execute:= bPistiReset, 
+	Done=> bAxisCommandDone, 
+	Busy=> bAxisCommandBusy, 
+	Error=> bAxisCommandError, 
+	ErrorID=> nAxisCommandErrorID);
+	
+	//Ha nem szabad futtatni
+//	IF(NOT(bPistiTengelySzabad)) THEN
+//		sPistiAxisCommand:='!INTERRUPTED';
+//	END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="PISTITENGELY">
+      <LineId Id="3" Count="19" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="23" Count="124" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

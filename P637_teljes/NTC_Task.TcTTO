@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <Task Name="NTC_Task" Id="{2de2fe12-9689-431a-a953-3cb01fa46406}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>1000</CycleTime>
+    <Priority>11</Priority>
+    <PouCall>
+      <Name>NTC</Name>
+    </PouCall>
+    <PouCall>
+      <Name>HEGESZTESUTMERES</Name>
+    </PouCall>
+    <PouCall>
+      <Name>ZEBRASCANNER</Name>
+    </PouCall>
+    <PouCall>
+      <Name>HEGESZTOK</Name>
+    </PouCall>
+    <TaskFBGuid>{942121bf-6a7c-4421-9ba9-58f66055888f}</TaskFBGuid>
+    <Fb_init>{0a181fab-da0d-41f2-a450-0f962e47fe79}</Fb_init>
+    <Fb_exit>{d81a2940-e822-481d-ba3a-c3d2c8c08ecf}</Fb_exit>
+    <CycleUpdate>{0108eda6-c49d-4ff3-9eab-b8b4009066a9}</CycleUpdate>
+    <PostCycleUpdate>{6aa8bf32-4859-434d-8a84-8118d8b0dd61}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

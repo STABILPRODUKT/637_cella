@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetISOLvalue" Id="{e05e55c7-3863-4ff6-8853-c8b3df79a4c8}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetISOLvalue : REAL
+VAR_INPUT
+	rVoltage : REAL;
+END_VAR
+VAR
+	rVoltagePerOhmRate : REAL := 5100/0.889;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[f_GetISOLvalue := rVoltage * rVoltagePerOhmRate;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

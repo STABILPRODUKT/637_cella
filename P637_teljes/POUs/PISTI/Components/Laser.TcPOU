@@ -1,0 +1,309 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="Laser" Id="{3a2bde6a-acad-4470-8273-b92389c87117}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Laser
+VAR_INPUT
+	s_InCommand : STRING :='';
+	s_TypeCode : STRING :='0';	
+END_VAR
+VAR_OUTPUT
+	s_Result: STRING;
+END_VAR
+VAR
+	iState: INT;
+	iState2: INT;
+	iTrials: INT;
+	iSetPower: INT;
+	iWishPower: INT := 12;
+	sWishPower: STRING;
+	sSetPower: STRING;
+
+	// Laser Com Open
+	sLaserRemoteHost: STRING := '192.168.1.99';
+//	sLaserRemoteHost: STRING := '192.168.1.22';
+	LaserSocketOpen: FB_SocketConnect;
+	bLaserSocketOpenEnable: BOOL := FALSE;
+	bLaserSocketBusy: BOOL;
+	bLaserSocketError: BOOL;
+	nLaserSocketErrId: UDINT;
+	hLaserSocket: T_HSOCKET;
+	
+	// Laser Send
+	LaserSocketSend: FB_SocketSend;
+	uSendByteLen: UDINT := 0;
+	baSendByteArray: ARRAY[0..255] OF BYTE;
+	bLaserSocketSendEnable: BOOL := FALSE;
+	bLaserSendbusy: BOOL;
+	bLaserSendError: BOOL;
+	nLaserSendErrId: UDINT;
+
+	// Laser Receive
+	LaserSocketReceive: FB_SocketReceive;
+	baReceivedByteArray: ARRAY[0..255] OF BYTE;
+	bLaserSocketReceiveEnable: BOOL := FALSE;
+	bLaserReceiveBusy: BOOL;
+	bLaserReceiveError: BOOL;
+	nLaserReceiveErrId: UDINT;
+	nLaserReceivedBytesNum: UDINT;
+	
+	// Laser Com Close
+	LaserSocketClose: FB_SocketClose;
+	bLaserSocketCloseEnable: BOOL := FALSE;
+	bLaserSocketCloseBusy: BOOL;
+	bLaserSocketCloseError: BOOL;
+	nLaserSocketCloseErrId: UDINT;
+	
+	sLaserSend: STRING :='';
+	sLaserReceived: STRING :='';
+	sExpectedResponse: STRING := '';
+	
+	// Lézer szoftver megnyitása
+	FB_Start_FOBA_Draw: NT_StartProcess;
+	bStartFOBADraw: BOOL;
+	bFOBADrawBusy: BOOL;
+	bFOBADrawErr: BOOL;
+	nFOBADrawErr: UDINT;
+
+	// Lézer parancs lista megnyitása
+	FB_Start_Ultimate: NT_StartProcess;
+	bStartUltimate: BOOL;
+	bUltimateBusy: BOOL;
+	bUltimateErr: BOOL;
+	nUltimateErr: UDINT;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iState OF
+	0:	// Parancsértelmezés
+		iState:=1;
+		iTrials:=0;
+		sExpectedResponse:='$06;0000;$R$N';
+		IF s_InCommand='GETJOB' THEN
+			sLaserSend:='GetJob;';
+		ELSIF s_InCommand='SETJOB_637' THEN
+			sLaserSend:='SetJob;637xxx;';
+		ELSIF s_InCommand='SETJOB_745900' THEN
+			sLaserSend:='SetJob;745900;';
+		ELSIF s_InCommand='SETJOB_745910' THEN
+			sLaserSend:='SetJob;745910;';
+		ELSIF s_InCommand='SETJOB_521' THEN
+			sLaserSend:='SetJob;521950;';
+		ELSIF s_InCommand='START' THEN
+			sLaserSend:='Start;';
+		ELSIF (s_InCommand='SETTYPE') THEN
+			IF (GVL.iSelectedProductType<8) THEN // 637 esetén
+				s_TypeCode:=TO_STRING(GVL.iSelectedProductType);
+			ELSIF (GVL.iSelectedProductType>8) THEN // 745 esetén
+				CASE GVL.iSelectedProductType OF
+					9, 10: s_TypeCode:='0'; //745900 és 745910
+					11, 12: s_TypeCode:='1'; //745905 és 745915
+					13, 14: s_TypeCode:='2'; //745906 és 745916
+					15, 16: s_TypeCode:='3'; //745907 és 745917
+				END_CASE
+			END_IF;
+			sLaserSend:=CONCAT('SetVars;TypeCode;',CONCAT(s_TypeCode,';'));
+		ELSIF s_InCommand='GETSTATUS' THEN
+			sLaserSend:='GetStatus;';
+			s_Result:='';
+		ELSIF s_InCommand='GETINTENSITY' THEN
+			sLaserSend:='GetIntensity;';
+			s_Result:='';
+		ELSE
+			iState:=0;
+		END_IF			
+	1:	// Vár arra, hogy ne legyen folyamatban a socket megnyitása
+		IF (bLaserSocketBusy=FALSE) THEN
+			iState:=2;
+		END_IF							
+	2:	// Ha nincs nyitva a lézer socket, kezdeményezi a megnyitását
+		IF NOT(GVL.bLaserCommOpen) THEN
+			bLaserSocketOpenEnable:=TRUE;
+			IF (bLaserSocketBusy=TRUE) THEN
+				iState:=3;
+			END_IF				
+		ELSE
+			iState:=4;
+		END_IF
+	3:	// Vár, hogy megnyíljon a lézer socket
+		IF (bLaserSocketBusy=FALSE) AND (bLaserSocketError=FALSE) THEN
+			GVL.bLaserCommOpen:=TRUE;
+			bLaserSocketOpenEnable:=FALSE;
+			iState:=4;
+		ELSIF (bLaserSocketError=TRUE) THEN
+			GVL.bLaserCommOpen:=FALSE;
+			bLaserSocketOpenEnable:=FALSE;
+			iState:=2;
+		END_IF
+	4:	// Ha nincs folyamatban parancsküldés, kezdeményezi a parancsküldést
+		IF (bLaserSendBusy=FALSE) THEN
+			MEMSET(ADR(baSendByteArray), 0, 256); // Byte tömb ürítése
+			baSendByteArray := MAXSTRING_TO_BYTEARR(sLaserSend); // Parancs string byte tömbbe
+			uSendByteLen := INT_TO_UDINT(LEN(sLaserSend)); // Parancs string hossza
+			baSendByteArray[uSendByteLen]:=16#D; // Lezáró karakter 1
+			baSendByteArray[uSendByteLen+1]:=16#A; // Lezáró karakter 2
+			bLaserSocketSendEnable:=TRUE; // Küldés indítójel
+			iState:=5;
+		END_IF
+	5:	// Vár, hogy a parancsküldés elkezdődjön
+		IF (bLaserSendBusy=TRUE) THEN
+			iState:=6;
+		END_IF
+	6:	// Vár a parancsküldés sikeres befejezésére
+		IF (bLaserSendBusy=FALSE) AND (bLaserSendError=FALSE) THEN
+			bLaserSocketSendEnable:=FALSE;
+			iState:=7;
+		END_IF
+	7:	// Ha nincs folyamatban válaszfogadás, kezdeményezi a válaszfogadást
+		IF (bLaserReceiveBusy=FALSE) THEN
+			MEMSET(ADR(baReceivedByteArray), 0, 256); // Byte tömb ürítése
+			bLaserSocketReceiveEnable:=TRUE; // Fogadás indítójel
+			iState:=8;
+		END_IF
+	8:	// Vár, hogy a válaszfogadás elkezdődjön
+		IF (bLaserReceiveBusy=TRUE) THEN
+			iState:=9;
+		END_IF
+	9:	// Vár a válaszfogadás sikeres befejezésére
+		IF (bLaserReceiveBusy=FALSE) AND (bLaserReceiveError=FALSE) THEN
+			bLaserSocketReceiveEnable:=FALSE;
+			sLaserReceived := BYTEARR_TO_MAXSTRING(baReceivedByteArray);
+			MEMSET(ADR(baReceivedByteArray), 0, 256);
+			iState:=10;
+		END_IF
+	10:	// Kiértékelés
+		IF (sLaserReceived=sExpectedResponse) THEN
+			s_InCommand:='';
+		ELSE
+			IF iTrials<5 THEN
+				iTrials:=iTrials+1;
+				iState:=7;
+			ELSE
+				s_InCommand:=sLaserReceived;
+			END_IF
+		END_IF
+		sExpectedResponse:='';
+		iState:=0;
+		IF sLaserSend='GetStatus;' THEN
+			IF (FIND(sLaserReceived,'LaserStatusReady')>0)
+				OR (FIND(sLaserReceived,'LaserStatusStandby')>0) THEN
+				s_Result:='READY';
+			ELSE
+				s_Result:='NOT_READY';
+			END_IF
+		ELSIF LEFT(sLaserSend,12)='GetIntensity' THEN
+			sSetPower:=DELETE(sLaserReceived,8,0);
+			sSetPower:=LEFT(sSetPower,LEN(sSetPower)-3);
+			iSetPower:=STRING_TO_INT(sSetPower);
+//			sLaserSend:='GetIntensity;';
+			;
+		ELSIF LEFT(sLaserSend,12)='SetIntensity' THEN
+			sLaserSend:='GetIntensity;';
+			iState:=1;
+		END_IF
+END_CASE
+
+// FOBA Draw indítási állapotgép
+CASE iState2 OF
+	0:	// Várakozás parancsra
+		IF (bStartFOBADraw=TRUE) THEN
+			iState2:=1;
+		ELSIF (bStartUltimate=TRUE) THEN
+			iState2:=11;
+		END_IF
+	1:
+		IF (bFOBADrawBusy=TRUE) THEN
+			iState2:=2;
+		END_IF
+	2:
+		IF (bFOBADrawBusy=FALSE) THEN
+			bStartFOBADraw:=FALSE;
+			iState2:=0;
+		END_IF
+	11:
+		IF (bUltimateBusy=TRUE) THEN
+			iState2:=12;
+		END_IF
+	12:
+		IF (bUltimateBusy=FALSE) THEN
+			bStartUltimate:=FALSE;
+			iState2:=0;
+		END_IF
+END_CASE
+
+// Kommunikáció nyitás
+LaserSocketOpen(
+	sSrvNetId:= '', 
+	sRemoteHost:= sLaserRemoteHost, 
+	nRemotePort:= 20001, 
+	bExecute:= bLaserSocketOpenEnable, 
+	tTimeout:= T#45S, 
+	bBusy=> bLaserSocketBusy, 
+	bError=> bLaserSocketError, 
+	nErrId=> nLaserSocketErrId, 
+	hSocket=> hLaserSocket);
+
+// Parancsküldés
+LaserSocketSend(
+	sSrvNetId:= '', 
+	hSocket:= hLaserSocket, 
+	cbLen:= uSendByteLen + 2, 
+	pSrc:= ADR(baSendByteArray), 
+	bExecute:= bLaserSocketSendEnable, 
+	tTimeout:= T#5S, 
+	bBusy=> bLaserSendBusy,
+	bError=> bLaserSendError,
+	nErrId=> nLaserSendErrId);
+
+// Válasz fogadása
+LaserSocketReceive(
+	sSrvNetId:= '', 
+	hSocket:= hLaserSocket, 
+	cbLen:= 255, 
+	pDest:= ADR(baReceivedByteArray), 
+	bExecute:= bLaserSocketReceiveEnable, 
+	tTimeout:= T#5S, 
+	bBusy=> bLaserReceiveBusy, 
+	bError=> bLaserReceiveError, 
+	nErrId=> nLaserReceiveErrId, 
+	nRecBytes=> nLaserReceivedBytesNum
+);
+
+//Kommunikáció bontás
+LaserSocketClose(
+	sSrvNetId:= '', 
+	hSocket:= hLaserSocket, 
+	bExecute:= bLaserSocketCloseEnable, 
+	tTimeout:= T#45S, 
+	bBusy=> bLaserSocketCloseBusy, 
+	bError=> bLaserSocketCloseError, 
+	nErrId=> nLaserSocketCloseErrId);
+
+// Lézer saját szoftverének indítása
+FB_Start_FOBA_Draw(
+					NETID:='',
+					PATHSTR:='C:\Program Files\FOBA\FOBA Draw\FOBA Draw 9.2.2\FOBA Draw.exe',
+					DIRNAME:='C:\Program Files\FOBA\FOBA Draw\FOBA Draw 9.2.2\',
+					COMNDLINE:='',
+					START:=bStartFOBADraw,
+					TMOUT:=T#30S,
+					BUSY => bFOBADrawBusy,
+					ERR => bFOBADrawErr,
+					ERRID => nFOBADrawErr
+					);
+
+// Lézer parancs listájának megnyitása
+FB_Start_Ultimate(
+					NETID:='',
+					PATHSTR:='C:\Program Files\Adobe\Reader 11.0\Reader\AcroRd32.exe',
+					DIRNAME:='C:\637\',
+					COMNDLINE:='"C:\637\Specification_Ultimate_V1.5.1_Foba_Rev2.pdf"',
+					START:=bStartUltimate,
+					TMOUT:=T#30S,
+					BUSY => bUltimateBusy,
+					ERR => bUltimateErr,
+					ERRID => nUltimateErr
+					);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

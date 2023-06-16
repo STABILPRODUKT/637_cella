@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="ROBOTCOMMAND_OLD" Id="{d6b7d705-b853-4eb5-a4f1-28b871f7dee5}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ROBOTCOMMAND_OLD
+VAR_INPUT
+	bRobotCommOpenEnable : BOOL := FALSE;
+	sRobotCommand : STRING := '';
+END_VAR
+VAR_OUTPUT
+	bRobotCommOpen : BOOL := FALSE;
+	nRobotErrId: UDINT;
+	sRobotResult : STRING := '';
+END_VAR
+VAR	
+//LOCALS
+	//Kapcsolat nyitás
+	sRobotRemoteHost: STRING := '192.168.1.100';
+	bRobotSocketbusy: BOOL;
+	bRobotSocketError: BOOL;
+	nRobotSocketErrId: UDINT;
+	hRobotSocket: T_HSOCKET;
+	bRobotSocketOpenEnable: BOOL := FALSE;
+	RobotSocketOpen: FB_SocketConnect;
+	
+	//Küldés
+	RobotSocketSend: FB_SocketSend;
+	baSendByteArray: ARRAY[0..255] OF BYTE;
+	bRobotSocketSendEnable: BOOL := FALSE;
+	sLRobotCommand: STRING :='';
+	sRobotSendData: STRING;
+	uSendByteLen: UDINT := 0;
+	bRobotSocketSendbusy: BOOL;
+	bRobotSocketSendError: BOOL;
+	nRobotSocketSendErrId: UDINT;
+	
+	//Fogadás
+	RobotSocketReceive: FB_SocketReceive;
+	baReceivedByteArray: ARRAY[0..255] OF BYTE;
+	bRobotSocketReceiveEnable: BOOL := FALSE;
+	sRobotReceived: STRING :='';
+	nRobotReceivedBytesNum: UDINT;
+	bRobotSocketReceivebusy: BOOL;
+	bRobotSocketReceiveError: BOOL;
+	nRobotSocketReceiveErrId: UDINT;
+	
+	//Kapcsolat bontás
+	bRobotSocketCloseEnable: BOOL := FALSE;
+	RobotSocketClose: FB_SocketClose;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+IF bRobotCommOpenEnable = TRUE THEN
+	//Kommunikáció nyitás
+	IF NOT(bRobotCommOpen) THEN
+		RobotSocketOpen(
+			sSrvNetId:= '', 
+			sRemoteHost:= sRobotRemoteHost, 
+			nRemotePort:= 2000, 
+			bExecute:= bRobotSocketOpenEnable, 
+			tTimeout:= T#45S, 
+			bBusy=> bRobotSocketbusy, 
+			bError=> bRobotSocketError, 
+			nErrId=> nRobotSocketErrId, 
+			hSocket=> hRobotSocket);
+		IF bRobotSocketOpenEnable=TRUE THEN
+			IF (NOT(bRobotSocketError) AND NOT(bRobotSocketbusy)) THEN
+				bRobotSocketOpenEnable := FALSE;
+				bRobotCommOpen:=TRUE;
+				MEMSET(ADR(baReceivedByteArray), 0, 256);
+				RobotSocketOpen(
+					sSrvNetId:= '', 
+					sRemoteHost:= sRobotRemoteHost, 
+					nRemotePort:= 2000, 
+					bExecute:= FALSE, 
+					tTimeout:= T#45S, 
+					bBusy=> bRobotSocketbusy, 
+					bError=> bRobotSocketError, 
+					nErrId=> nRobotSocketErrId, 
+					hSocket=> hRobotSocket);
+			END_IF
+		ELSE
+			bRobotSocketOpenEnable:=TRUE;
+		END_IF
+	END_IF
+END_IF
+
+IF (sLRobotCommand = '' AND sRobotCommand<>'' AND bRobotCommOpen = TRUE) THEN
+	nRobotErrId := 0;
+	sLRobotCommand := sRobotCommand;
+	sRobotResult := sRobotCommand;
+END_IF
+
+//Adatküldés
+IF sLRobotCommand<>'' AND bRobotCommOpen=TRUE THEN
+	RobotSocketSend(
+		sSrvNetId:= '', 
+		hSocket:= hRobotSocket, 
+		cbLen:= uSendByteLen, 
+		pSrc:= ADR(baSendByteArray), 
+		bExecute:= bRobotSocketSendEnable, 
+		tTimeout:= T#5S, 
+		bBusy=> bRobotSocketSendbusy, 
+		bError=> bRobotSocketSendError, 
+		nErrId=> nRobotSocketSendErrId);
+		
+	IF bRobotSocketSendEnable=TRUE THEN
+		IF NOT(bRobotSocketSendbusy) THEN		
+			bRobotSocketSendEnable:=FALSE;
+			IF NOT(bRobotSocketSendError) THEN
+				sLRobotCommand:='';
+				sRobotCommand:='';
+			ELSE
+				nRobotErrId := nRobotSocketSendErrId;
+				sLRobotCommand := '';
+				sRobotCommand:='';
+			END_IF;
+		END_IF;
+	ELSE
+		sRobotSendData := sLRobotCommand;
+		baSendByteArray := MAXSTRING_TO_BYTEARR(sRobotSendData);
+		uSendByteLen := INT_TO_UDINT(LEN(sRobotSendData));
+		bRobotSocketSendEnable:=TRUE;
+	END_IF
+END_IF
+
+//Adatfogadás
+IF bRobotCommOpen=TRUE THEN
+	RobotSocketReceive(
+		sSrvNetId:= '', 
+		hSocket:= hRobotSocket, 
+		cbLen:= 255, 
+		pDest:= ADR(baReceivedByteArray), 
+		bExecute:= bRobotSocketReceiveEnable, 
+		tTimeout:= T#5S, 
+		bBusy=> bRobotSocketReceivebusy, 
+		bError=> bRobotSocketReceiveError, 
+		nErrId=> nRobotSocketReceiveErrId, 
+		nRecBytes=> nRobotReceivedBytesNum);
+		
+	IF bRobotSocketReceiveEnable=TRUE THEN
+		IF NOT(bRobotSocketReceivebusy) THEN	
+			bRobotSocketReceiveEnable:=FALSE;
+			IF NOT(bRobotSocketReceiveError) THEN
+				IF nRobotReceivedBytesNum<>0 THEN
+					sRobotReceived := BYTEARR_TO_MAXSTRING(baReceivedByteArray);
+					MEMSET(ADR(baReceivedByteArray), 0, 256);
+					IF sRobotReceived[0] = 16#30 THEN
+						sRobotResult := DELETE(sRobotReceived,1,1);
+						nRobotErrId:= 0;
+					ELSE
+						sRobotResult := DELETE(sRobotReceived,1,1);
+						nRobotErrId:= 10000;
+					END_IF
+				END_IF;
+			ELSE
+				sRobotResult:='';
+				nRobotErrId := nRobotSocketReceiveErrId;
+			END_IF;
+		END_IF;
+	ELSE
+		nRobotReceivedBytesNum:=0;
+		bRobotSocketReceiveEnable := TRUE;
+	END_IF;
+END_IF
+
+IF bRobotCommOpenEnable = FALSE THEN
+	//Kommunikáció bontás
+	IF bRobotCommOpen THEN
+		RobotSocketClose(
+			sSrvNetId:= '', 
+			hSocket:= hRobotSocket, 
+			bExecute:= bRobotSocketCloseEnable, 
+			tTimeout:= T#45S, 
+			bBusy=> bRobotSocketbusy, 
+			bError=> bRobotSocketError, 
+			nErrId=> nRobotSocketErrId);
+	IF bRobotSocketCloseEnable=TRUE THEN
+			IF (NOT(bRobotSocketError) AND NOT(bRobotSocketError) AND NOT(bRobotSocketbusy)) THEN
+				bRobotSocketCloseEnable := FALSE;
+				bRobotCommOpen:=FALSE;
+				RobotSocketClose(
+					sSrvNetId:= '', 
+					hSocket:= hRobotSocket, 
+					bExecute:= bRobotSocketCloseEnable, 
+					tTimeout:= T#45S, 
+					bBusy=> bRobotSocketbusy, 
+					bError=> bRobotSocketError, 
+					nErrId=> nRobotSocketErrId);
+			END_IF
+		ELSE
+			bRobotSocketCloseEnable:=TRUE;
+		END_IF
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

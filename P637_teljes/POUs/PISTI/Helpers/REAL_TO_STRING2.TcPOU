@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="REAL_TO_STRING2" Id="{6d0f9c79-04f3-4a33-bd87-e8c27c6c01cd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION REAL_TO_STRING2 : string
+VAR_INPUT
+	rIn: LREAL;
+	nDigits: BYTE;
+END_VAR
+VAR
+	nMult: DINT := 1;
+	nI: BYTE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR nI:=1 TO nDigits DO
+	nMult:=nMult*10;
+END_FOR
+REAL_TO_STRING2:=LREAL_TO_STRING(DINT_TO_LREAL(LREAL_TO_DINT(rIn*nMult))/nMult);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

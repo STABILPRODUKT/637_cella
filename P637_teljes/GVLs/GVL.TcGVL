@@ -1,0 +1,458 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <GVL Name="GVL" Id="{9f5b7e00-dd11-402e-90d0-3bef99a08028}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	EngineExecuteList : ARRAY[1..5] OF STRING;
+	bSettingsAutoSaveElozo: BOOL;
+	bSettingsAutoSave: BOOL;
+	
+	//Temp
+//	bTempInputs AT %I*: ARRAY [0..15] OF BOOL;
+	bHeatingTempOK AT %I*: BOOL;
+	bTempOutputs AT %Q*: ARRAY [0..15] OF BOOL;
+	
+	// Kamera I/O-k
+	bKameraTrigger AT %Q*: BOOL;
+	bKameraPROG AT %Q*: BOOL;
+	bKameraBusy AT %I*: BOOL;
+	bKameraHulseVanOK AT %I*: BOOL;
+	bKameraHulsePozOK AT %I*: BOOL;
+	bKameraSzinekOK AT %I*: BOOL;
+	bKameraVezetekPozOK AT %I*: BOOL;
+	bPtKameraTrigger AT %Q*: BOOL;
+	bPtKameraHegesztesOK AT %I*: BOOL;
+	
+	// Hegesztő I/O-k
+	bHegesztoHiba AT %I*: BOOL;
+	bHegesztoHibaTorles AT %Q*: BOOL;
+
+	// Hegesztési beállítás
+	nWeldingDeformation1: DINT;
+	nWeldingDeformation2: DINT;
+	nWeldingDeformation3: DINT;
+	nWeldingDeformation4: DINT;
+	nWeldingDeformation5: DINT;
+	bAutomaticWeldingStop1Elozo: BOOL;
+	bAutomaticWeldingStop1: BOOL;
+	bAutomaticWeldingStop2Elozo: BOOL;
+	bAutomaticWeldingStop2: BOOL;
+	bAutomaticWeldingStop3Elozo: BOOL;
+	bAutomaticWeldingStop3: BOOL;
+	bAutomaticWeldingStop4Elozo: BOOL;
+	bAutomaticWeldingStop4: BOOL;
+	bAutomaticWeldingStop5Elozo: BOOL;
+	bAutomaticWeldingStop5: BOOL;
+	nWeldingStopDistance1Elozo: DINT := 320;
+	nWeldingStopDistance1: DINT := 320;
+	nWeldingDistanceMin1Elozo: DINT := 320;
+	nWeldingDistanceMin1: DINT := 320;
+	nWeldingDistanceMax1Elozo: DINT := 320;
+	nWeldingDistanceMax1: DINT := 320;
+	nWeldingStopDistance2Elozo: DINT := 320;
+	nWeldingStopDistance2: DINT := 320;
+	nWeldingDistanceMin2Elozo: DINT := 320;
+	nWeldingDistanceMin2: DINT := 320;
+	nWeldingDistanceMax2Elozo: DINT := 320;
+	nWeldingDistanceMax2: DINT := 320;
+	nWeldingStopDistance3Elozo: DINT := 320;
+	nWeldingStopDistance3: DINT := 320;
+	nWeldingDistanceMin3Elozo: DINT := 320;
+	nWeldingDistanceMin3: DINT := 320;
+	nWeldingDistanceMax3Elozo: DINT := 320;
+	nWeldingDistanceMax3: DINT := 320;
+	nWeldingStopDistance4Elozo: DINT := 320;
+	nWeldingStopDistance4: DINT := 320;
+	nWeldingDistanceMin4Elozo: DINT := 320;
+	nWeldingDistanceMin4: DINT := 320;
+	nWeldingDistanceMax4Elozo: DINT := 320;
+	nWeldingDistanceMax4: DINT := 320;
+	nWeldingStopDistance5Elozo: DINT := 320;
+	nWeldingStopDistance5: DINT := 320;
+	nWeldingDistanceMin5Elozo: DINT := 320;
+	nWeldingDistanceMin5: DINT := 320;
+	nWeldingDistanceMax5Elozo: DINT := 320;
+	nWeldingDistanceMax5: DINT := 320;
+	nWeldingStopDistance1_637: DINT := 320;
+	nWeldingDistanceMin1_637: DINT := 320;
+	nWeldingDistanceMax1_637: DINT := 320;
+	nWeldingStopDistance2_637: DINT := 320;
+	nWeldingDistanceMin2_637: DINT := 320;
+	nWeldingDistanceMax2_637: DINT := 320;
+	nWeldingStopDistance3_637: DINT := 320;
+	nWeldingDistanceMin3_637: DINT := 320;
+	nWeldingDistanceMax3_637: DINT := 320;
+	nWeldingStopDistance4_637: DINT := 320;
+	nWeldingDistanceMin4_637: DINT := 320;
+	nWeldingDistanceMax4_637: DINT := 320;
+	nWeldingStopDistance5_637: DINT := 320;
+	nWeldingDistanceMin5_637: DINT := 320;
+	nWeldingDistanceMax5_637: DINT := 320;
+	nWeldingStopDistance1_745: DINT := 320;
+	nWeldingDistanceMin1_745: DINT := 320;
+	nWeldingDistanceMax1_745: DINT := 320;
+	nWeldingStopDistance2_745: DINT := 320;
+	nWeldingDistanceMin2_745: DINT := 320;
+	nWeldingDistanceMax2_745: DINT := 320;
+	nWeldingStopDistance3_745: DINT := 320;
+	nWeldingDistanceMin3_745: DINT := 320;
+	nWeldingDistanceMax3_745: DINT := 320;
+	nWeldingStopDistance4_745: DINT := 320;
+	nWeldingDistanceMin4_745: DINT := 320;
+	nWeldingDistanceMax4_745: DINT := 320;
+	nWeldingStopDistance5_745: DINT := 320;
+	nWeldingDistanceMin5_745: DINT := 320;
+	nWeldingDistanceMax5_745: DINT := 320;
+	ulWeldingStartDistance1: ULINT;
+	ulWeldingStartDistance2: ULINT;
+	ulWeldingStartDistance3: ULINT;
+	ulWeldingStartDistance4: ULINT;
+	ulWeldingStartDistance5: ULINT;
+	nWeldingDistanceStartMin1Elozo: DINT := 0;
+	nWeldingDistanceStartMin1: DINT := 0;
+	nWeldingDistanceStartMax1Elozo: DINT := 210000;
+	nWeldingDistanceStartMax1: DINT := 210000;
+	nWeldingDistanceStartMin2Elozo: DINT := 0;
+	nWeldingDistanceStartMin2: DINT := 0;
+	nWeldingDistanceStartMax2Elozo: DINT := 210000;
+	nWeldingDistanceStartMax2: DINT := 210000;
+	nWeldingDistanceStartMin3Elozo: DINT := 0;
+	nWeldingDistanceStartMin3: DINT := 0;
+	nWeldingDistanceStartMax3Elozo: DINT := 210000;
+	nWeldingDistanceStartMax3: DINT := 210000;
+	nWeldingDistanceStartMin4Elozo: DINT := 0;
+	nWeldingDistanceStartMin4: DINT := 0;
+	nWeldingDistanceStartMax4Elozo: DINT := 210000;
+	nWeldingDistanceStartMax4: DINT := 210000;
+	nWeldingDistanceStartMin5Elozo: DINT := 0;
+	nWeldingDistanceStartMin5: DINT := 0;
+	nWeldingDistanceStartMax5Elozo: DINT := 210000;
+	nWeldingDistanceStartMax5: DINT := 210000;
+	bWeldingLog: BOOL;
+	bWeldingLogElozo: BOOL;
+	nElectrode1UsageElozo: DINT;
+	nElectrode1Usage: DINT;
+	nElectrode1UsageMaxElozo: DINT := 1;
+	nElectrode1UsageMax: DINT := 1;
+	nElectrode1UsageWarnElozo: DINT := 1;
+	nElectrode1UsageWarn: DINT := 1;
+	nElectrode1AlarmColor: DWORD := 16#FFFFFF00;
+	nElectrode2UsageElozo: DINT;
+	nElectrode2Usage: DINT;
+	nElectrode2UsageMaxElozo: DINT := 1;
+	nElectrode2UsageMax: DINT := 1;
+	nElectrode2UsageWarnElozo: DINT := 1;
+	nElectrode2UsageWarn: DINT := 1;
+	nElectrode2AlarmColor: DWORD := 16#FF8F8F00;
+	nElectrode3UsageElozo: DINT;
+	nElectrode3Usage: DINT;
+	nElectrode3UsageMaxElozo: DINT := 1;
+	nElectrode3UsageMax: DINT := 1;
+	nElectrode3UsageWarnElozo: DINT := 1;
+	nElectrode3UsageWarn: DINT := 1;
+	nElectrode3AlarmColor: DWORD := 16#FF8F8F00;
+	
+	nHegFejTisztCiklusokElozo: UINT := 5;
+	nHegFejTisztCiklusok: UINT := 5;
+	nHegFejTisztProgramElozo: UINT := 11;
+	nHegFejTisztProgram: UINT := 11;
+	
+	//Pisti Globals
+	axisPistiTengely: AXIS_REF;
+	bPistiPosSwitch AT %I*: BOOL;
+	bPistiNegSwitch AT %I*: BOOL;
+	bPistiServo : BOOL := TRUE;
+	bTempPistiInputs1 AT %I*: ARRAY [0..7] OF BOOL;
+	bHimbaOK: BOOL := FALSE;
+	bAdapterLefogoBent AT %I*: BOOL; // 0
+	bAdapterLefogoKint AT %I*: BOOL; // 1
+	bAdaptererzekelo AT %I*: BOOL; // 2
+	bHegeszto3Fent AT %I*: BOOL; // 3
+	bHegeszto3Lent AT %I*: BOOL; // 4
+	bLimitSwichPlus AT %I*: BOOL; // 5
+	bStartPt AT %I*: BOOL; // 6
+	bInput_7: BOOL; // 7 
+//	bTempPistiInputs2 AT %I*: ARRAY [0..15] OF BOOL;
+	bPlatniFent AT %I*: BOOL; // 0
+	bPlatniLent AT %I*: BOOL; // 1
+	bMeroKint AT %I*: BOOL; // 2
+	bMeroBent AT %I*: BOOL; // 3
+	bLezerZarva AT %I*: BOOL; // 4
+	bLezerNyitva AT %I*: BOOL; // 5
+	bKappepresNincsLegalul AT %I*: BOOL; // 6
+	bLimitSwitchMinus AT %I*: BOOL; // 7
+	bKappeJobbKint AT %I*: BOOL; // 8
+	bKappeJobbBent AT %I*: BOOL; // 9
+	bKappeBalBent AT %I*: BOOL; // 10
+	bKappeBalKint AT %I*: BOOL; // 11
+	bPlatniJobbon AT %I*: BOOL; // 12
+	bPlatniBalon AT %I*: BOOL; // 13
+	bKappePresFent AT %I*: BOOL; // 14
+	bInput_15: BOOL; // 15
+//	bTempPistiOutputs1 AT %Q*: ARRAY [0..9] OF BOOL;
+	bAdapterLefogo AT %Q*: BOOL; // 0
+	bJOZSITENGELYReserved: BOOL;
+	lrPtSzervizboxElozo : LREAL := -5;
+	lrPtSzervizbox : LREAL := -5;
+	lrNTCSzervizboxElozo : LREAL := -10;
+	lrNTCSzervizbox : LREAL := -10;
+	lrHajlitoPosition1Elozo : LREAL := -401.2;
+	lrHajlitoPosition1 : LREAL := -401.2;
+	lrHajlitoPosition2Elozo : LREAL := -575.1;
+	lrHajlitoPosition2 : LREAL := -575.1;
+	lrHegesztoPosition1Elozo : LREAL := -789.0;
+	lrHegesztoPosition1 : LREAL := -789.0;
+	lrHegesztoPosition2Elozo : LREAL := -792.0;
+	lrHegesztoPosition2 : LREAL := -792.0;
+	lrHegesztoPosition3Elozo : LREAL := -794.7;
+	lrHegesztoPosition3 : LREAL := -794.7;
+	lrCsiszoloPosition1Elozo : LREAL := -780;
+	lrCsiszoloPosition1 : LREAL := -780;
+	lrCsiszoloPosition2Elozo : LREAL := -800;
+	lrCsiszoloPosition2 : LREAL := -800;
+	lrHegesztoPosition4Elozo : LREAL := -1109.913;
+	lrHegesztoPosition4 : LREAL := -1109.913;
+	lrHegesztoPosition5Elozo : LREAL := -1101.15;
+	lrHegesztoPosition5 : LREAL := -1101.15;
+	lrHegesztoPosition6Elozo : LREAL := -379.7;
+	lrHegesztoPosition6 : LREAL := -379.7;
+	lrHegesztoPosition7Elozo : LREAL := -386;
+	lrHegesztoPosition7 : LREAL := -386;
+	lrNTCKameraPositionElozo : LREAL := -160.622;
+	lrNTCKameraPosition : LREAL := -160.622;
+	lrPtKameraPositionElozo : LREAL := -503.4;
+	lrPtKameraPosition : LREAL := -503.4;
+	lrRobotKappePositionElozo : LREAL := -694.5;
+	lrRobotKappePosition : LREAL := --694.5;
+	lrKodolvasasPositionElozo: LREAL := -841.54;
+	lrKodolvasasPosition: LREAL := -841.54;
+	lrKodolvasasPosition2Elozo: LREAL := -841.54;
+	lrKodolvasasPosition2: LREAL := -841.54;
+	lrKappePositionElozo : LREAL := -837.11;
+	lrKappePosition : LREAL := -837.11;
+	lrVegmeroPositionElozo : LREAL := -1054.776;
+	lrVegmeroPosition : LREAL := -1054.776;
+	
+	//Jozsi Globals
+	axisJozsiTengely: AXIS_REF;
+	bJozsiPosSwitch AT %I*: BOOL;
+	bJozsiNegSwitch AT %I*: BOOL;
+	bJozsiServo : BOOL := TRUE;
+//	bTempJozsiInputs1 AT %I*: ARRAY [0..15] OF BOOL;
+	bNTCVagoLent AT %I*: BOOL; // 0
+	bNTCVagoFent AT %I*: BOOL; // 1
+	bHegeszto2FentKint AT %I*: BOOL; // 2
+	bHegeszto2FentBent AT %I*: BOOL; // 3
+	bHegeszto2LentBent AT %I*: BOOL; // 4
+	bHegeszto2LentKint AT %I*: BOOL; // 5
+	bLimitSwitchNeg AT %I*: BOOL; // 6
+	bNTCPozicioban AT %I*: BOOL; // 7
+	bNTC_MegfogoNyitva AT %I*: BOOL; // 8
+	bNTC_MegfogoZarva AT %I*: BOOL; // 9
+	bNTC_KiszedoKint AT %I*: BOOL; // 10
+	bNTC_KiszedoBent AT %I*: BOOL; // 11
+	bNTCPirosGomb AT %I*: BOOL; // 12
+	bNTCZoldGomb AT %I*: BOOL; // 13
+	bNTC_OK AT %I*: BOOL; // 14
+	bNC_15: BOOL; // 15
+//	bTempJozsiInputs2 AT %I*: ARRAY [0..15] OF BOOL;
+	bPres1FelsoLent AT %I*: BOOL; // 0
+	bPres1FelsoFent AT %I*: BOOL; // 1
+	bPres1AlsoLent AT %I*: BOOL; // 2
+	bPres1AlsoFent AT %I*: BOOL; // 3
+	bHegeszto1BalFent AT %I*: BOOL; // 4
+	bHegeszto1BalLent AT %I*: BOOL; // 5
+	bStartNTC AT %I*: BOOL; // 6
+	bInput7: BOOL; // 7
+	bPres2FelsoLent AT %I*: BOOL; // 8
+	bPres2FelsoFent AT %I*: BOOL; // 9
+	bPres2AlsoFent AT %I*: BOOL; // 10
+	bPres2AlsoLent AT %I*: BOOL; // 11
+	bHegeszto1JobbFent AT %I*: BOOL; // 12
+	bHegeszto1JobbLent AT %I*: BOOL; // 13
+	bNTCAdapterErzekelo AT %I*: BOOL; // 14
+	bLimitSwitchPlus AT %I*: BOOL; // 15
+	bTempJozsiSzeleptombNTC AT %Q*: ARRAY [0..7] OF BOOL;
+	bTempJozsiSzeleptomb AT %Q*: ARRAY [0..7] OF BOOL;
+	bPISTITENGELYReserved: BOOL;
+	bHegesztofejTisztitas: BOOL := FALSE;
+	
+	
+	
+	//Laser
+	bLaserCommOpen : BOOL := FALSE;
+	
+	//Recipe Manager
+	RecipeManagerCommands: RecipeManCommands;
+	
+	//Mérés
+	bEtalonOn : BOOL := TRUE;
+	bFedelOK : BOOL :=FALSE;
+	bPTResOK : BOOL := FALSE;
+	iPTResQ : BYTE :=0;
+	bNTCResOK : BOOL := FALSE;
+	bNTCRes2OK : BOOL := FALSE;
+	iNTCResQ : BYTE := 0;
+	iNTC2ResQ : BYTE := 0;
+	bIsolOK : BOOL := FALSE;
+	iIsolQ : BYTE := 0;
+	bTimeConstOK : BOOL := FALSE;
+	iTimeConstQ : BYTE := 0;
+	bShockOK : BOOL := FALSE;
+	iShockQ : BYTE := 0;
+	bMarkingOK : BOOL := FALSE;
+	bMarking_ellenorizve : BOOL;
+	iMarkingQ : BYTE := 0;
+	bProduct1OK : BOOL := FALSE;
+	bProduct1NOK : BOOL := FALSE;
+	bProductOK : BOOL := FALSE;
+	bProductNOK : BOOL := FALSE;
+	rTemp : REAL := 0;
+	rPtRes : REAL := 0;
+	rPtResShock : REAL;
+	rPtDevElozo : REAL := 2;
+	rPtDev : REAL := 2;
+	rNTCRes : REAL :=0;
+	rNTCRes2 : REAL :=0;
+	rNTCDevElozo : REAL := 7;
+	rNTCDev : REAL := 7;
+	rNTC2DevElozo : REAL := 7;
+	rNTC2Dev : REAL := 7;
+	rISOL_MAXElozo : REAL := 0.97;
+	rISOL_MAX : REAL := 0.97;
+	rTempMaxElozo : REAL := 300.0;	// Fűtőtömb hőmérséklete
+	rTempMax : REAL := 300.0;	// Fűtőtömb hőmérséklete
+	rIdoallandoMaxElozo : REAL :=6;
+	rIdoallandoMax : REAL :=6;
+	rTimeConst : REAL :=0;
+	PTRES_SOKK_MAXElozo : REAL := 2000.0;
+	PTRES_SOKK_MAX : REAL := 2000.0;
+	iSelectedProductType: INT :=-1;
+	iPreviousSelectedProductType: INT :=-1;
+	iCurrentProductType: INT :=-3;
+	
+	//Termelés
+	nProductCount1 : DINT;
+	nGoodProductCount1 : DINT;
+	nBadProductCount1 : DINT;
+	nGoodProductCount : DINT;
+	nBadProductCount : DINT;
+	sProductTypeName : STRING;
+	saProductTypeNames: ARRAY[-3..0] OF STRING := ['6379XX_ETALON1', '6379XX_ETALON2',
+					 '6379XX_ETALON3','637900'];
+	saProductTypeNames745: ARRAY[-3..0] OF STRING := ['7459XX_ETALON1', '7459XX_ETALON2',
+					 '7459XX_ETALON3','745900'];
+	sNTCType: STRING;
+	sPtType: STRING;
+	sProductType: STRING;
+	sNTCTypeElozo: STRING;
+	sPtTypeElozo: STRING;
+	sProductTypeElozo: STRING;
+	bProductTypeOK: BOOL;
+
+	bElszivasBe AT %Q*: BOOL;
+	bSystemStarted: BOOL := FALSE;
+	bSystemNotStarted: BOOL := TRUE;
+
+	bHimbaBe: BOOL := FALSE;
+	bKameraBe: BOOL := TRUE;
+	bHajlitasBe: BOOL := TRUE;
+	bHegesztes1Be: BOOL := TRUE;
+	bHegesztes2Be: BOOL := TRUE;
+	bHegesztes3Be: BOOL := TRUE;
+	bHegesztes4Be: BOOL := TRUE;
+	bHegesztes5Be: BOOL := TRUE;
+	bKameraVegBe: BOOL := TRUE;
+	bHegesztes6Be: BOOL := TRUE;
+	bHegesztes7Be: BOOL := TRUE;
+	bPtKameraBe: BOOL := FALSE;
+	bRobotKappeBe: BOOL := TRUE;
+	bKappeBe: BOOL := TRUE;
+	bMeresBe: BOOL := TRUE;
+	bJelolesBe: BOOL := TRUE;
+	bNTCInditasFenysorompoval: BOOL;
+	bPtInditasFenysorompoval: BOOL;
+	sNTCKameraImageID: STRING := 'NTCKamera_NG_Image';
+	iBitmap_Version: INT :=0;
+	bNTCKameraElfogadva: BOOL := FALSE;
+	bNTCKameraNemJo: BOOL := FALSE;
+	bNTCEredmenyGombokRejtve: BOOL := TRUE;
+	bNTCBezarGombRejtve: BOOL := TRUE;
+
+	// Dátum, időpont
+	sYear: STRING;
+	sMonth: STRING;
+	sDay: STRING;
+	sHour: STRING;
+	sMinute: STRING;
+	sSecond: STRING;
+	sDateTime: STRING;
+	
+	// GUI kezelés
+	bMeresiEredmenyekRejtve: BOOL := TRUE;
+	bKameraEredmenyekRejtve: BOOL := TRUE;
+	bRegiFelulet: BOOL := FALSE;
+	iFoLapozo: INT;
+	iSzervizLapozo: INT;
+	iTengelyLapozo: INT;
+	iHegesztoLapozo: INT;
+	iMeresLapozo: INT;
+	iAutoMeresLapozo: INT;
+	
+	// Hibakezelés
+	bHibauzenetNTCRejtve: BOOL;
+	bHibauzenetPtRejtve: BOOL;
+	bHibauzenetKozosRejtve: BOOL;
+	nHibaKodNTC: UINT;
+	nHibaKodPt: UINT;
+	nHibaKodKozos: UINT;
+	
+	// Robot állapot
+	stRobotStatusz: ST_RobotState;
+	bRobotPaused: BOOL;
+	
+	// Biztonság
+	bFenysorompoNTC AT %I*: BOOL;
+	bFenysorompoPt AT %I*: BOOL;
+	bBiztonsagiFold AT %I*: BOOL;
+	bBiztonsagiTap AT %I*: BOOL;
+	bBiztonsagiZarBe AT %Q*: BOOL;
+	bVentillatorok1Be AT %Q*: BOOL := TRUE;
+	bVentillatorok2Be AT %Q*: BOOL := TRUE;
+	
+	bBiztonsagiZarGomb: BOOL;
+	nHibaKodRobot: UINT;
+END_VAR
+VAR_GLOBAL CONSTANT
+	saProductTypes: ARRAY[-1..16] OF STRING := ['', '637900', '637910', '637920', '637930', '637901', '637911', '637921', '637931','521950','745900','745910','745905','745915','745906','745916','745907','745917'];
+	NTC_Sensing_NomRT: ARRAY[0..1, 0..25] OF REAL := 
+	[15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+	15660.6, 14955.5, 14286.1, 13650.4, 13046.5, 12472.7, 11927.3, 11408.7, 10915.6, 10446.4, 10000, 9575.1, 9170.5, 8785.3, 8418.3, 8068.6, 7735.3, 7417.5, 7114.5, 6825.5, 6549.8, 6286.7, 6035.5, 5795.6, 5566.6, 5347.8];
+	Pt_NomRT: ARRAY[0..1, 0..15] OF REAL := 
+	[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,
+	1000,1077.9,1155.4,1232.4,1309,1385.1,1460.7,1535.8,1610.5,1684.8,1758.6,1831.9,1904.7,1977.1,2049.1,2120.5];
+	
+	TERMELES_FUL: INT := 0;
+	BEALLITASOK_FUL: INT := 1;
+	SZERVIZ_FUL: INT := 2;
+	RENDSZERIND_FUL: INT :=0;
+	BEHELYEZES_FUL: INT := 1;
+	TENGELYEK_FUL: INT := 2;
+		NTC_TENGELY_FUL: INT := 0;
+		PT_TENGELY_FUL: INT := 1;
+	HAJLITOK_FUL: INT := 3;
+	HEGESZTES_FUL: INT := 4;
+		HEGESZTO_STATUSZ_FUL: INT := 2;
+	ROBOT_FUL: INT := 5;
+	NTC_VAGO_FUL: INT := 6;
+	KAPPE_PRES_FUL: INT := 7;
+	VEGMERO_FUL: INT := 8;
+	LEZER_FUL: INT := 9;
+	KODOLVASO_FUL: INT := 10;
+END_VAR
+VAR_GLOBAL
+
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="KAMERA" Id="{537a82ef-94cd-463d-b102-8ce4a096e315}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM KAMERA
+VAR
+	iState: INT;
+	bVizsgalatKesz: BOOL := FALSE;
+	FB_Idozites: TON;
+	FB_TriggerPulse: TP;
+	
+	// Kamera szoftver megnyitása
+	FB_Start_IVNav: NT_StartProcess;
+	bStartIVNav: BOOL;
+	bIVNavBusy: BOOL;
+	bIVNavErr: BOOL;
+	nIVNavErr: UDINT;
+	iState2: INT;
+
+	bStartIdozites: BOOL;
+	bIdozitesLejart: BOOL;
+	bTriggerPulse: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iState OF
+	0:
+		IF GVL.bKameraTrigger=TRUE THEN
+			bVizsgalatKesz:=FALSE;
+			bStartIdozites:=TRUE;
+			iState:=2;
+		END_IF
+	1:
+		IF GVL.bKameraBusy=TRUE THEN
+			iState:=2;
+		END_IF
+	2:
+(*		IF GVL.bKameraBusy=FALSE THEN *)
+		IF bIdozitesLejart=TRUE THEN
+			bStartIdozites:=FALSE;
+			GVL.bKameraTrigger:=FALSE;
+			bVizsgalatKesz:=TRUE;
+			iState:=0;
+		END_IF
+END_CASE
+
+CASE iState2 OF
+	0:	// Várakozás parancsra
+		IF (bStartIVNav=TRUE) THEN
+			iState2:=1;
+		END_IF
+	1:
+		IF (bIVNavBusy=TRUE) THEN
+			iState2:=2;
+		END_IF
+	2:
+		IF (bIVNavBusy=FALSE) THEN
+			bStartIVNav:=FALSE;
+			iState2:=0;
+		END_IF
+END_CASE
+
+FB_Idozites(IN:=bStartIdozites,
+			PT:=T#100MS,
+			Q => bIdozitesLejart);
+
+// Kamera saját szoftverének indítása
+FB_Start_IVNav(
+					NETID:='',
+					PATHSTR:='C:\Program Files\KEYENCE\IV-Navigator\IV-Navigator.exe',
+					DIRNAME:='C:\Program Files\KEYENCE\IV-Navigator\',
+					COMNDLINE:='',
+					START:=bStartIVNav,
+					TMOUT:=T#30S,
+					BUSY => bIVNavBusy,
+					ERR => bIVNavErr,
+					ERRID => nIVNavErr
+					);
+
+FB_TriggerPulse(
+				IN:=GVL.bPtKameraTrigger,
+				PT:=T#150MS,
+				Q => bTriggerPulse);
+GVL.bPtKameraTrigger:=bTriggerPulse;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,554 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="INIT" Id="{1d631016-396b-4ef1-b568-ea7d3d9eeb00}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM INIT
+VAR
+	iState: INT := -4;
+	iStateHegeszto: INT := 0;		// Max 3
+	iStateTCP: INT := 0;			// Max 5
+	iStateLezer: INT := 0;			// Max 4
+	iStateRobot: INT := 0;			// Max 8
+	iStateHegesztoFejek: INT := 0;	// Max 3
+	iStateVegmero: INT := 0;		// Max 3
+	iStateNTCTengely: INT := 0;		// Max 5
+	iStatePt1000Tengely: INT := 0;	// Max 5
+	iStateHimba: INT := 0;			// Max 3
+	bHegesztoKesz: BOOL := FALSE;
+	bTCPKesz: BOOL := FALSE;
+	bLezerKesz: BOOL := FALSE;
+	bRobotKesz: BOOL := FALSE;
+	bHegesztoFejekKesz: BOOL := FALSE;
+	bVegmeroKesz: BOOL := FALSE;
+	bNTCTengelyKesz: BOOL := FALSE;
+	bPt1000TengelyKesz: BOOL := FALSE;
+	bHimbaKesz: BOOL := FALSE;
+	iKeszenletFoka: INT;
+	CloseAllSocket: fb_SocketCloseAll;
+	bExecuteCloseAll: BOOL;
+	bCloseAllBusy: BOOL;
+	bCloseAllError: BOOL;
+	nCloseAllError: UDINT;
+	TDelay: TON;
+	
+	// Indítási opciók
+	bLevego: BOOL := TRUE;
+	bRobot: BOOL := TRUE;
+	bVegmero: BOOL := TRUE;
+	bNTCTengely: BOOL := TRUE;
+	bPt1000Tengely: BOOL := TRUE;
+	bHegeszto: BOOL := TRUE;
+
+	// Visualization indítása
+	FB_Start_Visu: NT_StartProcess;
+	bStartVisu: BOOL;
+	bVisuBusy: BOOL;
+	bVisuErr: BOOL;
+	nVisuErr: UDINT;
+
+	// Idő lekérdezése
+	GetTime: NT_GetTime;
+	bStartGetTime: BOOL;
+	bGetTimeBusy: BOOL;
+	bGetTimeError: BOOL;
+	nGetTimeError: UDINT;
+	tstDateTime: TIMESTRUCT;
+	dtDateTime: DT;
+	sYear: STRING;
+	iState2: INT := 1;
+	sMonth: STRING;
+	sDay: STRING;
+	sHour: STRING;
+	sMinute: STRING;
+	sSecond: STRING;
+
+	WAIT: TON;
+	bStartWait: BOOL := FALSE;
+	bIdoLejart: BOOL := FALSE;
+	
+	FB_ShutDown: NT_Shutdown;	
+	bStartShutDown: BOOL := FALSE;
+	
+	FB_RestartSystem: TC_Restart;
+	bRestart: BOOL;
+	bRestartBusy: BOOL;
+	bRestartErr: BOOL;
+	nRestartErr: UDINT;
+	
+	bStartDelay: BOOL;
+	bDelayEnd: BOOL;
+	// Max 5
+	iStateKamera: INT;
+	bKameraKesz: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE iState OF
+	-4:	// 1 ciklusnyi várakozás
+		iState:=1;
+	-3:	// Visu indító trigger
+		bStartVisu:=TRUE;
+		iState:=-2;
+	-2:	// Várakozás az indító folyamat indulására
+		IF (bVisuBusy=TRUE) THEN
+			iState:=-1;
+		END_IF
+	-1:	// Várakozás a Visu indító folyamat befejeztére
+		IF (bVisuBusy=FALSE) THEN
+			bStartVisu:=FALSE;
+			IF bVisuErr=FALSE THEN
+				iState:=0;
+			ELSE
+				iState:=-3;
+			END_IF
+		END_IF
+	1:	// Sűrített levegő bekapcsolása; hegesztő, TCP init
+		MAIN.bLevego:=bLevego;
+		GVL.bBiztonsagiZarBe:=TRUE;
+		iStateHegeszto:=1;
+		iStateTCP:=1;
+		iState:=2;
+	2:	// Hegesztőfejek + végmérő alapállása
+		IF (MAIN.bLevegoOK=TRUE) THEN
+			iStateHegesztoFejek:=1;
+			iStateVegmero:=1;
+			iStateHimba:=1;
+			VEGMERO.bLezertakaro:=FALSE;
+			iState:=3;
+		END_IF
+	3:	// Tengelyek indítása
+		IF (bRobotKesz=TRUE) AND (bHegesztoFejekKesz=TRUE) AND (bVegmeroKesz=TRUE) AND (bHimbaKesz=TRUE) AND (bKameraKesz=TRUE) THEN
+			iStateNTCTengely:=1;
+			iStatePt1000Tengely:=1;
+			iState:=4;
+		END_IF
+	4:	// Folyamatok ellenőrzése; befejezés
+		IF (bHegesztoKesz=TRUE) AND (bNTCTengelyKesz=TRUE)
+			AND (bPt1000TengelyKesz=TRUE) AND (VEGMERO.bLezertakaroZarva=TRUE)
+			AND (GVL.bProductTypeOK=TRUE) THEN
+			iState:=5;
+			GVL.bSystemStarted:=TRUE;
+			GVL.bSystemNotStarted:=FALSE;
+		END_IF
+	// RESET-elés
+	10:
+		MAIN.bLevego:=FALSE;
+		GVL.bJozsiServo:=FALSE;
+		GVL.bPistiServo:=FALSE;
+		HEGESZTOK.bHegesztoMitStromOut:=FALSE;
+		KAMERAREMOTE.bKameraSetOffline:=FALSE;
+		KAMERAREMOTE.bKameraTriggerEN:=FALSE;
+		KAMERAREMOTE.bKameraTrigger:=FALSE;
+		iStateHegeszto := 0;		// Max 3
+		iStateTCP := 0;				// Max 5
+		iStateLezer := 0;			// Max 4
+		iStateRobot := 0;			// Max 8
+		iStateKamera := 0;			// Max 5
+		iStateHegesztoFejek := 0;	// Max 3
+		iStateVegmero := 0;			// Max 3
+		iStateNTCTengely := 0;		// Max 5
+		iStatePt1000Tengely := 0;	// Max 5
+		iStateHimba := 0;			// Max 3
+		bHegesztoKesz := FALSE;
+		bTCPKesz := FALSE;
+		bLezerKesz := FALSE;
+		bRobotKesz := FALSE;
+		bKameraKesz := TRUE;
+		bHegesztoFejekKesz := FALSE;
+		bVegmeroKesz := FALSE;
+		bHimbaKesz := FALSE;
+		bNTCTengelyKesz := FALSE;
+		bPt1000TengelyKesz := FALSE;
+		iKeszenletFoka := 0;
+		iState:=11;
+	11:
+		GVL.bSystemStarted:=FALSE;
+		GVL.bSystemNotStarted:=TRUE;
+		iState:=0;
+END_CASE
+
+CASE iStateHegeszto OF
+	1:	// Várakozás a hegesztő beindulására
+		IF (HEGESZTOK.bHegesztoBereit=TRUE) THEN
+			HEGESZTOK.bHegesztoMitStromOut:=TRUE;
+			iStateHegeszto:=2;
+		END_IF
+	2:	// Hegesztőáram bekapcsolása
+		IF (HEGESZTOK.bHegesztoBereit=TRUE) AND (HEGESZTOK.bHegesztoMitStromIn=TRUE) THEN
+			iStateHegeszto:=3;	// Kész állapot
+			bHegesztoKesz:=TRUE;
+		END_IF
+END_CASE
+
+// TCP kapcsolatok reset-elése
+CASE iStateTCP OF
+	1:	// 1 ciklusig alsó szint a trigger jelnek
+		bExecuteCloseAll:=FALSE;
+		iStateTCP:=2;
+	2:	// Felfutó él generálása a CloseAllSocket indításához
+		bExecuteCloseAll:=TRUE;
+		iStateTCP:=3;
+	3:	// Várakozás, hogy elinduljon a CloseAllSocket()
+		IF bCloseAllBusy=TRUE THEN
+			iStateTCP:=4;
+		END_IF
+	4:	// Várakozás, amíg a CloseAllSocket() dolgozik
+		IF bCloseAllBusy=FALSE THEN
+			iStateLezer:=1;	// Lézer indítása
+			iStateRobot:=1;	// Robot indítása
+			iStateKamera:=1; //Pt Kamera indítása
+//			TERMEKVALTAS.iState:=1; // Lézerprogram beállítása
+			iStateTCP:=5;	// Kész állapot
+			bTCPKesz:=TRUE;
+		END_IF
+END_CASE
+
+// Pt Kamera indítása
+CASE iStateKamera OF
+	1: // Kamera online állapotba állítás, ha estleg még nem lenne
+		KAMERAREMOTE.bKameraSetOffline:=FALSE;
+		KAMERAREMOTE.bKameraTriggerEN:=FALSE;
+		KAMERAREMOTE.bKameraTrigger:=FALSE;
+		KameraProcess.bKameraRun:=TRUE;
+		iStateKamera:=2;
+	2: // Ha megjön az online jel, továbblépünk, különben várunk
+		IF KAMERAREMOTE.bKameraOnline=TRUE THEN
+			iStateKamera:=3;
+		END_IF
+	3: // Trigger EN jel küldése
+		KAMERAREMOTE.bKameraTriggerEN:=TRUE;
+		iStateKamera:=4;
+	4: // Ha megjön a Trigger Ready jel, kész vagyunk
+		IF KAMERAREMOTE.bKameraTriggerReady=TRUE THEN
+			KameraProcess.bKameraRun:=FALSE;
+			bKameraKesz:=TRUE;
+			iStateKamera:=5; // Kész állapot
+		END_IF
+END_CASE
+
+// Robot alaphelyzetbe
+CASE iStateRobot OF
+	1:	// Ajtók ellenőrzése
+		IF GVL.bBiztonsagiFold=FALSE AND GVL.bBiztonsagiTap=TRUE THEN
+			bStartDelay:=TRUE;
+			iStateRobot:=2;
+		END_IF
+	2:	// Robotkommunikáció megnyitása
+		IF bDelayEnd=TRUE THEN
+			RobotProcess.s_InRobotCommand:='INIT';
+			iStateRobot:=3;
+		END_IF
+	3:	//	Várakozás a robot válaszára
+		IF ROBOTCOMMAND.sRobotResult='STATUSZ' THEN
+			iStateRobot:=4;
+		END_IF
+	4:	// Robotpozíció ellenőrzése
+		IF GVL.stRobotStatusz.rZ>-110 THEN
+			iStateRobot:=7;
+		ELSE
+			RobotProcess.s_InRobotTCPCommand := 'HOME';
+			iStateRobot:=5;
+		END_IF
+	5:	// Várakozás a robot HOME műveletének elkezdésére
+		IF ROBOTCOMMAND.sRobotResult='' THEN
+			iStateRobot:=6;
+		END_IF
+	6: // Várakozás a robot HOME műveletének végére
+		IF ROBOTCOMMAND.sRobotResult='HOME' THEN
+			iStateRobot:=7;
+		END_IF
+	7: // Várakozás a robot HOME műveletének végére
+		iStateRobot:=8;	// Kész állapot
+		bRobotKesz:=TRUE;
+END_CASE
+
+// Lézer státusz lekérdezése
+CASE iStateLezer OF
+	1:	// Státusz lekérdezése
+		Laser.s_InCommand:='GETSTATUS';
+		iStateLezer:=2;
+	2:	//	Várakozás a lézer kézsenlétére
+		IF Laser.s_Result='READY' THEN
+			iStateLezer:=3;
+		ELSIF Laser.s_Result='NOT_READY' THEN
+			iStateLezer:=1;
+		END_IF
+	3:	// Jelenlegi beállított teljesítmény lekérdezése
+		Laser.s_InCommand:='GETINTENSITY';
+		bLezerKesz:=TRUE;
+		iStateLezer:=4;		//Kész állapot
+END_CASE
+
+CASE iStateHegesztoFejek OF
+	1:	// Minden hegesztőfej visszahúzása, szervók bekapcsolása
+		HEGESZTOK.nHegesztoNum:=0;
+		iStateHegesztoFejek:=2;
+	2:	// Várakozás, hogy szabaddá váljon a kocsik útja
+		IF	(GVL.bHegeszto1BalFent AND GVL.bHegeszto1JobbFent // 1. hegesztőfej visszahúzva
+			AND GVL.bHegeszto2FentBent AND GVL.bHegeszto2LentBent // 2. hegesztőfej visszahúzva
+			AND GVL.bHegeszto3Fent) THEN // 3. hegesztőfej visszahúzva
+			iStateHegesztoFejek:=3;	// Kész állapot
+			bHegesztoFejekKesz:=TRUE;
+		END_IF
+END_CASE
+
+CASE iStateHimba OF
+	1: //Himba vissza
+		HIMBA.s_InCommand:='RESET';
+		iStateHimba:=2;
+	2: //Várakozás a Himba visszhúzódására
+		IF HIMBA.s_InCommand='' THEN
+			iStateHimba:=3;		//Kész állapot
+			bHimbaKesz:=TRUE;
+		END_IF
+END_CASE
+
+CASE iStateVegmero OF
+	1:	// Minden hegesztőfej visszahúzása, szervók bekapcsolása
+		VEGMERO.s_InCommand:='RESET';
+		iStateVegmero:=2;
+	2:	// Várakozás, hogy szabaddá váljon a kocsik útja
+		IF	(VEGMERO.s_InCommand='') THEN 
+			iStateVegmero:=3;	// Kész állapot
+			bVegmeroKesz:=TRUE;
+		END_IF
+END_CASE
+
+CASE iStateNTCTengely OF
+	1:	// Várakozás, hogy szabaddá váljon a kocsik útja
+		IF	(bNTCTengely AND GVL.bPres1FelsoFent AND GVL.bPres1AlsoLent // 1. prés visszahúzva
+			AND GVL.bPres2FelsoFent AND GVL.bPres2AlsoLent // 2. prés visszahúzva
+			AND GVL.bHegeszto1BalFent AND GVL.bHegeszto1JobbFent // 1. hegesztőfej visszahúzva
+			AND GVL.bHegeszto2FentBent AND GVL.bHegeszto2LentBent // 2. hegesztőfej visszahúzva
+			AND GVL.stRobotStatusz.rZ>-111.0) THEN// mérőtűk visszahúzva és robot fent
+			iStateNTCTengely:=2;
+		END_IF
+(*	2: // NTC tengely 
+		IF (JOZSITENGELY.bAxisReady = TRUE) THEN
+			GVL.bJozsiServo:=bNTCTengely;
+			iStateNTCTengely:=3;
+		END_IF
+	3:	IF JOZSITENGELY.bAxisOn THEN
+			JOZSITENGELY.sJozsiAxisCommand:='HOME'; // 1. fázis kocsijának home-ba küldése
+			iStateNTCTengely:=4;
+		END_IF*)
+	2:	// Home-ba küldés
+		JOZSITENGELY.sJozsiAxisCommand:='HOME';
+		iStateNTCTengely:=3;
+	3: // NTC tengely 
+		IF (JOZSITENGELY.bAxisReady = TRUE) THEN
+			GVL.bJozsiServo:=TRUE;
+			iStateNTCTengely:=4;
+		END_IF
+	4:	// Várakozás a tengely home-ba érkezésére
+		IF (JOZSITENGELY.sJozsiAxisCommand='') AND (JOZSITENGELY.bHomeReady=TRUE) THEN
+			iStateNTCTengely:=5;		//Kész állapot
+			bNTCTengelyKesz:=TRUE;
+		END_IF
+END_CASE
+
+CASE iStatePt1000Tengely OF
+	1:	// Várakozás, hogy szabaddá váljon a kocsik útja
+		IF	(bPt1000Tengely AND GVL.bHegeszto3Fent AND GVL.bKappepresFent // 3. hegesztőfej és Kappeprés visszahúzva
+			AND VEGMERO.bMerotukBent AND GVL.stRobotStatusz.rZ>-111.0) THEN // mérőtűk visszahúzva és robot fent
+			iStatePt1000Tengely:=2;
+		END_IF
+(*	2: // NTC tengely 
+		IF (PISTITENGELY.bAxisReady = TRUE) THEN
+			GVL.bPistiServo:=bNTCTengely;
+			iStatePt1000Tengely:=3;
+		END_IF
+	3:	IF PISTITENGELY.bAxisOn THEN
+			PISTITENGELY.sPistiAxisCommand:='HOME'; // 1. fázis kocsijának home-ba küldése
+			iStatePt1000Tengely:=4;
+		END_IF*)
+	2: 
+		PISTITENGELY.sPistiAxisCommand:='HOME'; // Home-ba küldés
+		iStatePt1000Tengely:=3;
+	3: // NTC tengely 
+		IF (PISTITENGELY.bAxisReady = TRUE) THEN
+			GVL.bPistiServo:=bNTCTengely;
+			iStatePt1000Tengely:=4;
+		END_IF
+	4:	// Várakozás a tengely home-ba érkezésére
+		IF (PISTITENGELY.sPistiAxisCommand='') AND (PISTITENGELY.bHomeReady=TRUE) THEN
+			iStatePt1000Tengely:=5;		//Kész állapot
+			bPt1000TengelyKesz:=TRUE;
+		END_IF
+END_CASE
+
+iKeszenletFoka:=REAL_TO_INT(100*INT_TO_REAL(iStateHegeszto
+				+iStateTCP
+				+iStateLezer
+				+iStateRobot
+				+iStateKamera
+				+iStateHegesztoFejek
+				+iStateVegmero
+				+iStateHimba
+				+iStateNTCTengely
+				+iStatePt1000Tengely)/44);
+
+CASE iState2 OF
+		1:	// Időpont beolvasása
+			bStartGetTime:=TRUE;
+			bStartWait:=TRUE;
+			iState2:=2;
+		2:	// Várakozás a busy jelre
+			IF bGetTimeBusy=TRUE THEN
+				iState2:=3;
+			END_IF
+		3:	// Várakozás az időpont beolvasás befejeztére
+			IF bGetTimeBusy=FALSE THEN
+				bStartGetTime:=FALSE;
+				iState2:=4;
+			END_IF
+		4:	// Időpont beolvasás sikerességének vizsgálata
+			IF bGetTimeError=FALSE THEN
+				iState2:=5;
+			ELSE
+				iState2:=1;
+			END_IF
+		5:	// Szövegek előállítása (pl. a rendszeridőből)
+			GVL.sYear:=WORD_TO_STRING(tstDateTime.wYear);
+			GVL.sMonth:=WORD_TO_STRING(tstDateTime.wMonth);
+			IF tstDateTime.wMonth<10 THEN
+				GVL.sMonth:=CONCAT('0',GVL.sMonth);
+			END_IF	
+			GVL.sDay:=WORD_TO_STRING(tstDateTime.wDay);
+			IF tstDateTime.wDay<10 THEN
+				GVL.sDay:=CONCAT('0',GVL.sDay);
+			END_IF	
+			GVL.sHour:=WORD_TO_STRING(tstDateTime.wHour);
+			IF tstDateTime.wHour<10 THEN
+				GVL.sHour:=CONCAT('0',GVL.sHour);
+			END_IF	
+			GVL.sMinute:=WORD_TO_STRING(tstDateTime.wMinute);
+			IF tstDateTime.wMinute<10 THEN
+				GVL.sMinute:=CONCAT('0',GVL.sMinute);
+			END_IF	
+			GVL.sSecond:=WORD_TO_STRING(tstDateTime.wSecond);
+			IF tstDateTime.wSecond<10 THEN
+				GVL.sSecond:=CONCAT('0',GVL.sSecond);
+			END_IF	
+			GVL.sDateTime:=CONCAT(GVL.sYear,
+							CONCAT('.',
+							CONCAT(GVL.sMonth,
+							CONCAT('.',
+							CONCAT(GVL.sDay,
+							CONCAT('.',
+							CONCAT('  ',
+							CONCAT(GVL.sHour,
+							CONCAT(':',
+							CONCAT(GVL.sMinute,
+							CONCAT(':',GVL.sSecond)))))))))));
+			iState2:=6;
+		6:	IF bIdoLejart=TRUE THEN
+				bStartWait:=FALSE;
+				iState2:=1;
+			END_IF
+END_CASE
+
+// Visualization indítása
+FB_Start_Visu(
+					NETID:='',
+					PATHSTR:='C:\TwinCAT\3.1\Components\Plc\Tc3PlcHmi\Tc3PlcHmi.exe',
+					DIRNAME:='C:\637\',
+					COMNDLINE:='',
+					START:=bStartVisu,
+					TMOUT:=T#30S,
+					BUSY => bVisuBusy,
+					ERR => bVisuErr,
+					ERRID => nVisuErr
+					);
+
+CloseAllSocket(
+			sSrvNetId:= '', 
+			bExecute:= bExecuteCloseAll, 
+			tTimeout:= T#2000MS, 
+			bBusy=> bCloseAllBusy, 
+			bError=> bCloseAllError, 
+			nErrId=> nCloseAllError);
+
+GetTime(
+		NETID:='',
+		START:=bStartGetTime,
+		TMOUT:=T#1S,
+		BUSY=>bGetTimeBusy,
+		ERR=>bGetTimeError,
+		ERRID=>nGetTimeError,
+		TIMESTR=>tstDateTime
+		);
+
+TDelay(IN:=bStartDelay, PT:=T#1S, Q=> bDelayEnd);
+
+WAIT(IN:=bStartWait,PT:=T#100MS,Q=>bIdoLejart,ET=>);
+
+FB_ShutDown(
+			NETID:='',
+			DELAY:=0,
+			START:=bStartShutDown,
+			TMOUT:=T#1M,
+			BUSY =>,
+			ERR => ,
+			ERRID =>
+			);
+
+FB_RestartSystem(NETID:='',
+				 RESTART:=bRestart,
+				 TMOUT:=T#10S,
+				 BUSY => bRestartBusy,
+				 ERR => bRestartErr,
+				 ERRID => nRestartErr);
+				 ]]></ST>
+    </Implementation>
+    <LineIds Name="INIT">
+      <LineId Id="3" Count="27" />
+      <LineId Id="448" Count="0" />
+      <LineId Id="31" Count="22" />
+      <LineId Id="744" Count="2" />
+      <LineId Id="54" Count="3" />
+      <LineId Id="574" Count="0" />
+      <LineId Id="58" Count="3" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="62" Count="3" />
+      <LineId Id="573" Count="0" />
+      <LineId Id="66" Count="1" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="68" Count="38" />
+      <LineId Id="549" Count="0" />
+      <LineId Id="107" Count="5" />
+      <LineId Id="553" Count="0" />
+      <LineId Id="551" Count="0" />
+      <LineId Id="554" Count="0" />
+      <LineId Id="561" Count="0" />
+      <LineId Id="559" Count="0" />
+      <LineId Id="562" Count="0" />
+      <LineId Id="556" Count="0" />
+      <LineId Id="566" Count="0" />
+      <LineId Id="557" Count="0" />
+      <LineId Id="563" Count="1" />
+      <LineId Id="569" Count="0" />
+      <LineId Id="659" Count="1" />
+      <LineId Id="663" Count="0" />
+      <LineId Id="665" Count="0" />
+      <LineId Id="747" Count="1" />
+      <LineId Id="750" Count="1" />
+      <LineId Id="749" Count="0" />
+      <LineId Id="661" Count="0" />
+      <LineId Id="552" Count="0" />
+      <LineId Id="113" Count="65" />
+      <LineId Id="456" Count="0" />
+      <LineId Id="458" Count="1" />
+      <LineId Id="461" Count="3" />
+      <LineId Id="466" Count="0" />
+      <LineId Id="465" Count="0" />
+      <LineId Id="460" Count="0" />
+      <LineId Id="457" Count="0" />
+      <LineId Id="179" Count="77" />
+      <LineId Id="575" Count="0" />
+      <LineId Id="257" Count="1" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="259" Count="114" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

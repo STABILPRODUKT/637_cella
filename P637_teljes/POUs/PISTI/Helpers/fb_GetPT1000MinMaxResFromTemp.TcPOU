@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="fb_GetPT1000MinMaxResFromTemp" Id="{42d9f36f-7aab-496a-ad7a-1048033fc7b7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_GetPT1000MinMaxResFromTemp
+VAR_INPUT
+	rTemp : REAL;
+END_VAR
+VAR_OUTPUT
+	rResMin : REAL := 0;
+	rResMax : REAL := 0;
+END_VAR
+VAR
+	rPercent : REAL := 0.01;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[rResMin := ((rTemp+259.74)/259.74)*1000*(1-rPercent);
+rResMax := ((rTemp+259.74)/259.74)*1000*(1+rPercent);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,288 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="NTCProcess" Id="{1ad92c24-1a7a-412a-9a4b-071650cf8afd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM NTCProcess
+VAR_INPUT
+	s_InCommand : STRING := '';
+	s_InCommandParam1 : STRING := '';
+	s_InCommandParam2 : STRING := '';
+	s_InCommandParam3 : STRING := '';
+	s_InCommandParam4 : STRING := '';
+	s_InCommandParam5 : STRING := '';
+END_VAR
+VAR_OUTPUT
+	n_OutErrId: UINT;
+END_VAR
+VAR
+	//IO
+	bVagoHajlitoFent AT %I*: BOOL;
+	bVagoHajlitoLent AT %I*: BOOL;
+	bKiszedoKint AT %I*: BOOL;
+	bKiszedoBent AT %I*: BOOL;
+	bMegfogoNyitva AT %I*: BOOL;
+	bMegfogoZarva AT %I*: BOOL;
+	bVagoHajlito AT %Q*: BOOL := FALSE;
+	bKiszedo AT %Q*: BOOL := FALSE;
+	bMegfogo AT %Q*: BOOL := FALSE;
+	
+	//INTERNAL	
+	iState : INT := 0;
+	s_InLCommand : STRING := '';
+	T_Ticker : TON;
+	bTickerEnable : BOOL := FALSE;
+	tTickerTime : TIME := T#3000MS;
+	bTickerQ : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NTCProcess.s_InCommand <>'' AND s_InLCommand = '' THEN
+	s_InLCommand := NTCProcess.s_InCommand;
+END_IF
+IF s_InLCommand <> '' THEN
+//	IF iState = 0 AND s_InLCommand = 'VAGAS' THEN
+//		iState := 1;
+//	END_IF
+	IF iState = 0 THEN 
+		IF s_InLCommand = 'VAGAS' THEN
+			iState := 1;
+		ELSIF s_InLCommand = 'NTC_ELENGED' THEN
+			iState := 21;
+		ELSIF s_InLCommand = 'VAGO_FEL-LE' THEN
+			iState := 31;
+		END_IF
+	END_IF
+	CASE iState OF 
+		1:
+			IF (bVagoHajlitoFent = TRUE AND bVagoHajlitoLent = FALSE
+				AND bKiszedoBent = FALSE AND bKiszedoKint = TRUE
+				AND bMegfogoZarva = FALSE AND bMegfogoNyitva = TRUE
+				AND NTC.bInternalState=FALSE) THEN
+				n_OutErrId := 0;
+				iState := 2;
+			ELSE
+				IF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+				ELSIF bVagoHajlitoFent = FALSE THEN
+					n_OutErrId := 115;
+				ELSIF bVagoHajlitoLent = TRUE THEN
+					n_OutErrId := 114;
+				ELSIF bKiszedoBent = TRUE THEN
+					n_OutErrId := 136;
+				ELSIF bKiszedoKint = FALSE THEN
+					n_OutErrId := 133;
+				ELSIF bMegfogoZarva = TRUE THEN 
+					n_OutErrId := 132;
+				ELSIF bMegfogoNyitva = FALSE THEN
+					n_OutErrId := 129;
+				ELSIF NTC.bInternalState=TRUE THEN
+					n_OutErrId := 300;
+				END_IF;
+				iState := 0;
+			END_IF
+		2:
+			NTC.bVagashoz := TRUE;
+			iState := 3;
+		3:
+			IF (NTC.bInternalState = FALSE AND NTC.bVagashoz = FALSE) THEN
+				iState := 4;
+				n_OutErrId := 0;
+			ELSIF NTC.bInternalState=TRUE THEN
+				n_OutErrId := 300;
+			ELSIF NTC.bVagashoz = TRUE THEN
+				n_OutErrId := 301;
+			END_IF
+		4:
+			bKiszedo := TRUE;
+			iState := 5;
+		5:
+			IF bKiszedoBent = TRUE AND bKiszedoKint = FALSE THEN
+				n_OutErrId := 0;
+				tTickerTime:=T#1S;
+				bTickerEnable := FALSE;
+				iState := 6;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bKiszedoBent = FALSE THEN
+				n_OutErrId := 135;
+			ELSIF bKiszedoKint = TRUE THEN
+				n_OutErrId := 134;
+			END_IF
+		6:
+			bTickerEnable := TRUE;
+			iState := 7;
+		7:
+			IF bTickerQ = TRUE THEN
+				bTickerEnable := FALSE;
+				iState := 8;
+			END_IF
+		8:
+			bVagoHajlito := TRUE;
+			iState := 9;
+		9:
+			IF bVagoHajlitoLent = TRUE AND bVagoHajlitoFent = FALSE THEN
+				n_OutErrId := 0;
+				tTickerTime:=T#1S;
+				bTickerEnable := FALSE;
+				iState := 10;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bVagoHajlitoLent = FALSE THEN 
+				n_OutErrId := 113;
+			ELSIF bVagoHajlitoFent = TRUE THEN
+				n_OutErrId := 116;
+			END_IF
+		10:
+			bTickerEnable := TRUE;
+			iState := 11;
+		11:
+			IF bTickerQ = TRUE THEN
+				bTickerEnable := FALSE;
+				iState := 12;
+			END_IF
+		12:
+			bVagoHajlito := FALSE;
+			iState := 13;
+		13:
+			IF bVagoHajlitoLent = FALSE AND bVagoHajlitoFent = TRUE THEN
+				n_OutErrId := 0;
+				tTickerTime:=T#1S;
+				bTickerEnable := FALSE;
+				iState := 14;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bVagoHajlitoLent = TRUE THEN 
+				n_OutErrId := 114;
+			ELSIF bVagoHajlitoFent = FALSE THEN
+				n_OutErrId := 115;
+			END_IF
+		14:
+			bTickerEnable := TRUE;
+			iState := 15;
+		15:
+			IF bTickerQ = TRUE THEN
+				bTickerEnable := FALSE;
+				iState := 16;
+			END_IF
+		16:
+			bMegfogo := TRUE;
+			iState := 17;
+		17:
+			IF bMegfogoZarva = TRUE AND bMegfogoNyitva = FALSE THEN
+				n_OutErrId := 0;
+				iState := 18;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bMegfogoZarva = FALSE THEN 
+				n_OutErrId := 131;
+			ELSIF bMegfogoNyitva = TRUE THEN
+				n_OutErrId := 130;
+			END_IF
+		18:
+			bKiszedo := FALSE;
+			iState := 19;
+		19:
+			IF bKiszedoKint = TRUE AND bKiszedoBent = FALSE THEN
+				n_OutErrId := 0;
+				iState := 20;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bKiszedoKint = FALSE THEN 
+				n_OutErrId := 133;
+			ELSIF bKiszedoBent = TRUE THEN
+				n_OutErrId := 136;
+			END_IF
+		20:
+			iState := 0;
+			n_OutErrId := 0;
+		21:
+			bMegfogo := FALSE;
+			iState := 22;
+
+		22:
+			IF bMegfogoZarva = FALSE AND bMegfogoNyitva = TRUE THEN
+				n_OutErrId := 0;
+				iState := 20;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bMegfogoZarva = TRUE THEN 
+				n_OutErrId := 132;
+			ELSIF bMegfogoNyitva = FALSE THEN
+				n_OutErrId := 129;
+			END_IF
+
+		31:
+			IF (bVagoHajlitoFent = TRUE AND bVagoHajlitoLent = FALSE
+				AND bKiszedoBent = FALSE AND bKiszedoKint = TRUE
+				AND bMegfogoZarva = FALSE AND bMegfogoNyitva = TRUE
+				AND NTC.bInternalState=FALSE) THEN
+				n_OutErrId := 0;
+				iState := 32;
+			ELSE
+				IF MAIN.bLevegoOK = FALSE THEN
+					n_OutErrId := 5;
+				ELSIF bVagoHajlitoFent = FALSE THEN
+					n_OutErrId := 115;
+				ELSIF bVagoHajlitoLent = TRUE THEN
+					n_OutErrId := 114;
+				ELSIF bKiszedoBent = TRUE THEN
+					n_OutErrId := 136;
+				ELSIF bKiszedoKint = FALSE THEN
+					n_OutErrId := 133;
+				ELSIF bMegfogoZarva = TRUE THEN 
+					n_OutErrId := 132;
+				ELSIF bMegfogoNyitva = FALSE THEN
+					n_OutErrId := 129;
+				ELSIF NTC.bInternalState=TRUE THEN
+					n_OutErrId := 300;
+				END_IF;
+				iState := 0;
+			END_IF
+		32:
+			bVagoHajlito := TRUE;
+			iState := 33;
+		33:
+			IF bVagoHajlitoLent = TRUE AND bVagoHajlitoFent = FALSE THEN
+				n_OutErrId := 0;
+				tTickerTime:=T#1S;
+				bTickerEnable := FALSE;
+				iState := 34;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bVagoHajlitoLent = FALSE THEN 
+				n_OutErrId := 113;
+			ELSIF bVagoHajlitoFent = TRUE THEN
+				n_OutErrId := 116;
+			END_IF
+		34:
+			bTickerEnable := TRUE;
+			iState := 35;
+		35:
+			IF bTickerQ = TRUE THEN
+				bTickerEnable := FALSE;
+				iState := 36;
+			END_IF
+		36:
+			bVagoHajlito := FALSE;
+			iState := 37;
+		37:
+			IF bVagoHajlitoLent = FALSE AND bVagoHajlitoFent = TRUE THEN
+				n_OutErrId := 0;
+				iState := 0;
+			ELSIF MAIN.bLevegoOK = FALSE THEN
+				n_OutErrId := 5;
+			ELSIF bVagoHajlitoLent = TRUE THEN 
+				n_OutErrId := 114;
+			ELSIF bVagoHajlitoFent = FALSE THEN
+				n_OutErrId := 115;
+			END_IF
+
+	END_CASE
+	IF iState = 0 THEN
+		NTCProcess.s_InCommand := '';
+		s_InLCommand := '';
+	END_IF
+END_IF
+T_Ticker(IN:= bTickerEnable, PT:= tTickerTime, Q=> bTickerQ, ET=> );]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="GetResourceFromCommand" Id="{1127ab92-b28c-4365-9ea6-613002fde49d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION GetResourceFromCommand : STRING
+VAR_INPUT
+	Command: STRING;
+END_VAR
+VAR
+	sReturn : STRING;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[sReturn := LEFT ( Command , FIND(Command,'_') - 1);
+GetResourceFromCommand := sReturn;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

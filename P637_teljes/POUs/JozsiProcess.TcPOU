@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="JozsiProcess" Id="{d26a7896-9bf2-46f7-90d0-62a1c56d712f}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM JozsiProcess
+VAR
+	//Futtatáshoz
+	bRunning : BOOL := FALSE;
+	bIsError : BOOL := FALSE;
+	nErrorNum : DINT := 0;
+	iPtr : INT := 0;
+	sResource : STRING := '';
+	bResourceFound : BOOL := FALSE;
+	
+	//Recepthez
+	asActualProgram : ARRAY [0..5,0..199] OF STRING;
+	sRecipeName : STRING :='';
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bRunning=TRUE AND nErrorNum = 0 THEN
+		IF (asActualProgram[0,iPtr]) <> '' THEN
+			sResource := GetResourceFromCommand(asActualProgram[0,iPtr]);
+			IF sResource = 'ROBOT' THEN
+				nErrorNum := f_E_Robot(asActualProgram[0,iPtr],asActualProgram[1,iPtr],asActualProgram[2,iPtr],asActualProgram[3,iPtr],asActualProgram[4,iPtr],asActualProgram[5,iPtr]);
+			END_IF
+			IF nErrorNum <> 0 THEN
+				bRunning := FALSE;
+			END_IF
+		END_IF
+//			GVL.sRobotCommand := f_RobotCommandTranslation(asActualProgram[0,iPtr],asActualProgram[1,iPtr],asActualProgram[2,iPtr],asActualProgram[3,iPtr],asActualProgram[4,iPtr],asActualProgram[5,iPtr]);
+//			iPtr := iPtr + 1;
+//		ELSE
+//			bRobotRunning := FALSE;	
+//		END_IF
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

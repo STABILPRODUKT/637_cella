@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="HEGESZTOFEJTISZTITAS" Id="{c07c2b0b-0de7-4b67-8bb1-8c0cbe0a6ee1}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HEGESZTOFEJTISZTITAS
+VAR
+	iState: INT := 0;
+	iCount: INT;
+	iMaxCount: INT := 10;
+	lrPosition: LREAL := -751; //JOZSITENGELY.lrSardisajatPosition1;
+	WAIT: TON;
+	bIdoIndul: BOOL;
+	bIdoLejart: BOOL := FALSE;
+	tDelay: TIME := T#250ms;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF iState<>0 THEN
+	CASE iState OF
+		1:	// Inicializálás
+			GVL.bJOZSITENGELYReserved:=TRUE;
+			iCount:=0;
+			iState:=2;
+			bIdoIndul:=FALSE;
+			lrPosition:=GVL.lrCsiszoloPosition2;
+			JOZSITENGELY.lrJozsiPosition:=lrPosition;
+			JOZSITENGELY.sJozsiAxisCommand:='MOVE';
+			iState:=2;
+		2:	// Kezdő pozíció felvétele
+			IF JOZSITENGELY.sJozsiAxisCommand='' THEN
+				iState:=3;
+			END_IF;
+		3: // 1. hegesztőfej le
+			HEGESZTOK.nHegesztoNum:=GVL.nHegFejTisztProgram-1;
+			iState:=4;
+		4:	// Késleltetés indítása
+			bIdoIndul:=TRUE;
+			iState:=5;
+		5:	// Várakozás a késleltetés lejártára
+			IF bIdoLejart=TRUE THEN
+				bIdoIndul:=FALSE;
+				iState:=6;
+			END_IF
+		6:	// Ha lent van a fej, akkor egy mozgás és számol egyet 
+			IF (HEGESZTOK.ulHegeszto1Utmero<142500) THEN
+				IF lrPosition=GVL.lrCsiszoloPosition1 THEN
+					lrPosition:=GVL.lrCsiszoloPosition2;
+				ELSIF lrPosition=GVL.lrCsiszoloPosition2 THEN
+					lrPosition:=GVL.lrCsiszoloPosition1;
+				END_IF
+				GVL.bHegesztofejTisztitas:=TRUE;
+				JOZSITENGELY.lrJozsiPosition:=lrPosition;
+				JOZSITENGELY.sJozsiAxisCommand:='MOVE';
+				iCount:=iCount+1;
+				iState:=7;
+			END_IF;
+		7:	// Ha még nem mozgott eleget, akkor vissza a mozgásra, különben kilépés
+			IF (JOZSITENGELY.sJozsiAxisCommand='') THEN
+				IF iCount<2*GVL.nHegFejTisztCiklusok THEN
+					iState:=4;
+				ELSE
+					iState:=8;
+					GVL.bHegesztofejTisztitas:=FALSE;
+				END_IF
+			END_IF
+		8:	// Hegesztőfej fel
+//			IF (GVL.bHegeszto1BalLent=TRUE) THEN
+				HEGESZTOK.nHegesztoNum:=0;
+				iState:=9;			
+//			END_IF
+		9:	// Ha a hegesztőfej fent van, akkor következő lépés
+			IF (GVL.bHegeszto1BalFent=TRUE)
+				AND (GVL.bHegeszto1JobbFent=TRUE) THEN
+				iState:=100;
+			END_IF
+		100: // Szervizboxhoz
+			JOZSITENGELY.lrJozsiPosition:=GVL.lrNTCSzervizbox;
+			JOZSITENGELY.sJozsiAxisCommand:='MOVE';
+			iState:=101;
+		101: IF JOZSITENGELY.sJozsiAxisCommand='' THEN
+				iState:=0;
+				GVL.bJOZSITENGELYReserved:=FALSE;
+			END_IF;
+	END_CASE
+END_IF
+WAIT(IN:=bIdoIndul,PT:=tDelay,Q=>bIdoLejart,ET=>);					
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

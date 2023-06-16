@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="fb_SplitRobotResult" Id="{85ef0f7f-a444-4fd9-8157-595f5e69a997}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fb_SplitRobotResult
+VAR_INPUT
+	sCommand : STRING;
+	sResult : STRING;
+END_VAR
+VAR_OUTPUT
+	bIsError : BOOL;
+	sErrorOrResult : STRING;
+END_VAR
+VAR
+	sCRLFString : STRING := '  ';
+	nCRLFPosition : INT := 0;
+	sTempResult : STRING;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[sCRLFString[0] := 16#D;
+sCRLFString[1] := 16#A;
+IF MID(sResult,LEN(sCommand),2)=sCommand THEN
+	sErrorOrResult := MID(sResult,LEN(sResult)-LEN(sCommand)-4,3+LEN(sCommand));
+	nCRLFPosition := FIND(sErrorOrResult,sCRLFString);
+	IF nCRLFPosition > 0 THEN
+		sErrorOrResult := DELETE(sErrorOrResult,2,nCRLFPosition);
+	END_IF
+	IF sResult[0] = 16#23 THEN
+		bIsError := FALSE;
+	ELSE
+		bIsError := TRUE;
+	END_IF
+ELSE
+	bIsError := TRUE;
+	sErrorOrResult := '1';
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

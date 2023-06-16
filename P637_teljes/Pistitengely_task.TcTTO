@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <Task Name="Pistitengely_task" Id="{d38a6ba5-bf1e-45ef-9fe1-97555a34a990}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>13</Priority>
+    <PouCall>
+      <Name>PISTITENGELY</Name>
+    </PouCall>
+    <TaskFBGuid>{cd9244af-1b79-47d9-a1ec-6560773d98f9}</TaskFBGuid>
+    <Fb_init>{8bbce802-dc47-4dac-b602-ca2ebbf552af}</Fb_init>
+    <Fb_exit>{e750c8d7-eb3e-4cd2-96be-a2760858279e}</Fb_exit>
+    <CycleUpdate>{71435638-d74b-4522-90bd-508972d634c6}</CycleUpdate>
+    <PostCycleUpdate>{411a166e-85e5-4ad4-9b23-9e90a3c01a5d}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

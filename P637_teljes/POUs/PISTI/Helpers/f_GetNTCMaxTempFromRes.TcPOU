@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetNTCMaxTempFromRes" Id="{e67257ce-5359-4f7f-9012-c76a85da5804}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetNTCMaxTempFromRes : REAL
+VAR_INPUT
+	rRes : REAL;
+END_VAR
+VAR
+	rTemp : REAL := 0;
+	rTempTemp :REAL := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF rRes<>0 THEN 
+	rTempTemp := rRes/1000;
+	rTempTemp := LN(rTempTemp);
+	f_GetNTCMaxTempFromRes := rTempTemp*rTempTemp*rTempTemp*(-0.1505);
+	f_GetNTCMaxTempFromRes := f_GetNTCMaxTempFromRes + rTempTemp*rTempTemp*(2.563);
+	f_GetNTCMaxTempFromRes := f_GetNTCMaxTempFromRes - rTempTemp*(31.865);
+	f_GetNTCMaxTempFromRes := f_GetNTCMaxTempFromRes + 85.783;
+ELSE
+	f_GetNTCMaxTempFromRes := 0;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

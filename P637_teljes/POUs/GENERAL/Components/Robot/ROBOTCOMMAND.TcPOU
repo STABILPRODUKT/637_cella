@@ -1,0 +1,302 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="ROBOTCOMMAND" Id="{84178efb-e2c2-410f-aa48-95844a59f3d2}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM ROBOTCOMMAND
+VAR_INPUT
+	bRobotCommOpenEnable : BOOL := FALSE;
+	bRobotCommCloseEnable: BOOL := FALSE;
+	bRobotCommandSend : BOOL := FALSE;
+	sRobotCommand : STRING := '';
+END_VAR
+VAR_OUTPUT
+	bRobotCommOpen : BOOL := FALSE;
+	nRobotErrId: UDINT;
+	sRobotResult : STRING := '';
+	sRobotInput : STRING;
+	nRobotInput : BYTE;
+	bVakuumSzippantoFent : BOOL;
+	bVakuumSzippantoLent : BOOL;
+	bCsipeszNyitva : BOOL;
+	bCsipeszZarva : BOOL;
+	bVakuumA : BOOL;
+	bVakuumB : BOOL;	
+	iDelimiterPos : INT;
+	sTemp: STRING;
+	sX: STRING;
+	sY: STRING;
+	sZ: STRING;
+	sU: STRING;
+	sHand: STRING;
+	rX: REAL;
+	rY: REAL;
+	rZ: REAL;
+	rU: REAL;
+	iState: INT := 0;
+END_VAR
+
+VAR	
+//LOCALS
+	//RobotComm
+	sRobotRemoteHost: STRING := '192.168.1.100';
+	bConnectBusy: BOOL;
+	bSendBusy: BOOL;
+	bReceiveBusy: BOOL;
+	bCloseBusy: BOOL;
+	bConnectError: BOOL;
+	bSendError: BOOL;
+	bReceiveError: BOOL;
+	bCloseError: BOOL;
+	nConnectErrId: UDINT;
+	nSendErrId: UDINT;
+	nReceiveErrId: UDINT;
+	nCloseErrId: UDINT;
+	hRobotSocket: T_HSOCKET;
+	
+	//Kapcsolat nyitás
+	bRobotSocketOpenEnable: BOOL := FALSE;
+	RobotSocketOpen: FB_SocketConnect;
+	
+	//Küldés
+	RobotSocketSend: FB_SocketSend;
+	baSendByteArray: ARRAY[0..255] OF BYTE;
+	bRobotSocketSendEnable: BOOL := FALSE;
+	sLRobotCommand: STRING :='';
+	sRobotSendData: STRING;
+	uSendByteLen: UDINT := 0;
+	
+	//Fogadás
+	RobotSocketReceive: FB_SocketReceive;
+	baReceivedByteArray: ARRAY[0..255] OF BYTE;
+	bRobotSocketReceiveEnable: BOOL := FALSE;
+	sRobotReceived: STRING :='';
+	nRobotReceivedBytesNum: UDINT;
+	
+	//Kapcsolat bontás
+	bRobotSocketCloseEnable: BOOL := FALSE;
+	RobotSocketClose: FB_SocketClose;
+	
+	bIsError : BOOL := FALSE;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[RobotSocketOpen(
+			sSrvNetId:= '', 
+			sRemoteHost:= sRobotRemoteHost, 
+			nRemotePort:= 2000, 
+			bExecute:= bRobotSocketOpenEnable, 
+			tTimeout:= T#45S, 
+			bBusy=> bConnectBusy, 
+			bError=> bConnectError, 
+			nErrId=> nConnectErrId, 
+			hSocket=> hRobotSocket);
+			
+RobotSocketSend(
+		sSrvNetId:= '', 
+		hSocket:= hRobotSocket, 
+		cbLen:= uSendByteLen, 
+		pSrc:= ADR(baSendByteArray), 
+		bExecute:= bRobotSocketSendEnable, 
+		tTimeout:= T#5S, 
+		bBusy=> bSendBusy, 
+		bError=> bSendError, 
+		nErrId=> nSendErrId);
+		
+RobotSocketReceive(
+	sSrvNetId:= '', 
+	hSocket:= hRobotSocket, 
+	cbLen:= 255, 
+	pDest:= ADR(baReceivedByteArray), 
+	bExecute:= bRobotSocketReceiveEnable, 
+	tTimeout:= T#30S, 
+	bBusy=> bReceiveBusy, 
+	bError=> bReceiveError, 
+	nErrId=> nReceiveErrId, 
+	nRecBytes=> nRobotReceivedBytesNum);		
+		
+RobotSocketClose(
+	sSrvNetId:= '', 
+	hSocket:= hRobotSocket, 
+	bExecute:= bRobotSocketCloseEnable, 
+	tTimeout:= T#45S, 
+	bBusy=> bCloseBusy, 
+	bError=> bCloseError, 
+	nErrId=> nCloseErrId);
+
+//Kommunikáció nyitás
+IF (bRobotCommOpenEnable = TRUE) AND (bRobotCommOpen = FALSE) AND (iState <= 0) THEN
+	sRobotResult := '';	
+	iState:=1;
+ELSE
+	bRobotCommOpenEnable := FALSE;
+END_IF;
+
+//Parancs küldés
+IF (bRobotCommandSend = TRUE) AND (bRobotCommOpen=TRUE) AND(iState <= 0) THEN
+	iState:=11;
+ELSE
+	bRobotCommandSend := FALSE;
+END_IF;
+//Kommunikáció zárás
+IF (bRobotCommCloseEnable = TRUE) AND (bRobotCommOpen = TRUE) AND (iState < 31) THEN
+	iState:=31;
+ELSE
+	bRobotCommCloseEnable := FALSE;
+END_IF;
+
+
+
+
+CASE iState OF
+	
+	1:	//Kommunikáció nyitás
+		bRobotSocketOpenEnable:=TRUE;
+		iState:=2;
+	
+	2:
+		IF bConnectBusy = TRUE THEN
+			iState:=3;
+		END_IF
+	3:
+		IF bConnectBusy = FALSE THEN
+			iState:=4;
+		END_IF 
+		
+	4:
+		IF bConnectError =FALSE THEN
+			//Minden OK
+			bRobotCommOpen:=TRUE;
+		ELSE
+			//HIBA
+			bRobotCommOpen:=FALSE;	
+		END_IF
+		bRobotCommOpenEnable := FALSE;
+		bRobotSocketOpenEnable:=FALSE;
+		iState:=0;
+		
+		
+	11: //Parancs küldés
+		sRobotResult := '';
+		nRobotErrId := 0;
+		sLRobotCommand := sRobotCommand;
+		sRobotSendData := sLRobotCommand;
+		baSendByteArray := MAXSTRING_TO_BYTEARR(sRobotSendData);
+		uSendByteLen := INT_TO_UDINT(LEN(sRobotSendData));
+		MEMSET(ADR(baReceivedByteArray), 0, 256);
+		
+		iState:=12;
+		
+	12:
+		bRobotSocketSendEnable:=TRUE;
+		iState:=13;
+		
+	13:
+		IF bSendBusy = TRUE THEN
+			iState:=14;
+		END_IF
+	14:
+		IF bSendBusy = FALSE THEN
+			iState:=15;
+		END_IF 
+		
+	15:
+		IF bSendError =FALSE THEN
+			//Minden OK
+			bIsError:= FALSE;
+			bRobotSocketReceiveEnable := FALSE;
+			iState:=21;
+		ELSE
+			//HIBA
+			bIsError:= TRUE;	
+			iState:=0;
+		END_IF
+		bRobotCommandSend := FALSE;
+		bRobotSocketSendEnable:=FALSE;
+		
+		sRobotCommand:='';		
+		sLRobotCommand := '';
+
+		
+	21:	//Adatfogadás
+		nRobotReceivedBytesNum:=0;
+		bRobotSocketReceiveEnable := TRUE;
+		iState:=22;
+		
+	22:
+		IF bReceiveBusy = TRUE THEN
+			iState:=23;
+		END_IF
+	23:
+		IF bReceiveBusy = FALSE THEN
+			iState:=24;
+		END_IF 		
+	24:
+		IF bReceiveError =FALSE THEN
+			//Minden OK
+			bIsError:= FALSE;
+			iState:=25;
+		ELSE
+			//HIBA
+			bIsError:= TRUE;
+			iState:=0;	
+		END_IF
+		bRobotSocketReceiveEnable:=FALSE;
+		
+	25:
+		IF (nRobotReceivedBytesNum <>0) THEN
+			sRobotReceived := BYTEARR_TO_MAXSTRING(baReceivedByteArray);
+			IF sRobotReceived[0] = 16#30 THEN
+				nRobotErrId:= 0;
+			ELSE
+				nRobotErrId:= 10000;
+			END_IF
+			GVL.stRobotStatusz:=f_GetRobotState(sRobotReceived);
+			sRobotResult:=GVL.stRobotStatusz.sResult;
+			iState:=0;
+		ELSE
+			iState:=21;
+		END_IF
+		
+
+		
+	31:	//Kommunikáció zárás
+		bRobotSocketCloseEnable:=TRUE;
+		iState:=32;
+	
+	32:
+		IF bCloseBusy = TRUE THEN
+			iState:=33;
+		END_IF
+	33:
+		IF bCloseBusy = FALSE THEN
+			bRobotSocketCloseEnable:=FALSE;
+			iState:=34;
+		END_IF 
+		
+	34:
+		IF bCloseError =FALSE THEN
+			//Minden OK
+			bRobotCommOpen:=FALSE;
+		ELSE
+			//HIBA
+			bRobotCommOpen:=FALSE;	//még át kell gondolni
+		END_IF
+		bRobotCommCloseEnable := FALSE;
+		bRobotSocketCloseEnable:=FALSE;
+		iState:=0;
+	
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="ROBOTCOMMAND">
+      <LineId Id="3" Count="46" />
+      <LineId Id="284" Count="1" />
+      <LineId Id="50" Count="4" />
+      <LineId Id="280" Count="1" />
+      <LineId Id="55" Count="3" />
+      <LineId Id="282" Count="1" />
+      <LineId Id="59" Count="143" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

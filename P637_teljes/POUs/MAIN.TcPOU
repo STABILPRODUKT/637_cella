@@ -1,0 +1,1068 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="MAIN" Id="{f873ccbd-f00a-46c9-a630-ebc7b3feb62e}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR_INPUT
+	bLevego AT %Q*: BOOL := FALSE;	
+END_VAR
+VAR_OUTPUT
+	bLevegoOK AT %I*: BOOL;	
+END_VAR
+VAR
+	bZoliGomb AT %I* : BOOL;
+	bZoliSzelep AT %Q*: BOOL := FALSE;
+
+	bPartsReadReady: BOOL;	
+	bSettingsReadReady: BOOL;	
+	iInd: INT;
+	bTypeFound: BOOL;
+
+	iState: INT:=3;
+	sPartsString: STRING;
+	sPartsGetStr: T_MaxString;
+	iStateS: INT:=3;
+	sSettingsString: T_MaxString;
+	sSettingsGetStr: T_MaxString;
+	iEqu: INT;
+
+	// Fájlnyitás
+	bPartsOpenExecute: BOOL := FALSE;
+	PartsOpen: fb_FileOpen;
+	nPartsOpenMode: DWORD;
+	bPartsOpenBusy: BOOL;
+	bPartsOpenError: BOOL;
+	nPartsOpenError: UDINT;
+	hPartsFile: UINT;
+	
+	bSettingsOpenExecute: BOOL := FALSE;
+	SettingsOpen: fb_FileOpen;
+	nSettingsOpenMode: DWORD;
+	bSettingsOpenBusy: BOOL;
+	bSettingsOpenError: BOOL;
+	nSettingsOpenError: UDINT;
+	hSettingsFile: UINT;
+	
+	// Fájlírás
+	PartsPutStr: fb_FilePuts;
+	bPartsPutStrExecute: BOOL;
+	bPartsPutStrBusy: BOOL;
+	bPartsPutStrError: BOOL;
+	nPartsPutStrError: UDINT;
+	
+	SettingsPutStr: fb_FilePuts;
+	bSettingsPutStrExecute: BOOL;
+	bSettingsPutStrBusy: BOOL;
+	bSettingsPutStrError: BOOL;
+	nSettingsPutStrError: UDINT;
+
+	// Fájlolvasás
+	PartsGetStr: fb_FileGets;
+	bPartsGetStrExecute: BOOL;
+	bPartsGetStrBusy: BOOL;
+	bPartsGetStrError: BOOL;
+	nPartsGetStrError: UDINT;
+
+	SettingsGetStr: fb_FileGets;
+	bSettingsGetStrExecute: BOOL;
+	bSettingsGetStrBusy: BOOL;
+	bSettingsGetStrError: BOOL;
+	nSettingsGetStrError: UDINT;
+	
+	// Fájlzárás
+	PartsClose: fb_FileClose;
+	bPartsCloseExecute: BOOL;
+	bPartsCloseBusy: BOOL;
+	bPartsCloseError: BOOL;
+	nPartsCloseError: UDINT;
+
+	SettingsClose: fb_FileClose;
+	bSettingsCloseExecute: BOOL;
+	bSettingsCloseBusy: BOOL;
+	bSettingsCloseError: BOOL;
+	nSettingsCloseError: UDINT;
+
+	bGetStrPartsEOF: BOOL;
+	bGetStrSettingsEOF: BOOL;
+	raParameters: ARRAY[0..25] OF REAL;
+	Ind: INT;
+	sParName: STRING;
+	sParValue: STRING;
+	sParLine: STRING;
+	R_TRIG_BiztZar: R_TRIG;
+	
+	F_TRIG_BiztZar: F_TRIG;
+	TON_Biztzar: TON;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF bZoliGomb=TRUE THEN
+	bZoliSzelep := TRUE;
+ELSE
+	bZoliSzelep := FALSE;
+END_IF
+
+//TON_Biztzar(IN:=GVL.bBiztonsagiZarGomb, PT:=T#200MS);
+R_TRIG_BiztZar(CLK:=GVL.bBiztonsagiZarGomb);
+F_TRIG_BiztZar(CLK:=GVL.bBiztonsagiZarGomb);
+
+IF F_TRIG_BiztZar.Q THEN
+//	WHILE NOT (ROBOTREMOTE.sRobotCommand='') DO
+//		;
+//	END_WHILE
+//	ROBOTREMOTE.sRobotCommand := 'Pause';
+//	ROBOTREMOTE.bRobotCommandSend := TRUE;
+	GVL.bBiztonsagiZarBe:=FALSE;
+//
+END_IF
+
+IF R_TRIG_BiztZar.Q THEN
+//	WHILE NOT (ROBOTREMOTE.sRobotCommand='') DO
+//		;
+//	END_WHILE
+	GVL.bBiztonsagiZarBe:=TRUE;
+	ROBOTREMOTE.sRobotCommand := 'Continue';
+	ROBOTREMOTE.bRobotCommandSend := TRUE;
+END_IF
+
+CASE iState OF
+	2:	// Alkatrészváltozás figyelése
+		IF NOT((GVL.sNTCType=GVL.sNTCTypeElozo)
+			AND (GVL.sPtType=GVL.sPtTypeElozo)
+			AND (GVL.sProductType=GVL.sProductTypeElozo)) THEN
+			GVL.bProductTypeOK:=FALSE;	
+			IF NOT(GVL.sNTCType=GVL.sNTCTypeElozo) THEN
+				IF (LEN(GVL.sNTCType)=32) THEN
+					GVL.sNTCType:=RIGHT(GVL.sNTCType,23);
+					GVL.sNTCType:=LEFT(GVL.sNTCType,6);
+					iState:=3;
+				ELSE
+					GVL.sNTCType:='HIBÁS KÓD';
+				END_IF;
+				GVL.sNTCTypeElozo:=GVL.sNTCType;
+			END_IF;
+			IF NOT(GVL.sPtType=GVL.sPtTypeElozo) THEN
+				IF (LEN(GVL.sPtType)=32) THEN
+					GVL.sPtType:=RIGHT(GVL.sPtType,23);
+					GVL.sPtType:=LEFT(GVL.sPtType,6);
+					iState:=3;
+				ELSE
+					GVL.sPtType:='HIBÁS KÓD';
+				END_IF;
+				GVL.sPtTypeElozo:=GVL.sPtType;
+			END_IF;
+			IF NOT(GVL.sProductType=GVL.sProductTypeElozo) THEN
+				IF NOT ((GVL.sProductType='637900')
+					OR (GVL.sProductType='637901')
+					OR (GVL.sProductType='637910')
+					OR (GVL.sProductType='637911')
+					OR	(GVL.sProductType='637920')
+					OR (GVL.sProductType='637921')
+					OR (GVL.sProductType='637930')
+					OR (GVL.sProductType='637931')
+					OR (GVL.sProductType='745900')
+					OR (GVL.sProductType='745905')
+					OR (GVL.sProductType='745906')
+					OR (GVL.sProductType='745907')
+					OR (GVL.sProductType='745910')
+					OR (GVL.sProductType='745915')
+					OR (GVL.sProductType='745916')
+					OR (GVL.sProductType='745917')
+					OR	(GVL.sProductType='521950')) THEN
+					GVL.sProductType:='HIBÁS KÓD';
+					GVL.iSelectedProductType:=-1;					
+				END_IF
+				GVL.sProductTypeElozo:=GVL.sProductType;
+			END_IF;
+			GVL.bProductTypeOK:=
+			(((GVL.sProductType='637900') OR (GVL.sProductType='637901') OR (GVL.sProductType='745900') OR (GVL.sProductType='745910'))
+				AND ((GVL.sNTCType='567604') OR (GVL.sNTCType='637707')) AND (GVL.sPtType='637710'))
+			OR	(((GVL.sProductType='637910') OR (GVL.sProductType='637911') OR (GVL.sProductType='745905') OR (GVL.sProductType='745915'))
+				AND ((GVL.sNTCType='567604') OR (GVL.sNTCType='637707')) AND (GVL.sPtType='637711'))
+			OR	(((GVL.sProductType='637920') OR (GVL.sProductType='637921') OR (GVL.sProductType='745907') OR (GVL.sProductType='745917'))
+				AND ((GVL.sNTCType='509647') OR (GVL.sNTCType='637700')) AND (GVL.sPtType='637710'))
+			OR	(((GVL.sProductType='637930') OR (GVL.sProductType='637931') OR (GVL.sProductType='745906') OR (GVL.sProductType='745916'))
+				AND ((GVL.sNTCType='509647') OR (GVL.sNTCType='637700')) AND (GVL.sPtType='637711'))
+			OR	(GVL.sProductType='521950');
+			IF GVL.bProductTypeOK=TRUE THEN
+				bTypeFound:=FALSE;
+				iInd:=0;
+				WHILE (NOT bTypeFound) AND (iInd<11) DO
+					IF GVL.sProductType=GVL.saProductTypes[iInd] THEN
+						bTypeFound:=TRUE;
+						GVL.iSelectedProductType:=iInd; // Ezzel kezdeményezzük a termékváltást
+					ELSE
+						iInd:=iInd+1;
+					END_IF
+				END_WHILE
+				IF GVL.iSelectedProductType=8 THEN
+					Laser.s_InCommand:='SETJOB_521';
+				ELSIF GVL.iSelectedProductType<8 THEN
+					Laser.s_InCommand:='SETJOB_637';
+					GVL.bKameraPROG:=FALSE;
+					GVL.nWeldingStopDistance1:=GVL.nWeldingStopDistance1_637;
+					GVL.nWeldingStopDistance2:=GVL.nWeldingStopDistance2_637;
+					GVL.nWeldingStopDistance3:=GVL.nWeldingStopDistance3_637;
+					GVL.nWeldingStopDistance4:=GVL.nWeldingStopDistance4_637;
+					GVL.nWeldingStopDistance5:=GVL.nWeldingStopDistance5_637;
+					GVL.nWeldingDistanceMin1:=GVL.nWeldingDistanceMin1_637;
+					GVL.nWeldingDistanceMin2:=GVL.nWeldingDistanceMin2_637;
+					GVL.nWeldingDistanceMin3:=GVL.nWeldingDistanceMin3_637;
+					GVL.nWeldingDistanceMin4:=GVL.nWeldingDistanceMin4_637;
+					GVL.nWeldingDistanceMin5:=GVL.nWeldingDistanceMin5_637;
+					GVL.nWeldingDistanceMax1:=GVL.nWeldingDistanceMax1_637;
+					GVL.nWeldingDistanceMax2:=GVL.nWeldingDistanceMax2_637;
+					GVL.nWeldingDistanceMax3:=GVL.nWeldingDistanceMax3_637;
+					GVL.nWeldingDistanceMax4:=GVL.nWeldingDistanceMax4_637;
+					GVL.nWeldingDistanceMax5:=GVL.nWeldingDistanceMax5_637;
+				ELSIF GVL.iSelectedProductType>8 THEN
+					GVL.bKameraPROG:=TRUE;
+					GVL.nWeldingStopDistance1:=GVL.nWeldingStopDistance1_745;
+					GVL.nWeldingStopDistance2:=GVL.nWeldingStopDistance2_745;
+					GVL.nWeldingStopDistance3:=GVL.nWeldingStopDistance3_745;
+					GVL.nWeldingStopDistance4:=GVL.nWeldingStopDistance4_745;
+					GVL.nWeldingStopDistance5:=GVL.nWeldingStopDistance5_745;
+					GVL.nWeldingDistanceMin1:=GVL.nWeldingDistanceMin1_745;
+					GVL.nWeldingDistanceMin2:=GVL.nWeldingDistanceMin2_745;
+					GVL.nWeldingDistanceMin3:=GVL.nWeldingDistanceMin3_745;
+					GVL.nWeldingDistanceMin4:=GVL.nWeldingDistanceMin4_745;
+					GVL.nWeldingDistanceMin5:=GVL.nWeldingDistanceMin5_745;
+					GVL.nWeldingDistanceMax1:=GVL.nWeldingDistanceMax1_745;
+					GVL.nWeldingDistanceMax2:=GVL.nWeldingDistanceMax2_745;
+					GVL.nWeldingDistanceMax3:=GVL.nWeldingDistanceMax3_745;
+					GVL.nWeldingDistanceMax4:=GVL.nWeldingDistanceMax4_745;
+					GVL.nWeldingDistanceMax5:=GVL.nWeldingDistanceMax5_745;
+					IF GVL.iSelectedProductType>8 AND GVL.iSelectedProductType MOD 2=1 THEN // 74590X
+						Laser.s_InCommand:='SETJOB_745900';
+					ELSIF GVL.iSelectedProductType>8 AND GVL.iSelectedProductType MOD 2=0 THEN // 74591X
+						Laser.s_InCommand:='SETJOB_745910';
+					END_IF
+				END_IF
+			END_IF
+		END_IF
+	3:	// "Parts" fájl megnyitásának kezdeményezése
+		bPartsOpenExecute:=TRUE;
+		IF bPartsReadReady=TRUE THEN
+			nPartsOpenMode:=FOPEN_MODETEXT OR FOPEN_MODEWRITE;
+		ELSE
+			nPartsOpenMode:=FOPEN_MODETEXT OR FOPEN_MODEREAD;
+		END_IF;
+		iState:=4;
+	4:	// Várakozás a busy jelre
+		IF bPartsOpenBusy=TRUE THEN
+			iState:=5;
+		END_IF
+	5:	// Várakozás a fájlnyitás befejeztére
+		IF bPartsOpenBusy=FALSE THEN
+			bPartsOpenExecute:=FALSE;
+			IF bPartsReadReady=TRUE THEN
+				iState:=6;
+			ELSE
+				iState:=26;
+			END_IF
+		END_IF
+	6:	// Fájlnyitás sikerességének vizsgálata
+		IF bPartsOpenError=FALSE THEN
+			sPartsString:=CONCAT('NTC=',
+							CONCAT(GVL.sNTCType,
+							CONCAT('$R$N',
+							CONCAT('PT1000=',GVL.sPtType))));
+			iState:=7;
+		ELSE
+			iState:=101;
+		END_IF
+	7:	// Parts fájlba írás kezdeményezése
+		bPartsPutStrExecute:=TRUE;
+		iState:=8;
+	8:	// Várakozás a busy jelre
+		IF bPartsPutStrBusy=TRUE THEN
+			iState:=9;
+		END_IF
+	9:	// Várakozás a fájlírás befejeztére
+		IF bPartsPutStrBusy=FALSE THEN
+			bPartsPutStrExecute:=FALSE;
+			iState:=10;
+		END_IF
+	10:	// Fájlírás sikerességének vizsgálata
+		IF bPartsPutStrError=FALSE THEN
+			iState:=11;
+		ELSE
+			iState:=103;
+		END_IF
+	26:	// Fájlnyitás sikerességének vizsgálata
+		IF bPartsOpenError=FALSE THEN
+			iState:=27;
+		ELSE
+			iState:=101;
+		END_IF
+	27:	// Parts fájlból olvasás kezdeményezése
+		bPartsGetStrExecute:=TRUE;
+		iState:=28;
+	28:	// Várakozás a busy jelre
+		IF bPartsGetStrBusy=TRUE THEN
+			iState:=29;
+		END_IF
+	29:	// Várakozás a fájlolvasás befejeztére
+		IF bPartsGetStrBusy=FALSE THEN
+			bPartsGetStrExecute:=FALSE;
+			iState:=30;
+		END_IF
+	30:	// Fájlolvasás sikerességének vizsgálata
+		IF bPartsGetStrError=FALSE THEN
+			IF FIND(sPartsGetStr,'NTC')>0 THEN
+				GVL.sNTCType:=LEFT(RIGHT(sPartsGetStr,LEN(sPartsGetStr)-FIND(sPartsGetStr,'=')),6);
+				GVL.sNTCTypeElozo:=GVL.sNTCType;
+			ELSIF FIND(sPartsGetStr,'PT1000')>0 THEN
+				GVL.sPtType:=LEFT(RIGHT(sPartsGetStr,LEN(sPartsGetStr)-FIND(sPartsGetStr,'=')),6);
+				GVL.sPtTypeElozo:=GVL.sPtType;
+			END_IF
+			IF bGetStrPartsEOF=FALSE THEN
+				iState:=27;
+			ELSE
+				iState:=11;
+			END_IF
+		ELSE
+			iState:=103;
+		END_IF
+	11:	// Parts fájl zárásának kezdeményezése
+		bPartsCloseExecute:=TRUE;
+		iState:=12;
+	12:	// Várakozás a busy jelre
+		IF bPartsCloseBusy=TRUE THEN
+			iState:=13;
+		END_IF
+	13:	// Várakozás a fájlzárás befejeztére
+		IF bPartsCloseBusy=FALSE THEN
+			bPartsCloseExecute:=FALSE;
+			iState:=14;
+		END_IF
+	14:	// Fájlzárás sikerességének vizsgálata
+		IF bPartsCloseError=FALSE THEN
+			bPartsReadReady:=TRUE;	
+			iState:=2;
+		ELSE
+			iState:=104;
+		END_IF
+END_CASE
+
+CASE iStateS OF
+	2:	// Paraméterváltozás figyelése
+		IF (GVL.bSettingsAutoSave=TRUE) AND
+			NOT((GVL.bSettingsAutoSave=GVL.bSettingsAutoSaveElozo)
+			AND (GVL.rNTCDev=GVL.rNTCDevElozo)
+			AND (GVL.rNTC2Dev=GVL.rNTC2DevElozo)
+			AND (GVL.rPtDev=GVL.rPtDevElozo)
+			AND (GVL.rISOL_MAX=GVL.rISOL_MAXElozo)
+			AND (GVL.rTempMax=GVL.rTempMaxElozo)
+			AND (GVL.rIdoallandoMax=GVL.rIdoallandoMaxElozo)
+			AND (GVL.PTRES_SOKK_MAX=GVL.PTRES_SOKK_MAXElozo)
+			AND (GVL.lrPtSzervizbox=GVL.lrPtSzervizboxElozo)
+			AND (GVL.lrHegesztoPosition6=GVL.lrHegesztoPosition6Elozo)
+			AND (GVL.lrHegesztoPosition7=GVL.lrHegesztoPosition7Elozo)
+			AND (GVL.lrRobotKappePosition=GVL.lrRobotKappePositionElozo)
+			AND (GVL.lrKappePosition=GVL.lrKappePositionElozo)
+			AND (GVL.lrKodolvasasPosition=GVL.lrKodolvasasPositionElozo)
+			AND (GVL.lrKodolvasasPosition2=GVL.lrKodolvasasPosition2Elozo)
+			AND (GVL.lrVegmeroPosition=GVL.lrVegmeroPositionElozo)
+			AND (GVL.lrNTCSzervizbox=GVL.lrNTCSzervizboxElozo)
+			AND (GVL.lrHajlitoPosition1=GVL.lrHajlitoPosition1Elozo)
+			AND (GVL.lrHajlitoPosition2=GVL.lrHajlitoPosition2Elozo)
+			AND (GVL.lrHegesztoPosition1=GVL.lrHegesztoPosition1Elozo)
+			AND (GVL.lrHegesztoPosition2=GVL.lrHegesztoPosition2Elozo)
+			AND (GVL.lrHegesztoPosition3=GVL.lrHegesztoPosition3Elozo)
+			AND (GVL.lrHegesztoPosition4=GVL.lrHegesztoPosition4Elozo)
+			AND (GVL.lrHegesztoPosition5=GVL.lrHegesztoPosition5Elozo)
+			AND (GVL.nWeldingStopDistance1=GVL.nWeldingStopDistance1Elozo)
+			AND (GVL.nWeldingStopDistance2=GVL.nWeldingStopDistance2Elozo)
+			AND (GVL.nWeldingStopDistance3=GVL.nWeldingStopDistance3Elozo)
+			AND (GVL.nWeldingStopDistance4=GVL.nWeldingStopDistance4Elozo)
+			AND (GVL.nWeldingStopDistance5=GVL.nWeldingStopDistance5Elozo)
+			AND (GVL.bAutomaticWeldingStop1=GVL.bAutomaticWeldingStop1Elozo)
+			AND (GVL.bAutomaticWeldingStop2=GVL.bAutomaticWeldingStop2Elozo)
+			AND (GVL.bAutomaticWeldingStop3=GVL.bAutomaticWeldingStop3Elozo)
+			AND (GVL.bAutomaticWeldingStop4=GVL.bAutomaticWeldingStop4Elozo)
+			AND (GVL.bAutomaticWeldingStop5=GVL.bAutomaticWeldingStop5Elozo)
+			AND (GVL.nWeldingDistanceMin1=GVL.nWeldingDistanceMin1Elozo)
+			AND (GVL.nWeldingDistanceMin2=GVL.nWeldingDistanceMin2Elozo)
+			AND (GVL.nWeldingDistanceMin3=GVL.nWeldingDistanceMin3Elozo)
+			AND (GVL.nWeldingDistanceMin4=GVL.nWeldingDistanceMin4Elozo)
+			AND (GVL.nWeldingDistanceMin5=GVL.nWeldingDistanceMin5Elozo)
+			AND (GVL.nWeldingDistanceMax1=GVL.nWeldingDistanceMax1Elozo)
+			AND (GVL.nWeldingDistanceMax2=GVL.nWeldingDistanceMax2Elozo)
+			AND (GVL.nWeldingDistanceMax3=GVL.nWeldingDistanceMax3Elozo)
+			AND (GVL.nWeldingDistanceMax4=GVL.nWeldingDistanceMax4Elozo)
+			AND (GVL.nWeldingDistanceMax5=GVL.nWeldingDistanceMax5Elozo)
+			AND (GVL.lrNTCKameraPosition=GVL.lrNTCKameraPositionElozo)
+			AND (GVL.lrPtKameraPosition=GVL.lrPtKameraPositionElozo)
+			AND (GVL.nWeldingDistanceStartMin1=GVL.nWeldingDistanceStartMin1Elozo)
+			AND (GVL.nWeldingDistanceStartMin2=GVL.nWeldingDistanceStartMin2Elozo)
+			AND (GVL.nWeldingDistanceStartMin3=GVL.nWeldingDistanceStartMin3Elozo)
+			AND (GVL.nWeldingDistanceStartMin4=GVL.nWeldingDistanceStartMin4Elozo)
+			AND (GVL.nWeldingDistanceStartMin5=GVL.nWeldingDistanceStartMin5Elozo)
+			AND (GVL.nWeldingDistanceStartMax1=GVL.nWeldingDistanceStartMax1Elozo)
+			AND (GVL.nWeldingDistanceStartMax2=GVL.nWeldingDistanceStartMax2Elozo)
+			AND (GVL.nWeldingDistanceStartMax3=GVL.nWeldingDistanceStartMax3Elozo)
+			AND (GVL.nWeldingDistanceStartMax4=GVL.nWeldingDistanceStartMax4Elozo)
+			AND (GVL.nWeldingDistanceStartMax5=GVL.nWeldingDistanceStartMax5Elozo)
+			AND (GVL.lrCsiszoloPosition1=GVL.lrCsiszoloPosition1Elozo)
+			AND (GVL.lrCsiszoloPosition2=GVL.lrCsiszoloPosition2Elozo)
+			AND (GVL.nElectrode1Usage=GVL.nElectrode1UsageElozo)
+			AND (GVL.nElectrode1UsageMax=GVL.nElectrode1UsageMaxElozo)
+			AND (GVL.nElectrode1UsageWarn=GVL.nElectrode1UsageWarnElozo)
+			AND (GVL.nElectrode2Usage=GVL.nElectrode2UsageElozo)
+			AND (GVL.nElectrode2UsageMax=GVL.nElectrode2UsageMaxElozo)
+			AND (GVL.nElectrode2UsageWarn=GVL.nElectrode2UsageWarnElozo)
+			AND (GVL.nElectrode3Usage=GVL.nElectrode3UsageElozo)
+			AND (GVL.nElectrode3UsageWarn=GVL.nElectrode3UsageWarnElozo)
+			AND (GVL.nElectrode3UsageMax=GVL.nElectrode3UsageMaxElozo)
+			AND (GVL.nHegFejTisztCiklusok=GVL.nHegFejTisztCiklusokElozo)
+			AND (GVL.nHegFejTisztProgram=GVL.nHegFejTisztProgramElozo)
+			AND (GVL.bWeldingLog=GVL.bWeldingLogElozo)) THEN
+			iStateS:=3;
+		END_IF
+	3:	// "Parts" fájl megnyitásának kezdeményezése
+		bSettingsOpenExecute:=TRUE;
+		IF bSettingsReadReady=TRUE THEN
+			nSettingsOpenMode:=FOPEN_MODETEXT OR FOPEN_MODEWRITE;
+		ELSE
+			nSettingsOpenMode:=FOPEN_MODETEXT OR FOPEN_MODEREAD;
+		END_IF;
+		iStateS:=4;
+	4:	// Várakozás a busy jelre
+		IF bSettingsOpenBusy=TRUE THEN
+			iStateS:=5;
+		END_IF
+	5:	// Várakozás a fájlnyitás befejeztére
+		IF bSettingsOpenBusy=FALSE THEN
+			bSettingsOpenExecute:=FALSE;
+			IF bSettingsReadReady=TRUE THEN
+				iStateS:=6;
+			ELSE
+				iStateS:=26;
+			END_IF
+		END_IF
+	6:	// Fájlnyitás sikerességének vizsgálata
+		IF bSettingsOpenError=FALSE THEN
+			Ind:=0;
+			sSettingsString:='';
+			iStateS:=7;
+		ELSE
+			iStateS:=101;
+		END_IF
+	7:	// Hegesztési információk mentésének előkészítése termékspecifikusan
+		IF GVL.iSelectedProductType<8 THEN
+			GVL.nWeldingStopDistance1_637:=GVL.nWeldingStopDistance1;
+			GVL.nWeldingStopDistance2_637:=GVL.nWeldingStopDistance2;
+			GVL.nWeldingStopDistance3_637:=GVL.nWeldingStopDistance3;
+			GVL.nWeldingStopDistance4_637:=GVL.nWeldingStopDistance4;
+			GVL.nWeldingStopDistance5_637:=GVL.nWeldingStopDistance5;
+			GVL.nWeldingDistanceMin1_637:=GVL.nWeldingDistanceMin1;
+			GVL.nWeldingDistanceMin2_637:=GVL.nWeldingDistanceMin2;
+			GVL.nWeldingDistanceMin3_637:=GVL.nWeldingDistanceMin3;
+			GVL.nWeldingDistanceMin4_637:=GVL.nWeldingDistanceMin4;
+			GVL.nWeldingDistanceMin5_637:=GVL.nWeldingDistanceMin5;
+			GVL.nWeldingDistanceMax1_637:=GVL.nWeldingDistanceMax1;
+			GVL.nWeldingDistanceMax2_637:=GVL.nWeldingDistanceMax2;
+			GVL.nWeldingDistanceMax3_637:=GVL.nWeldingDistanceMax3;
+			GVL.nWeldingDistanceMax4_637:=GVL.nWeldingDistanceMax4;
+			GVL.nWeldingDistanceMax5_637:=GVL.nWeldingDistanceMax5;
+		ELSIF GVL.iSelectedProductType>8 THEN
+			GVL.nWeldingStopDistance1_745:=GVL.nWeldingStopDistance1;
+			GVL.nWeldingStopDistance2_745:=GVL.nWeldingStopDistance2;
+			GVL.nWeldingStopDistance3_745:=GVL.nWeldingStopDistance3;
+			GVL.nWeldingStopDistance4_745:=GVL.nWeldingStopDistance4;
+			GVL.nWeldingStopDistance5_745:=GVL.nWeldingStopDistance5;
+			GVL.nWeldingDistanceMin1_745:=GVL.nWeldingDistanceMin1;
+			GVL.nWeldingDistanceMin2_745:=GVL.nWeldingDistanceMin2;
+			GVL.nWeldingDistanceMin3_745:=GVL.nWeldingDistanceMin3;
+			GVL.nWeldingDistanceMin4_745:=GVL.nWeldingDistanceMin4;
+			GVL.nWeldingDistanceMin5_745:=GVL.nWeldingDistanceMin5;
+			GVL.nWeldingDistanceMax1_745:=GVL.nWeldingDistanceMax1;
+			GVL.nWeldingDistanceMax2_745:=GVL.nWeldingDistanceMax2;
+			GVL.nWeldingDistanceMax3_745:=GVL.nWeldingDistanceMax3;
+			GVL.nWeldingDistanceMax4_745:=GVL.nWeldingDistanceMax4;
+			GVL.nWeldingDistanceMax5_745:=GVL.nWeldingDistanceMax5;
+		END_IF
+		iStateS:=8;
+	8:	// Soronkövetkező sor és mentendő STRING előállítása
+		CASE Ind OF
+			0: sParName:='AUTOSAVE'; sParValue:=BOOL_TO_STRING(GVL.bSettingsAutoSave);
+			1: sParName:='NTCTOL'; sParValue:=REAL_TO_STRING(GVL.rNTCDev);
+			2: sParName:='NTC2TOL'; sParValue:=REAL_TO_STRING(GVL.rNTC2Dev);
+			3: sParName:='PTTOL'; sParValue:=REAL_TO_STRING(GVL.rPtDev);
+			4: sParName:='SZIGMAX'; sParValue:=REAL_TO_STRING(GVL.rISOL_MAX);
+			5: sParName:='TOMBHOM'; sParValue:=REAL_TO_STRING(GVL.rTempMax);
+			6: sParName:='IDOALLMAX'; sParValue:=REAL_TO_STRING(GVL.rIdoallandoMax);
+			7: sParName:='SOKKMAX'; sParValue:=REAL_TO_STRING(GVL.PTRES_SOKK_MAX);
+			8: sParName:='PTSZERVPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrPtSzervizbox);
+			9: sParName:='HEG6POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHegesztoPosition6);
+			10: sParName:='HEG7POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHegesztoPosition7);
+			11: sParName:='ROBKAPPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrRobotKappePosition);
+			12: sParName:='KAPPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrKappePosition);
+			13: sParName:='KODPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrKodolvasasPosition);
+			14: sParName:='KODPOZ2'; sParValue:=LREAL_TO_STRING(GVL.lrKodolvasasPosition2);
+			15: sParName:='VEGMEROPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrVegmeroPosition);
+			16: sParName:='NTCSZERVPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrNTCSzervizbox);
+			17: sParName:='HAJL1POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHajlitoPosition1);
+			18: sParName:='HAJL2POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHajlitoPosition2);
+			19: sParName:='HEG1POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHegesztoPosition1);
+			20: sParName:='HEG2POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHegesztoPosition2);
+			21: sParName:='HEG3POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHegesztoPosition3);
+			22: sParName:='HEG4POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHegesztoPosition4);
+			23: sParName:='HEG5POZ'; sParValue:=LREAL_TO_STRING(GVL.lrHegesztoPosition5);
+			24: sParName:='HEGSTOPTAV1'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance1_637);
+			25: sParName:='HEGSTOPTAV2'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance2_637);
+			26: sParName:='HEGSTOPTAV3'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance3_637);
+			27: sParName:='HEGSTOPTAV4'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance4_637);
+			28: sParName:='HEGSTOPTAV5'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance5_637);
+			29: sParName:='HEGSTOPTAV1_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance1_745);
+			30: sParName:='HEGSTOPTAV2_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance2_745);
+			31: sParName:='HEGSTOPTAV3_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance3_745);
+			32: sParName:='HEGSTOPTAV4_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance4_745);
+			33: sParName:='HEGSTOPTAV5_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingStopDistance5_745);
+			34: sParName:='AUTHEGSTOP1'; sParValue:=BOOL_TO_STRING(GVL.bAutomaticWeldingStop1);
+			35: sParName:='AUTHEGSTOP2'; sParValue:=BOOL_TO_STRING(GVL.bAutomaticWeldingStop2);
+			36: sParName:='AUTHEGSTOP3'; sParValue:=BOOL_TO_STRING(GVL.bAutomaticWeldingStop3);
+			37: sParName:='AUTHEGSTOP4'; sParValue:=BOOL_TO_STRING(GVL.bAutomaticWeldingStop4);
+			38: sParName:='AUTHEGSTOP5'; sParValue:=BOOL_TO_STRING(GVL.bAutomaticWeldingStop5);
+			39: sParName:='WELDINGLOG'; sParValue:=BOOL_TO_STRING(GVL.bWeldingLog);
+			40: sParName:='HEGMINTAV1'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin1_637);
+			41: sParName:='HEGMINTAV2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin2_637);
+			42: sParName:='HEGMINTAV3'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin3_637);
+			43: sParName:='HEGMINTAV4'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin4_637);
+			44: sParName:='HEGMINTAV5'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin5_637);
+			45: sParName:='HEGMINTAV1_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin1_745);
+			46: sParName:='HEGMINTAV2_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin2_745);
+			47: sParName:='HEGMINTAV3_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin3_745);
+			48: sParName:='HEGMINTAV4_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin4_745);
+			49: sParName:='HEGMINTAV5_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMin5_745);
+			50: sParName:='HEGMAXTAV1'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax1_637);
+			51: sParName:='HEGMAXTAV2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax2_637);
+			52: sParName:='HEGMAXTAV3'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax3_637);
+			53: sParName:='HEGMAXTAV4'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax4_637);
+			54: sParName:='HEGMAXTAV5'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax5_637);
+			55: sParName:='HEGMAXTAV1_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax1_745);
+			56: sParName:='HEGMAXTAV2_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax2_745);
+			57: sParName:='HEGMAXTAV3_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax3_745);
+			58: sParName:='HEGMAXTAV4_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax4_745);
+			59: sParName:='HEGMAXTAV5_2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceMax5_745);
+			60: sParName:='NTCKAMPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrNTCKameraPosition);
+			61: sParName:='PTKAMPOZ'; sParValue:=LREAL_TO_STRING(GVL.lrPtKameraPosition);
+			62: sParName:='HEGMINSTARTTAV1'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMin1);
+			63: sParName:='HEGMINSTARTTAV2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMin2);
+			64: sParName:='HEGMINSTARTTAV3'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMin3);
+			65: sParName:='HEGMINSTARTTAV4'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMin4);
+			66: sParName:='HEGMINSTARTTAV5'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMin5);
+			67: sParName:='HEGMAXSTARTTAV1'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMax1);
+			68: sParName:='HEGMAXSTARTTAV2'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMax2);
+			69: sParName:='HEGMAXSTARTTAV3'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMax3);
+			70: sParName:='HEGMAXSTARTTAV4'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMax4);
+			71: sParName:='HEGMAXSTARTTAV5'; sParValue:=DINT_TO_STRING(GVL.nWeldingDistanceStartMax5);
+			72: sParName:='CSISZ1POZ'; sParValue:=LREAL_TO_STRING(GVL.lrCsiszoloPosition1);
+			73: sParName:='CSISZ2POZ'; sParValue:=LREAL_TO_STRING(GVL.lrCsiszoloPosition2);
+			74: sParName:='ELEKTRHASZ1'; sParValue:=DINT_TO_STRING(GVL.nElectrode1Usage);
+			75: sParName:='ELEKTRHASZ1FIGY'; sParValue:=DINT_TO_STRING(GVL.nElectrode1UsageWarn);
+			76: sParName:='ELEKTRHASZ1MAX'; sParValue:=DINT_TO_STRING(GVL.nElectrode1UsageMax);
+			77: sParName:='ELEKTRHASZ2'; sParValue:=DINT_TO_STRING(GVL.nElectrode2Usage);
+			78: sParName:='ELEKTRHASZ2FIGY'; sParValue:=DINT_TO_STRING(GVL.nElectrode2UsageWarn);
+			79: sParName:='ELEKTRHASZ2MAX'; sParValue:=DINT_TO_STRING(GVL.nElectrode2UsageMax);
+			80: sParName:='ELEKTRHASZ3'; sParValue:=DINT_TO_STRING(GVL.nElectrode3Usage);
+			81: sParName:='ELEKTRHASZ3FIGY'; sParValue:=DINT_TO_STRING(GVL.nElectrode3UsageWarn);
+			82: sParName:='ELEKTRHASZ3MAX'; sParValue:=DINT_TO_STRING(GVL.nElectrode3UsageMax);
+			83: sParName:='ELEKTRTISZTCIKL'; sParValue:=DINT_TO_STRING(GVL.nHegFejTisztCiklusok);
+			84: sParName:='ELEKTRTISZTPROG'; sParValue:=DINT_TO_STRING(GVL.nHegFejTisztProgram);
+		END_CASE
+		sParLine:=CONCAT(sParName,
+					CONCAT('=',
+					CONCAT(sParValue,'$R$N')));
+		IF LEN(sSettingsString)+LEN(sParLine)<255 THEN
+			sSettingsString:=CONCAT(sSettingsString,sParLine);
+			Ind:=Ind+1;
+			IF Ind>84 THEN
+				iStateS:=9;
+			END_IF
+		ELSE
+			iStateS:=9;
+		END_IF
+	9:	// Parts fájlba írás kezdeményezése
+		bSettingsPutStrExecute:=TRUE;
+		iStateS:=10;
+	10:	// Várakozás a busy jelre
+		IF bSettingsPutStrBusy=TRUE THEN
+			iStateS:=11;
+		END_IF
+	11:	// Várakozás a fájlírás befejeztére
+		IF bSettingsPutStrBusy=FALSE THEN
+			bSettingsPutStrExecute:=FALSE;
+			iStateS:=12;
+		END_IF
+	12:	// Fájlírás sikerességének vizsgálata
+		IF bSettingsPutStrError=FALSE THEN
+			sSettingsString:='';
+			IF Ind<85 THEN
+				iStateS:=8;
+			ELSE
+				GVL.bSettingsAutoSaveElozo:=GVL.bSettingsAutoSave;
+				GVL.rNTCDevElozo:=GVL.rNTCDev;
+				GVL.rNTC2DevElozo:=GVL.rNTC2Dev;
+				GVL.rPtDevElozo:=GVL.rPtDev;
+				GVL.rISOL_MAXElozo:=GVL.rISOL_MAX;
+				GVL.rTempMaxElozo:=GVL.rTempMax;
+				GVL.rIdoallandoMaxElozo:=GVL.rIdoallandoMax;
+				GVL.PTRES_SOKK_MAXElozo:=GVL.PTRES_SOKK_MAX;
+				GVL.lrPtSzervizboxElozo:=GVL.lrPtSzervizbox;
+				GVL.lrHegesztoPosition6Elozo:=GVL.lrHegesztoPosition6;
+				GVL.lrHegesztoPosition7Elozo:=GVL.lrHegesztoPosition7;
+				GVL.lrRobotKappePositionElozo:=GVL.lrRobotKappePosition;
+				GVL.lrKappePositionElozo:=GVL.lrKappePosition;
+				GVL.lrKodolvasasPositionElozo:=GVL.lrKodolvasasPosition;
+				GVL.lrKodolvasasPosition2Elozo:=GVL.lrKodolvasasPosition2;
+				GVL.lrVegmeroPositionElozo:=GVL.lrVegmeroPosition;
+				GVL.lrNTCSzervizboxElozo:=GVL.lrNTCSzervizbox;
+				GVL.lrHajlitoPosition1Elozo:=GVL.lrHajlitoPosition1;
+				GVL.lrHajlitoPosition2Elozo:=GVL.lrHajlitoPosition2;
+				GVL.lrHegesztoPosition1Elozo:=GVL.lrHegesztoPosition1;
+				GVL.lrHegesztoPosition2Elozo:=GVL.lrHegesztoPosition2;
+				GVL.lrHegesztoPosition3Elozo:=GVL.lrHegesztoPosition3;
+				GVL.lrHegesztoPosition4Elozo:=GVL.lrHegesztoPosition4;
+				GVL.lrHegesztoPosition5Elozo:=GVL.lrHegesztoPosition5;
+				GVL.nWeldingStopDistance1Elozo:=GVL.nWeldingStopDistance1;
+				GVL.nWeldingStopDistance2Elozo:=GVL.nWeldingStopDistance2;
+				GVL.nWeldingStopDistance3Elozo:=GVL.nWeldingStopDistance3;
+				GVL.nWeldingStopDistance4Elozo:=GVL.nWeldingStopDistance4;
+				GVL.nWeldingStopDistance5Elozo:=GVL.nWeldingStopDistance5;
+				GVL.bAutomaticWeldingStop1Elozo:=GVL.bAutomaticWeldingStop1;
+				GVL.bAutomaticWeldingStop2Elozo:=GVL.bAutomaticWeldingStop2;
+				GVL.bAutomaticWeldingStop3Elozo:=GVL.bAutomaticWeldingStop3;
+				GVL.bAutomaticWeldingStop4Elozo:=GVL.bAutomaticWeldingStop4;
+				GVL.bAutomaticWeldingStop5Elozo:=GVL.bAutomaticWeldingStop5;
+				GVL.bWeldingLogElozo:=GVL.bWeldingLog;
+				GVL.nWeldingDistanceMin1Elozo:=GVL.nWeldingDistanceMin1;
+				GVL.nWeldingDistanceMin2Elozo:=GVL.nWeldingDistanceMin2;
+				GVL.nWeldingDistanceMin3Elozo:=GVL.nWeldingDistanceMin3;
+				GVL.nWeldingDistanceMin4Elozo:=GVL.nWeldingDistanceMin4;
+				GVL.nWeldingDistanceMin5Elozo:=GVL.nWeldingDistanceMin5;
+				GVL.nWeldingDistanceMax1Elozo:=GVL.nWeldingDistanceMax1;
+				GVL.nWeldingDistanceMax2Elozo:=GVL.nWeldingDistanceMax2;
+				GVL.nWeldingDistanceMax3Elozo:=GVL.nWeldingDistanceMax3;
+				GVL.nWeldingDistanceMax4Elozo:=GVL.nWeldingDistanceMax4;
+				GVL.nWeldingDistanceMax5Elozo:=GVL.nWeldingDistanceMax5;
+				GVL.lrNTCKameraPositionElozo:=GVL.lrNTCKameraPosition;
+				GVL.lrPtKameraPositionElozo:=GVL.lrPtKameraPosition;
+				GVL.nWeldingDistanceStartMin1Elozo:=GVL.nWeldingDistanceStartMin1;
+				GVL.nWeldingDistanceStartMin2Elozo:=GVL.nWeldingDistanceStartMin2;
+				GVL.nWeldingDistanceStartMin3Elozo:=GVL.nWeldingDistanceStartMin3;
+				GVL.nWeldingDistanceStartMin4Elozo:=GVL.nWeldingDistanceStartMin4;
+				GVL.nWeldingDistanceStartMin5Elozo:=GVL.nWeldingDistanceStartMin5;
+				GVL.nWeldingDistanceStartMax1Elozo:=GVL.nWeldingDistanceStartMax1;
+				GVL.nWeldingDistanceStartMax2Elozo:=GVL.nWeldingDistanceStartMax2;
+				GVL.nWeldingDistanceStartMax3Elozo:=GVL.nWeldingDistanceStartMax3;
+				GVL.nWeldingDistanceStartMax4Elozo:=GVL.nWeldingDistanceStartMax4;
+				GVL.nWeldingDistanceStartMax5Elozo:=GVL.nWeldingDistanceStartMax5;
+				GVL.lrCsiszoloPosition1Elozo:=GVL.lrCsiszoloPosition1;
+				GVL.lrCsiszoloPosition2Elozo:=GVL.lrCsiszoloPosition2;
+				GVL.nElectrode1UsageElozo:=GVL.nElectrode1Usage;
+				GVL.nElectrode1UsageWarnElozo:=GVL.nElectrode1UsageWarn;
+				GVL.nElectrode1UsageMaxElozo:=GVL.nElectrode1UsageMax;
+				GVL.nElectrode2UsageElozo:=GVL.nElectrode2Usage;
+				GVL.nElectrode2UsageWarnElozo:=GVL.nElectrode2UsageWarn;
+				GVL.nElectrode2UsageMaxElozo:=GVL.nElectrode2UsageMax;
+				GVL.nElectrode3UsageElozo:=GVL.nElectrode3Usage;
+				GVL.nElectrode3UsageWarnElozo:=GVL.nElectrode3UsageWarn;
+				GVL.nElectrode3UsageMaxElozo:=GVL.nElectrode3UsageMax;
+				GVL.nHegFejTisztCiklusokElozo:=GVL.nHegFejTisztCiklusok;
+				GVL.nHegFejTisztProgramElozo:=GVL.nHegFejTisztProgram;
+				IF GVL.nElectrode1Usage>GVL.nElectrode1UsageMax THEN
+					GVL.nElectrode1AlarmColor:=16#FFFF0000;
+				ELSE
+					GVL.nElectrode1AlarmColor:=16#FFFFFF00;
+				END_IF
+				IF GVL.nElectrode2Usage>GVL.nElectrode2UsageMax THEN
+					GVL.nElectrode2AlarmColor:=16#FFFF0000;
+				ELSE
+					GVL.nElectrode2AlarmColor:=16#FFFFFF00;
+				END_IF
+				IF GVL.nElectrode3Usage>GVL.nElectrode3UsageMax THEN
+					GVL.nElectrode3AlarmColor:=16#FFFF0000;
+				ELSE
+					GVL.nElectrode3AlarmColor:=16#FFFFFF00;
+				END_IF
+				iStateS:=13;
+			END_IF
+		ELSE
+			iStateS:=103;
+		END_IF
+		
+	26:	// Fájlnyitás sikerességének vizsgálata
+		IF bSettingsOpenError=FALSE THEN
+			iStateS:=27;
+			Ind:=0;
+		ELSE
+			iStateS:=101;
+		END_IF
+	27:	// Parts fájlból olvasás kezdeményezése
+		bSettingsGetStrExecute:=TRUE;
+		iStateS:=28;
+	28:	// Várakozás a busy jelre
+		IF bSettingsGetStrBusy=TRUE THEN
+			iStateS:=29;
+		END_IF
+	29:	// Várakozás a fájlolvasás befejeztére
+		IF bSettingsGetStrBusy=FALSE THEN
+			bSettingsGetStrExecute:=FALSE;
+			iStateS:=30;
+		END_IF
+	30:	// Fájlolvasás sikerességének vizsgálata
+		IF bSettingsGetStrError=FALSE THEN
+			iEqu:=FIND(sSettingsGetStr,'=');
+			sParName:=LEFT(sSettingsGetStr,iEqu-1);
+			sParValue:=RIGHT(sSettingsGetStr,LEN(sSettingsGetStr)-iEqu);
+			sParValue:=LEFT(sParValue,LEN(sParValue)-2);
+			IF sParName='AUTOSAVE' THEN GVL.bSettingsAutoSave:=STRING_TO_BOOL(sParValue);
+			ELSIF sParName='NTCTOL' THEN GVL.rNTCDev:=STRING_TO_REAL(sParValue);
+			ELSIF sParName='NTC2TOL' THEN GVL.rNTC2Dev:=STRING_TO_REAL(sParValue);
+			ELSIF sParName='PTTOL' THEN GVL.rPtDev:=STRING_TO_REAL(sParValue);
+			ELSIF sParName='SZIGMAX' THEN GVL.rISOL_MAX:=STRING_TO_REAL(sParValue);
+			ELSIF sParName='TOMBHOM' THEN GVL.rTempMax:=STRING_TO_REAL(sParValue);
+			ELSIF sParName='IDOALLMAX' THEN GVL.rIdoallandoMax:=STRING_TO_REAL(sParValue);
+			ELSIF sParName='SOKKMAX' THEN GVL.PTRES_SOKK_MAX:=STRING_TO_REAL(sParValue);
+			ELSIF sParName='PTSZERVPOZ' THEN GVL.lrPtSzervizbox:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEG6POZ' THEN GVL.lrHegesztoPosition6:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEG7POZ' THEN GVL.lrHegesztoPosition7:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='ROBKAPPOZ' THEN GVL.lrRobotKappePosition:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='KAPPOZ' THEN GVL.lrKappePosition:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='KODPOZ' THEN GVL.lrKodolvasasPosition:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='KODPOZ2' THEN GVL.lrKodolvasasPosition2:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='VEGMEROPOZ' THEN GVL.lrVegmeroPosition:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='NTCSZERVPOZ' THEN GVL.lrNTCSzervizbox:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HAJL1POZ' THEN GVL.lrHajlitoPosition1:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HAJL2POZ' THEN GVL.lrHajlitoPosition2:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEG1POZ' THEN GVL.lrHegesztoPosition1:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEG2POZ' THEN GVL.lrHegesztoPosition2:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEG3POZ' THEN GVL.lrHegesztoPosition3:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEG4POZ' THEN GVL.lrHegesztoPosition4:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEG5POZ' THEN GVL.lrHegesztoPosition5:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEGSTOPTAV1' THEN GVL.nWeldingStopDistance1_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV2' THEN GVL.nWeldingStopDistance2_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV3' THEN GVL.nWeldingStopDistance3_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV4' THEN GVL.nWeldingStopDistance4_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV5' THEN GVL.nWeldingStopDistance5_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV1_2' THEN GVL.nWeldingStopDistance1_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV2_2' THEN GVL.nWeldingStopDistance2_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV3_2' THEN GVL.nWeldingStopDistance3_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV4_2' THEN GVL.nWeldingStopDistance4_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGSTOPTAV5_2' THEN GVL.nWeldingStopDistance5_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='AUTHEGSTOP1' THEN GVL.bAutomaticWeldingStop1:=STRING_TO_BOOL(sParValue);
+			ELSIF sParName='AUTHEGSTOP2' THEN GVL.bAutomaticWeldingStop2:=STRING_TO_BOOL(sParValue);
+			ELSIF sParName='AUTHEGSTOP3' THEN GVL.bAutomaticWeldingStop3:=STRING_TO_BOOL(sParValue);
+			ELSIF sParName='AUTHEGSTOP4' THEN GVL.bAutomaticWeldingStop4:=STRING_TO_BOOL(sParValue);
+			ELSIF sParName='AUTHEGSTOP5' THEN GVL.bAutomaticWeldingStop5:=STRING_TO_BOOL(sParValue);
+			ELSIF sParName='WELDINGLOG' THEN GVL.bWeldingLog:=STRING_TO_BOOL(sParValue);
+			ELSIF sParName='HEGMINTAV1' THEN GVL.nWeldingDistanceMin1_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV2' THEN GVL.nWeldingDistanceMin2_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV3' THEN GVL.nWeldingDistanceMin3_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV4' THEN GVL.nWeldingDistanceMin4_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV5' THEN GVL.nWeldingDistanceMin5_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV1_2' THEN GVL.nWeldingDistanceMin1_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV2_2' THEN GVL.nWeldingDistanceMin2_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV3_2' THEN GVL.nWeldingDistanceMin3_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV4_2' THEN GVL.nWeldingDistanceMin4_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINTAV5_2' THEN GVL.nWeldingDistanceMin5_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV1' THEN GVL.nWeldingDistanceMax1_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV2' THEN GVL.nWeldingDistanceMax2_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV3' THEN GVL.nWeldingDistanceMax3_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV4' THEN GVL.nWeldingDistanceMax4_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV5' THEN GVL.nWeldingDistanceMax5_637:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV1_2' THEN GVL.nWeldingDistanceMax1_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV2_2' THEN GVL.nWeldingDistanceMax2_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV3_2' THEN GVL.nWeldingDistanceMax3_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV4_2' THEN GVL.nWeldingDistanceMax4_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXTAV5_2' THEN GVL.nWeldingDistanceMax5_745:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='NTCKAMPOZ' THEN GVL.lrNTCKameraPosition:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='PTKAMPOZ' THEN GVL.lrPtKameraPosition:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='HEGMINSTARTTAV1' THEN GVL.nWeldingDistanceStartMin1:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINSTARTTAV2' THEN GVL.nWeldingDistanceStartMin2:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINSTARTTAV3' THEN GVL.nWeldingDistanceStartMin3:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINSTARTTAV4' THEN GVL.nWeldingDistanceStartMin4:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMINSTARTTAV5' THEN GVL.nWeldingDistanceStartMin5:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXSTARTTAV1' THEN GVL.nWeldingDistanceStartMax1:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXSTARTTAV2' THEN GVL.nWeldingDistanceStartMax2:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXSTARTTAV3' THEN GVL.nWeldingDistanceStartMax3:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXSTARTTAV4' THEN GVL.nWeldingDistanceStartMax4:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='HEGMAXSTARTTAV5' THEN GVL.nWeldingDistanceStartMax5:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='CSISZ1POZ' THEN GVL.lrCsiszoloPosition1:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='CSISZ2POZ' THEN GVL.lrCsiszoloPosition2:=STRING_TO_LREAL(sParValue);
+			ELSIF sParName='ELEKTRHASZ1' THEN GVL.nElectrode1Usage:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ1FIGY' THEN GVL.nElectrode1UsageWarn:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ1MAX' THEN GVL.nElectrode1UsageMax:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ2' THEN GVL.nElectrode2Usage:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ2FIGY' THEN GVL.nElectrode2UsageWarn:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ2MAX' THEN GVL.nElectrode2UsageMax:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ3' THEN GVL.nElectrode3Usage:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ3FIGY' THEN GVL.nElectrode3UsageWarn:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRHASZ3MAX' THEN GVL.nElectrode3UsageMax:=STRING_TO_DINT(sParValue);
+			ELSIF sParName='ELEKTRTISZTCIKL' THEN GVL.nHegFejTisztCiklusok:=STRING_TO_UINT(sParValue);
+			ELSIF sParName='ELEKTRTISZTPROG' THEN GVL.nHegFejTisztProgram:=STRING_TO_UINT(sParValue);
+			END_IF
+			IF bGetStrSettingsEOF=FALSE THEN
+				iStateS:=27;
+				Ind:=Ind+1;
+			ELSE
+				// Termékspecifikus hegesztési paraméterek kiválasztása
+				IF GVL.iSelectedProductType<8 THEN
+					GVL.nWeldingStopDistance1:=GVL.nWeldingStopDistance1_637;
+					GVL.nWeldingStopDistance2:=GVL.nWeldingStopDistance2_637;
+					GVL.nWeldingStopDistance3:=GVL.nWeldingStopDistance3_637;
+					GVL.nWeldingStopDistance4:=GVL.nWeldingStopDistance4_637;
+					GVL.nWeldingStopDistance5:=GVL.nWeldingStopDistance5_637;
+					GVL.nWeldingDistanceMin1:=GVL.nWeldingDistanceMin1_637;
+					GVL.nWeldingDistanceMin2:=GVL.nWeldingDistanceMin2_637;
+					GVL.nWeldingDistanceMin3:=GVL.nWeldingDistanceMin3_637;
+					GVL.nWeldingDistanceMin4:=GVL.nWeldingDistanceMin4_637;
+					GVL.nWeldingDistanceMin5:=GVL.nWeldingDistanceMin5_637;
+					GVL.nWeldingDistanceMax1:=GVL.nWeldingDistanceMax1_637;
+					GVL.nWeldingDistanceMax2:=GVL.nWeldingDistanceMax2_637;
+					GVL.nWeldingDistanceMax3:=GVL.nWeldingDistanceMax3_637;
+					GVL.nWeldingDistanceMax4:=GVL.nWeldingDistanceMax4_637;
+					GVL.nWeldingDistanceMax5:=GVL.nWeldingDistanceMax5_637;
+				ELSIF GVL.iSelectedProductType>8 THEN
+					GVL.nWeldingStopDistance1:=GVL.nWeldingStopDistance1_745;
+					GVL.nWeldingStopDistance2:=GVL.nWeldingStopDistance2_745;
+					GVL.nWeldingStopDistance3:=GVL.nWeldingStopDistance3_745;
+					GVL.nWeldingStopDistance4:=GVL.nWeldingStopDistance4_745;
+					GVL.nWeldingStopDistance5:=GVL.nWeldingStopDistance5_745;
+					GVL.nWeldingDistanceMin1:=GVL.nWeldingDistanceMin1_745;
+					GVL.nWeldingDistanceMin2:=GVL.nWeldingDistanceMin2_745;
+					GVL.nWeldingDistanceMin3:=GVL.nWeldingDistanceMin3_745;
+					GVL.nWeldingDistanceMin4:=GVL.nWeldingDistanceMin4_745;
+					GVL.nWeldingDistanceMin5:=GVL.nWeldingDistanceMin5_745;
+					GVL.nWeldingDistanceMax1:=GVL.nWeldingDistanceMax1_745;
+					GVL.nWeldingDistanceMax2:=GVL.nWeldingDistanceMax2_745;
+					GVL.nWeldingDistanceMax3:=GVL.nWeldingDistanceMax3_745;
+					GVL.nWeldingDistanceMax4:=GVL.nWeldingDistanceMax4_745;
+					GVL.nWeldingDistanceMax5:=GVL.nWeldingDistanceMax5_745;
+				END_IF
+				// Automatikusan mentendő paraméterek változásának törlése
+				GVL.bSettingsAutoSaveElozo:=GVL.bSettingsAutoSave;
+				GVL.rNTCDevElozo:=GVL.rNTCDev;
+				GVL.rNTC2DevElozo:=GVL.rNTC2Dev;
+				GVL.rPtDevElozo:=GVL.rPtDev;
+				GVL.rISOL_MAXElozo:=GVL.rISOL_MAX;
+				GVL.rTempMaxElozo:=GVL.rTempMax;
+				GVL.rIdoallandoMaxElozo:=GVL.rIdoallandoMax;
+				GVL.PTRES_SOKK_MAXElozo:=GVL.PTRES_SOKK_MAX;
+				GVL.lrPtSzervizboxElozo:=GVL.lrPtSzervizbox;
+				GVL.lrHegesztoPosition6Elozo:=GVL.lrHegesztoPosition6;
+				GVL.lrHegesztoPosition7Elozo:=GVL.lrHegesztoPosition7;
+				GVL.lrRobotKappePositionElozo:=GVL.lrRobotKappePosition;
+				GVL.lrKappePositionElozo:=GVL.lrKappePosition;
+				GVL.lrKodolvasasPositionElozo:=GVL.lrKodolvasasPosition;
+				GVL.lrKodolvasasPosition2Elozo:=GVL.lrKodolvasasPosition2;
+				GVL.lrVegmeroPositionElozo:=GVL.lrVegmeroPosition;
+				GVL.lrNTCSzervizboxElozo:=GVL.lrNTCSzervizbox;
+				GVL.lrHajlitoPosition1Elozo:=GVL.lrHajlitoPosition1;
+				GVL.lrHajlitoPosition2Elozo:=GVL.lrHajlitoPosition2;
+				GVL.lrHegesztoPosition1Elozo:=GVL.lrHegesztoPosition1;
+				GVL.lrHegesztoPosition2Elozo:=GVL.lrHegesztoPosition2;
+				GVL.lrHegesztoPosition3Elozo:=GVL.lrHegesztoPosition3;
+				GVL.lrHegesztoPosition4Elozo:=GVL.lrHegesztoPosition4;
+				GVL.lrHegesztoPosition5Elozo:=GVL.lrHegesztoPosition5;
+				GVL.nWeldingStopDistance1Elozo:=GVL.nWeldingStopDistance1;
+				GVL.nWeldingStopDistance2Elozo:=GVL.nWeldingStopDistance2;
+				GVL.nWeldingStopDistance3Elozo:=GVL.nWeldingStopDistance3;
+				GVL.nWeldingStopDistance4Elozo:=GVL.nWeldingStopDistance4;
+				GVL.nWeldingStopDistance5Elozo:=GVL.nWeldingStopDistance5;
+				GVL.bAutomaticWeldingStop1Elozo:=GVL.bAutomaticWeldingStop1;
+				GVL.bAutomaticWeldingStop2Elozo:=GVL.bAutomaticWeldingStop2;
+				GVL.bAutomaticWeldingStop3Elozo:=GVL.bAutomaticWeldingStop3;
+				GVL.bAutomaticWeldingStop4Elozo:=GVL.bAutomaticWeldingStop4;
+				GVL.bAutomaticWeldingStop5Elozo:=GVL.bAutomaticWeldingStop5;
+				GVL.bWeldingLogElozo:=GVL.bWeldingLog;
+				GVL.nWeldingDistanceMin1Elozo:=GVL.nWeldingDistanceMin1;
+				GVL.nWeldingDistanceMin2Elozo:=GVL.nWeldingDistanceMin2;
+				GVL.nWeldingDistanceMin3Elozo:=GVL.nWeldingDistanceMin3;
+				GVL.nWeldingDistanceMin4Elozo:=GVL.nWeldingDistanceMin4;
+				GVL.nWeldingDistanceMin5Elozo:=GVL.nWeldingDistanceMin5;
+				GVL.nWeldingDistanceMax1Elozo:=GVL.nWeldingDistanceMax1;
+				GVL.nWeldingDistanceMax2Elozo:=GVL.nWeldingDistanceMax2;
+				GVL.nWeldingDistanceMax3Elozo:=GVL.nWeldingDistanceMax3;
+				GVL.nWeldingDistanceMax4Elozo:=GVL.nWeldingDistanceMax4;
+				GVL.nWeldingDistanceMax5Elozo:=GVL.nWeldingDistanceMax5;
+				GVL.lrNTCKameraPositionElozo:=GVL.lrNTCKameraPosition;
+				GVL.lrPtKameraPositionElozo:=GVL.lrPtKameraPosition;
+				GVL.nWeldingDistanceStartMin1Elozo:=GVL.nWeldingDistanceStartMin1;
+				GVL.nWeldingDistanceStartMin2Elozo:=GVL.nWeldingDistanceStartMin2;
+				GVL.nWeldingDistanceStartMin3Elozo:=GVL.nWeldingDistanceStartMin3;
+				GVL.nWeldingDistanceStartMin4Elozo:=GVL.nWeldingDistanceStartMin4;
+				GVL.nWeldingDistanceStartMin5Elozo:=GVL.nWeldingDistanceStartMin5;
+				GVL.nWeldingDistanceStartMax1Elozo:=GVL.nWeldingDistanceStartMax1;
+				GVL.nWeldingDistanceStartMax2Elozo:=GVL.nWeldingDistanceStartMax2;
+				GVL.nWeldingDistanceStartMax3Elozo:=GVL.nWeldingDistanceStartMax3;
+				GVL.nWeldingDistanceStartMax4Elozo:=GVL.nWeldingDistanceStartMax4;
+				GVL.nWeldingDistanceStartMax5Elozo:=GVL.nWeldingDistanceStartMax5;
+				GVL.lrCsiszoloPosition1Elozo:=GVL.lrCsiszoloPosition1;
+				GVL.lrCsiszoloPosition2Elozo:=GVL.lrCsiszoloPosition2;
+				GVL.nElectrode1UsageElozo:=GVL.nElectrode1Usage;
+				GVL.nElectrode1UsageWarnElozo:=GVL.nElectrode1UsageWarn;
+				GVL.nElectrode1UsageMaxElozo:=GVL.nElectrode1UsageMax;
+				GVL.nElectrode2UsageElozo:=GVL.nElectrode2Usage;
+				GVL.nElectrode2UsageWarnElozo:=GVL.nElectrode2UsageWarn;
+				GVL.nElectrode2UsageMaxElozo:=GVL.nElectrode2UsageMax;
+				GVL.nElectrode3UsageElozo:=GVL.nElectrode3Usage;
+				GVL.nElectrode3UsageWarnElozo:=GVL.nElectrode3UsageWarn;
+				GVL.nElectrode3UsageMaxElozo:=GVL.nElectrode3UsageMax;
+				GVL.nHegFejTisztCiklusokElozo:=GVL.nHegFejTisztCiklusok;
+				GVL.nHegFejTisztProgramElozo:=GVL.nHegFejTisztProgram;
+				// A hegesztési paraméterek figyelmeztető ill. riasztó színeinek beállítása, ha szükséges:
+				IF GVL.nElectrode1Usage>GVL.nElectrode1UsageMax THEN
+					GVL.nElectrode1AlarmColor:=16#FFFF0000; // piros
+				ELSE
+					GVL.nElectrode1AlarmColor:=16#FFFFFF00; //sárga
+				END_IF
+				IF GVL.nElectrode2Usage>GVL.nElectrode2UsageMax THEN
+					GVL.nElectrode2AlarmColor:=16#FFFF0000;
+				ELSE
+					GVL.nElectrode2AlarmColor:=16#FFFFFF00;
+				END_IF
+				IF GVL.nElectrode3Usage>GVL.nElectrode3UsageMax THEN
+					GVL.nElectrode3AlarmColor:=16#FFFF0000;
+				ELSE
+					GVL.nElectrode3AlarmColor:=16#FFFFFF00;
+				END_IF
+				iStateS:=12;
+			END_IF
+		ELSE
+			iStateS:=103;
+		END_IF
+	13:	// Settings fájl zárásának kezdeményezése
+		bSettingsCloseExecute:=TRUE;
+		iStateS:=14;
+	14:	// Várakozás a busy jelre
+		IF bSettingsCloseBusy=TRUE THEN
+			iStateS:=15;
+		END_IF
+	15:	// Várakozás a fájlzárás befejeztére
+		IF bSettingsCloseBusy=FALSE THEN
+			bSettingsCloseExecute:=FALSE;
+			iStateS:=16;
+		END_IF
+	16:	// Fájlzárás sikerességének vizsgálata
+		IF bSettingsCloseError=FALSE THEN
+			bSettingsReadReady:=TRUE;	
+			iStateS:=2;
+		ELSE
+			iStateS:=104;
+		END_IF
+
+END_CASE
+
+
+PartsOpen(
+		sNetId:='',
+		sPathName:='C:\637\Init\Parts.ini',
+		nMode:=nPartsOpenMode,
+		ePath:=PATH_GENERIC,
+		bExecute:=bPartsOpenExecute,
+		tTimeout:=T#5S,
+		bBusy=>bPartsOpenBusy,
+		bError=>bPartsOpenError,
+		nErrId=>nPartsOpenError,
+		hFile=>hPartsFile
+		);
+		
+PartsPutStr(
+		sNetId:='',
+		hFile:=hPartsFile,
+		sLine:=sPartsString,
+		bExecute:=bPartsPutStrExecute,
+		tTimeout:=T#1S,
+		bBusy=>bPartsPutStrBusy,
+		bError=>bPartsPutStrError,
+		nErrId=>nPartsPutStrError);
+		
+PartsGetStr(
+		sNetId:='',
+		hFile:=hPartsFile,
+		bExecute:=bPartsGetStrExecute,
+		tTimeout:=T#1S,
+		bBusy=>bPartsGetStrBusy,
+		bError=>bPartsGetStrError,
+		nErrId=>nPartsGetStrError,
+		sLine=>sPartsGetStr,
+		bEOF=>bGetStrPartsEOF
+);
+		
+PartsClose(
+		sNetId:='',
+		hFile:=hPartsFile,
+		bExecute:=bPartsCloseExecute,
+		tTimeout:=T#5S,
+		bBusy=>bPartsCloseBusy,
+		bError=>bPartsCloseError,
+		nErrId=>nPartsCloseError
+		);
+
+SettingsOpen(
+		sNetId:='',
+		sPathName:='C:\637\Init\Settings.ini',
+		nMode:=nSettingsOpenMode,
+		ePath:=PATH_GENERIC,
+		bExecute:=bSettingsOpenExecute,
+		tTimeout:=T#5S,
+		bBusy=>bSettingsOpenBusy,
+		bError=>bSettingsOpenError,
+		nErrId=>nSettingsOpenError,
+		hFile=>hSettingsFile
+		);
+		
+SettingsPutStr(
+		sNetId:='',
+		hFile:=hSettingsFile,
+		sLine:=sSettingsString,
+		bExecute:=bSettingsPutStrExecute,
+		tTimeout:=T#1S,
+		bBusy=>bSettingsPutStrBusy,
+		bError=>bSettingsPutStrError,
+		nErrId=>nSettingsPutStrError);
+		
+SettingsGetStr(
+		sNetId:='',
+		hFile:=hSettingsFile,
+		bExecute:=bSettingsGetStrExecute,
+		tTimeout:=T#1S,
+		bBusy=>bSettingsGetStrBusy,
+		bError=>bSettingsGetStrError,
+		nErrId=>nSettingsGetStrError,
+		sLine=>sSettingsGetStr,
+		bEOF=>bGetStrSettingsEOF
+);
+		
+SettingsClose(
+		sNetId:='',
+		hFile:=hSettingsFile,
+		bExecute:=bSettingsCloseExecute,
+		tTimeout:=T#5S,
+		bBusy=>bSettingsCloseBusy,
+		bError=>bSettingsCloseError,
+		nErrId=>nSettingsCloseError
+		);
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="3" Count="4" />
+      <LineId Id="1488" Count="0" />
+      <LineId Id="1388" Count="0" />
+      <LineId Id="1019" Count="0" />
+      <LineId Id="1490" Count="0" />
+      <LineId Id="1387" Count="0" />
+      <LineId Id="1020" Count="5" />
+      <LineId Id="1491" Count="0" />
+      <LineId Id="1583" Count="0" />
+      <LineId Id="1391" Count="0" />
+      <LineId Id="1393" Count="0" />
+      <LineId Id="1026" Count="3" />
+      <LineId Id="1489" Count="0" />
+      <LineId Id="1030" Count="1" />
+      <LineId Id="8" Count="922" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

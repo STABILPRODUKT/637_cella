@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="TEST_R_INTERPOL" Id="{3f1a6bf4-62e8-4c79-99af-7dea528ecbe7}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM TEST_R_INTERPOL
+VAR
+	rRNTC_MIN0, rRNTC_MIN1, rRNTC_MAX0, rRNTC_MAX1, rPt_MIN, rPt_MAX, rT: REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[rRNTC_MIN0:=f_GetNTCMinR(rTemp:=rT, nProd:=0);
+rRNTC_MAX0:=f_GetNTCMaxR(rTemp:=rT, nProd:=0);
+rRNTC_MIN1:=f_GetNTCMinR(rTemp:=rT, nProd:=1);
+rRNTC_MAX1:=f_GetNTCMaxR(rTemp:=rT, nProd:=1);
+rPt_MIN:=f_GetPtMinR(rTemp:=rT);
+rPt_MAX:=f_GetPtMaxR(rTemp:=rT);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

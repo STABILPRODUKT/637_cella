@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetPtTfromR" Id="{b1af7675-0e2b-409c-8081-d9093688e378}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetPtTfromR : real
+VAR_INPUT
+	rR: REAL;
+END_VAR
+VAR
+	nI: INT;
+	rT0, rT1, rR0, rR1, rM: REAL;
+END_VAR
+VAR CONSTANT
+	Pt_RT: ARRAY[0..1, 0..15] OF REAL := 
+	[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,
+	1000,1077.9,1155.4,1232.4,1309,1385.1,1460.7,1535.8,1610.5,1684.8,1758.6,1831.9,1904.7,1977.1,2049.1,2120.5];
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[nI:=1;
+WHILE (Pt_RT[1,nI]<rR) AND (nI<15) DO
+	nI:=nI+1;
+END_WHILE
+rT0:=Pt_RT[0,nI-1];
+rT1:=Pt_RT[0,nI];
+rR0:=Pt_RT[1,nI-1];
+rR1:=Pt_RT[1,nI];
+rM:=(rT1-rT0)/(rR1-rR0);
+f_GetPtTfromR:=rT0+rM*(rR-rR0);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

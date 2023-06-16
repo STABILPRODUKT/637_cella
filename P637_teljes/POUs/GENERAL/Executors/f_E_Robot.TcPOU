@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_E_Robot" Id="{ce930f04-9bc2-45c2-b1cf-7287a8d1616b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_E_Robot : DINT
+VAR_INPUT
+	s_Command : STRING := '';
+	s_Param1 : STRING := '';
+	s_Param2 : STRING := '';
+	s_Param3 : STRING := '';
+	s_Param4 : STRING := '';
+	s_Param5 : STRING := '';
+END_VAR
+VAR
+	s_RobotCommandType : STRING := '';
+	b_TypeFound : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[s_RobotCommandType := RIGHT ( s_Command , FIND(s_Command,'_'));
+IF ROBOTCOMMAND.sRobotCommand = '' AND ROBOTREMOTE.sRobotCommand = '' THEN
+	IF s_RobotCommandType = 'REMOTE' THEN
+		RobotProcess.s_InRobotCommand := s_Param1;
+		RobotProcess.s_InRobotCommandParam1 := s_Param2;
+		RobotProcess.s_InRobotCommandParam2 := s_Param3;
+		RobotProcess.s_InRobotCommandParam3 := s_Param4;
+		RobotProcess.s_InRobotCommandParam4 := s_Param5;
+		b_TypeFound := TRUE;
+	END_IF
+	IF s_RobotCommandType = 'COMMAND' THEN
+		RobotProcess.s_InRobotTCPCommand := s_Param1;
+		b_TypeFound := TRUE;
+	END_IF
+	IF b_TypeFound = FALSE THEN
+		f_E_Robot := -101;
+	ELSE
+		IF RobotProcess.iState = 100 THEN
+			f_E_Robot := -200;
+		END_IF
+	END_IF
+ELSE
+	f_E_Robot := -100;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

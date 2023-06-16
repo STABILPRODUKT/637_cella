@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetPtMaxR" Id="{cfaf98b5-16b6-413e-b309-5d6f052341d0}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetPtMaxR : real
+VAR_INPUT
+	rTemp: REAL;
+END_VAR
+VAR
+	nI: INT;
+	rT0, rT1, rR0, rR1, rM: REAL;
+END_VAR
+VAR CONSTANT
+	Pt_MaxRT: ARRAY[0..1, 0..15] OF REAL := 
+	[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,
+	1010,1089,1168,1246,1324,1402,1479,1556,1633,1709,1784,1860,1935,2009,2083,2157];
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*nI:=1;
+WHILE (Pt_MaxRT[0,nI]<rTemp) AND (nI<15) DO
+	nI:=nI+1;
+END_WHILE
+rT0:=Pt_MaxRT[0,nI-1];
+rT1:=Pt_MaxRT[0,nI];
+rR0:=Pt_MaxRT[1,nI-1];
+rR1:=Pt_MaxRT[1,nI];
+rM:=(rR1-rR0)/(rT1-rT0);
+f_GetPtMaxR:=rR0+rM*(rTemp-rT0);*)
+nI:=1;
+WHILE (GVL.Pt_NomRT[0,nI]<rTemp) AND (nI<15) DO
+	nI:=nI+1;
+END_WHILE
+rT0:=GVL.Pt_NomRT[0,nI-1];
+rT1:=GVL.Pt_NomRT[0,nI];
+rR0:=GVL.Pt_NomRT[1,nI-1];
+rR1:=GVL.Pt_NomRT[1,nI];
+rM:=(rR1-rR0)/(rT1-rT0);
+f_GetPtMaxR:=(rR0+rM*(rTemp-rT0))*(1+GVL.rPtDev/100);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="f_RobotNTCTengelytolTavol" Id="{9ac71912-bbf0-4c31-b681-4766f05fa0ba}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_RobotNTCTengelytolTavol : BOOL]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[f_RobotNTCTengelytolTavol:=(GVL.stRobotStatusz.rX>-100) 
+							OR (GVL.stRobotStatusz.rY>350)
+							OR (GVL.stRobotStatusz.rZ>-111);]]></ST>
+    </Implementation>
+    <LineIds Name="f_RobotNTCTengelytolTavol">
+      <LineId Id="3" Count="1" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

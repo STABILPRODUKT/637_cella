@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <Task Name="Robot_task" Id="{eb456140-e9dc-4ff5-8409-71f9f47ee9ec}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>20</Priority>
+    <PouCall>
+      <Name>RobotProcess</Name>
+    </PouCall>
+    <PouCall>
+      <Name>ROBOTREMOTE</Name>
+    </PouCall>
+    <PouCall>
+      <Name>ROBOTCOMMAND</Name>
+    </PouCall>
+    <TaskFBGuid>{eb432253-4d1b-4d2f-9019-e438e6adc46f}</TaskFBGuid>
+    <Fb_init>{886e5609-96e3-443e-9b40-366fb803ed19}</Fb_init>
+    <Fb_exit>{56e1522a-4643-423a-a270-0c712788c4f7}</Fb_exit>
+    <CycleUpdate>{23557b57-7f16-4525-aa9e-65a95c008ec9}</CycleUpdate>
+    <PostCycleUpdate>{3897e7ff-1ff4-40e3-83ac-902d51fe3e3d}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

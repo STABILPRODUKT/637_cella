@@ -1,0 +1,248 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="JOZSITENGELY" Id="{5042d693-ab4c-4da5-81d6-6b87cf261e23}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM JOZSITENGELY
+VAR
+	JozsiHome: MC_Home;
+	bJozsiHomeEnable: BOOL := FALSE;
+	bAxisBusy : BOOL := FALSE;
+	bAxisActive: BOOL := FALSE;
+	bAxisAborted: BOOL := FALSE;
+	bAxisError: BOOL := FALSE;
+	nAxisErrorID: UDINT;
+	bAxisStopDone: BOOL := FALSE;
+	bJozsiHomeSwitch AT %I*: BOOL;
+	fbJozsiTengelyStop: MC_Stop;
+	fbJozsitengelyServo: MC_Power;
+	bJozsiPosSwitch : BOOL := TRUE;
+	bJozsiTengelySzabad : BOOL;
+	bOperational AT %I*: BOOL;
+	bNTC_OK AT %I*: BOOL;
+	bHomeReady : BOOL := FALSE;
+	nAxisStatus AT %I*: UINT;
+	bAxisReady : BOOL;
+	bAxisOn : BOOL;
+	
+	//HOME
+	bAxisHomeDone: BOOL;
+	bAxisHomeBusy: BOOL;
+	bAxisHomeActive: BOOL;
+	bAxisHomeAborted: BOOL;
+	bAxisHomeError: BOOL;
+	nAxisHomeErrorID: UDINT;
+	
+	//MOVE
+	bAxisMoveDone: BOOL;
+	bAxisMoveBusy: BOOL;
+	bAxisMoveActive: BOOL;
+	bAxisMoveAborted: BOOL;
+	bAxisMoveError: BOOL;
+	nAxisMoveErrorID: UDINT;
+	
+	//COMMAND
+	bAxisCommandDone: BOOL;
+	bAxisCommandBusy: BOOL;
+	bAxisCommandActive: BOOL;
+	bAxisCommandAborted: BOOL;
+	bAxisCommandError: BOOL;
+	nAxisCommandErrorID: UDINT;
+	
+	
+	fbJozsitengelyJOG: MC_Jog;
+	bJozsiJOGPlus : BOOL := FALSE;
+	bJozsiJOGMinus : BOOL := FALSE;
+	fbJozsitengelyReset: MC_Reset;
+	bJozsiReset: BOOL;
+	nJozsiErrorCode AT %I*: UDINT;
+	lrJozsiActPos AT %I*: LREAL;
+	fbJozsiMoveAbsolute: MC_MoveAbsolute;
+	
+	//Pozíciók
+//	lrSzervizbox : LREAL := -10;
+//	lrHajlitoPosition1 : LREAL := -401.510;
+//	lrHajlitoPosition2 : LREAL := -575.44;
+//	lrHegesztoPosition1 : LREAL := -789.1;
+//	lrHegesztoPosition2 : LREAL := -792.3;
+//	lrHegesztoPosition3 : LREAL := -795.1;
+//	lrHegesztoPosition4 : LREAL := -1109.913;
+//	lrHegesztoPosition5 : LREAL := -1101.15;
+//	lrSardisajatPosition1 : LREAL := -756;
+//	lrSardisajatPosition2 : LREAL := -738;
+	lrSardisajatPosition1 : LREAL := -656;
+	lrSardisajatPosition2 : LREAL := -638;
+	bJozsiTengelySzabad_TON: TON;
+END_VAR
+VAR_INPUT
+	lrJozsiPosition : LREAL := 0;
+	sJozsiAxisCommand: STRING := '';	
+END_VAR
+VAR_OUTPUT
+	n_OutErrId: UINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[bJozsiTengelySzabad := GVL.bPres1AlsoLent AND GVL.bPres1FelsoFent
+						AND GVL.bPres2FelsoFent AND GVL.bPres2AlsoLent
+						AND ((GVL.bHegeszto1BalFent AND GVL.bHegeszto1JobbFent) OR GVL.bHegesztofejTisztitas)
+						AND GVL.bHegeszto2FentBent AND GVL.bHegeszto2LentBent AND bOperational
+//						AND ((GVL.stRobotStatusz.rX>-100) 
+//								OR (GVL.stRobotStatusz.rY>350)
+//								OR (GVL.stRobotStatusz.rZ>-111))
+						AND f_RobotNTCTengelytolTavol()
+						AND (GVL.bFenysorompoNTC
+							OR (sJozsiAxisCommand='HOME')
+							OR (JOZSITENGELY.lrJozsiActPos>-10)
+							OR (JOZSITENGELY.lrJozsiActPos<-500))
+						AND NOT GVL.bBiztonsagiFold AND GVL.bBiztonsagiTap;
+bJozsiTengelySzabad_TON(IN:=bJozsiTengelySzabad, PT:=T#100MS);
+IF bJozsiTengelySzabad_TON.Q = FALSE THEN
+	IF MAIN.bLevegoOK=FALSE THEN
+		n_OutErrId := 5;
+	ELSIF GVL.bPres1AlsoLent=FALSE THEN
+		n_OutErrId := 149;
+	ELSIF GVL.bPres1FelsoFent=FALSE THEN
+		n_OutErrId := 147;
+	ELSIF GVL.bPres2FelsoFent=FALSE THEN
+		n_OutErrId := 163;
+	ELSIF GVL.bPres2AlsoLent=FALSE THEN
+		n_OutErrId := 167;
+	ELSIF GVL.bHegeszto1BalFent=FALSE THEN
+		n_OutErrId := 153;
+	ELSIF GVL.bHegeszto1JobbFent=FALSE THEN
+		n_OutErrId := 169;
+	ELSIF GVL.bHegeszto2FentBent=FALSE THEN
+		n_OutErrId := 119;
+	ELSIF GVL.bHegeszto2LentBent=FALSE THEN
+		n_OutErrId := 121;
+	ELSIF bOperational=FALSE THEN
+		n_OutErrId := 193;
+//	ELSIF NOT ((GVL.stRobotStatusz.rX>-100)
+//		OR (GVL.stRobotStatusz.rY>350)
+//		OR (GVL.stRobotStatusz.rZ>-111)) THEN
+	ELSIF NOT f_RobotNTCTengelytolTavol() THEN
+		n_OutErrId := 302;
+	ELSIF GVL.bFenysorompoNTC=FALSE THEN
+		n_OutErrId := 31;
+	ELSIF GVL.bBiztonsagiFold=TRUE THEN
+		n_OutErrId := 42;
+	ELSIF GVL.bBiztonsagiTap=FALSE THEN
+		n_OutErrId := 43;
+	END_IF
+ELSE
+	n_OutErrId := 0;
+END_IF
+bAxisReady:=nAxisStatus MOD 2 = 1;
+bAxisOn:=nAxisStatus/2 MOD 2 = 1;
+
+fbJozsiTengelyStop(
+	Axis:= GVL.axisJozsiTengely, 
+	Execute:= (NOT((GVL.bJozsiPosSwitch OR sJozsiAxisCommand='HOME') AND GVL.bJozsiNegSwitch AND bJozsiTengelySzabad_TON.Q)
+				OR (sJozsiAxisCommand='STOP')), 
+	Deceleration:= , 
+	Jerk:= , 
+	Options:= , 
+	Done=> bAxisStopDone, 
+	Busy=> bAxisBusy, 
+	Active=> bAxisActive, 
+	CommandAborted=> bAxisAborted, 
+	Error=> bAxisError, 
+	ErrorID=> nAxisErrorID);
+IF (sJozsiAxisCommand='STOP') AND bAxisStopDone AND NOT bAxisError THEN
+	sJozsiAxisCommand := '';
+END_IF
+IF NOT(GVL.bJozsiPosSwitch OR sJozsiAxisCommand='HOME') OR NOT(GVL.bJozsiNegSwitch) THEN
+	GVL.bJozsiServo := FALSE;
+	sJozsiAxisCommand:='';
+END_IF
+fbJozsitengelyServo(
+	Axis:= GVL.axisJozsiTengely, 
+	Enable:= GVL.bJozsiServo, 
+	Enable_Positive:= (GVL.bJozsiPosSwitch OR sJozsiAxisCommand='HOME'), 
+	Enable_Negative:= GVL.bJozsiNegSwitch, 
+	Override:= 100, 
+	BufferMode:= , 
+	Options:= , 
+	Status=> , 
+	Busy=> , 
+	Active=> , 
+	Error=> , 
+	ErrorID=> );
+	
+	//Home
+JozsiHome(
+	Axis:= GVL.axisJozsiTengely, 
+	Execute:= sJozsiAxisCommand='HOME' AND bJozsiTengelySzabad_TON.Q, 
+	Position:= DEFAULT_HOME_POSITION, 
+	HomingMode:= MC_DefaultHoming, 
+	BufferMode:= , 
+	Options:= , 
+	bCalibrationCam:= NOT(bJozsiHomeSwitch), 
+	Done=> bAxisHomeDone, 
+	Busy=> bAxisHomeBusy, 
+	Active=> bAxisHomeActive, 
+	CommandAborted=> bAxisHomeAborted, 
+	Error=> bAxisHomeError, 
+	ErrorID=> nAxisHomeErrorID);
+	//Lefutás ellenőrzése
+IF (bAxisHomeDone AND NOT(bAxisHomeBusy OR bAxisHomeActive OR bAxisHomeAborted OR bAxisHomeError)) THEN
+	lrJozsiPosition:=GVL.lrNTCSzervizbox;
+	sJozsiAxisCommand := 'MOVE';
+	bHomeReady:=TRUE;
+END_IF
+	
+	//Move
+fbJozsiMoveAbsolute(
+	Axis:= GVL.axisJozsiTengely, 
+	Execute:= sJozsiAxisCommand='MOVE' AND bJozsiTengelySzabad_TON.Q AND bHomeReady, 
+	Position:= lrJozsiPosition, // -1115...0
+	Velocity:= 1000, 
+	Acceleration:= 0, 
+	Deceleration:= 0, 
+	Jerk:= 0, 
+	BufferMode:= , 
+	Options:= , 
+	Done=> bAxisMoveDone, 
+	Busy=> bAxisMoveBusy, 
+	Active=> bAxisMoveActive, 
+	CommandAborted=> bAxisMoveAborted, 
+	Error=> bAxisMoveError, 
+	ErrorID=> nAxisMoveErrorID);
+	//Lefutás ellenőrzése
+IF (bAxisMoveDone AND NOT(bAxisMoveBusy OR bAxisMoveActive OR bAxisMoveAborted OR bAxisMoveError)) THEN
+	sJozsiAxisCommand := '';
+END_IF
+	
+	//JOG
+	fbJozsitengelyJOG(
+	Axis:= GVL.axisJozsiTengely, 
+	JogForward:= bJozsiJOGPlus AND bJozsiTengelySzabad_TON.Q, 
+	JogBackwards:= bJozsiJOGMinus AND bJozsiTengelySzabad_TON.Q, 
+	Mode:= MC_JOGMODE_STANDARD_SLOW, 
+	Position:= , 
+	Velocity:= 100, 
+	Acceleration:= 0, 
+	Deceleration:= 0, 
+	Jerk:= 0, 
+	Done=> bAxisCommandDone, 
+	Busy=> bAxisCommandBusy, 
+	Active=> bAxisCommandActive, 
+	CommandAborted=> bAxisCommandAborted, 
+	Error=> bAxisCommandError, 
+	ErrorID=> nAxisCommandErrorID);
+	
+	//RESET ERROR
+	fbJozsitengelyReset(
+	Axis:= GVL.axisJozsiTengely, 
+	Execute:= bJozsiReset, 
+	Done=> bAxisCommandDone, 
+	Busy=> bAxisCommandBusy, 
+	Error=> bAxisCommandError, 
+	ErrorID=> nAxisCommandErrorID);
+	
+	//Ha nem szabad futtatni
+//	IF(NOT(bJozsiTengelySzabad)) THEN
+//		sJozsiAxisCommand:='!INTERRUPTED';
+//	END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

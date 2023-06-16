@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <Task Name="Jozsitengely_task" Id="{0452bdb0-39a7-486e-bcae-e017c2511efa}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>14</Priority>
+    <PouCall>
+      <Name>JOZSITENGELY</Name>
+    </PouCall>
+    <TaskFBGuid>{a36becdc-e304-44fa-8620-2bf0e1297f8b}</TaskFBGuid>
+    <Fb_init>{4bf605f1-4dda-47b0-8877-10e2142f7b30}</Fb_init>
+    <Fb_exit>{3b0c61b1-905b-45ce-8d3f-c3f1c936f4be}</Fb_exit>
+    <CycleUpdate>{626300b1-43af-4b97-8603-a1443aff60d2}</CycleUpdate>
+    <PostCycleUpdate>{4d2131fb-6a96-4bc4-a42b-b704f17cfa64}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_E_Tengely" Id="{2855df40-0d6d-46eb-82fb-10438546552e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_E_Tengely : DINT
+VAR_INPUT
+	s_Command : STRING := '';
+	s_Param1 : STRING := '';
+	s_Param2 : STRING := '';
+	s_Param3 : STRING := '';
+	s_Param4 : STRING := '';
+	s_Param5 : STRING := '';
+END_VAR
+VAR
+	b_TypeFound : BOOL := FALSE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF JOZSITENGELY.sJozsiAxisCommand = '' THEN
+	JOZSITENGELY.sJozsiAxisCommand := s_Param1;
+	JOZSITENGELY.lrJozsiPosition := STRING_TO_LREAL(s_Param2);
+ELSE
+	f_E_Tengely := -100;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

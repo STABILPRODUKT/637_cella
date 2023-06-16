@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+  <POU Name="f_GetPtNomR" Id="{3a30a4ae-1496-43ef-bea0-a9ae41b9825c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION f_GetPtNomR : real
+VAR_INPUT
+	rTemp: REAL := 25;
+END_VAR
+VAR
+	nI: INT;
+	rT0, rT1, rR0, rR1, rM: REAL;
+END_VAR
+VAR CONSTANT
+	Pt_MinRT: ARRAY[0..1, 0..15] OF REAL := 
+	[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,
+	990,1067,1143,1219,1294,1368,1442,1516,1588,1661,1733,1804,1875,1945,2015,2084];
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[nI:=1;
+WHILE (Pt_MinRT[0,nI]<rTemp) AND (nI<15) DO
+	nI:=nI+1;
+END_WHILE
+rT0:=Pt_MinRT[0,nI-1];
+rT1:=Pt_MinRT[0,nI];
+rR0:=Pt_MinRT[1,nI-1];
+rR1:=Pt_MinRT[1,nI];
+rM:=(rR1-rR0)/(rT1-rT0);
+f_GetPtMinR:=rR0+rM*(rTemp-rT0);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

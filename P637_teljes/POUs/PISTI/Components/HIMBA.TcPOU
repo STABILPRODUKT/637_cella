@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.12">
+  <POU Name="HIMBA" Id="{0ba249c0-14b0-4fa5-89dd-e16f64c51883}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM HIMBA
+VAR_INPUT
+	s_InCommand : STRING := '';
+	s_InCommandParam1 : STRING := '';
+	s_InCommandParam2 : STRING := '';
+	s_InCommandParam3 : STRING := '';
+	s_InCommandParam4 : STRING := '';
+	s_InCommandParam5 : STRING := '';
+END_VAR
+VAR_OUTPUT
+	n_OutErrId: UINT;
+END_VAR
+VAR
+	bHimba_hatul AT %I*: BOOL; //6
+	bHimba_elol AT %I*: BOOL; //7
+	bHimba_szenzor AT %I*: BOOL; //Bemenetek2 10
+	bHimba AT %Q*: BOOL := 0; //Szelep11
+	iState: INT;
+	WAIT: TON;
+	bStartWait: BOOL := FALSE;
+	bIdoLejart: BOOL := FALSE;
+	tDelay: TIME := T#2000MS;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF (iState=0) AND (HIMBA.s_InCommand='START') THEN
+	iState:=1;
+ELSIF (iState<20) AND (HIMBA.s_InCommand='RESET') THEN
+	iState:=20;
+END_IF
+
+	IF iState<>0 THEN
+		CASE iState OF
+		// Himba kitolása
+		1:	GVL.bHimbaOK:=FALSE;
+			HIMBA.bHimba:=TRUE;
+			iState:=2;
+		// Ha megérkezett a Himba, várunk a megnyugvásra
+		2:	IF (HIMBA.bHimba_elol=TRUE) AND (HIMBA.bHimba_hatul=FALSE) THEN
+				tDelay:=T#600MS;
+				bStartWait:=TRUE;
+				n_OutErrId:=0;
+				iState:=3;
+			ELSE
+				n_OutErrId:=338;
+			END_IF
+		// Ha lejárt a várakozási idő kiértékeljük az érzékelő jelét
+		3:	IF (bIdoLejart=TRUE) THEN
+				bStartWait:=FALSE;
+				IF (HIMBA.bHimba_szenzor=TRUE) THEN
+					GVL.bHimbaOK:=TRUE;
+				ELSE
+					GVL.bHimbaOK:=FALSE;
+				END_IF
+				iState:=4;
+			END_IF
+		// Himba visszahúzása
+		4:	HIMBA.bHimba:=FALSE;
+			iState:=5;
+		// Ha visszatért a himba, várunk a megnyugvásra
+		5: IF (HIMBA.bHimba_hatul=TRUE) AND (HIMBA.bHimba_elol=FALSE) THEN
+				tDelay:=T#300MS;
+				bStartWait:=TRUE;
+				n_OutErrId:=0;
+				iState:=6;
+			ELSE
+				n_OutErrId:=339;
+			END_IF
+		// Ha lejárt az idő, vége a folyamatnak
+		6:	IF (bIdoLejart=TRUE) THEN
+				bStartWait:=FALSE;
+				iState:=0;
+				HIMBA.s_InCommand:='';
+			END_IF
+
+		// Reset: húzza vissza a himbát!
+		20:	bStartWait:=FALSE;
+			GVL.bHimbaOK:=FALSE;
+			HIMBA.bHimba:=FALSE;
+			iState:=21;				
+		// Ha visszatért a himba, várunk a megnyugvásra
+		21:	IF (HIMBA.bHimba_hatul=TRUE) AND (HIMBA.bHimba_elol=FALSE) THEN
+				tDelay:=T#300MS;
+				bStartWait:=TRUE;
+				n_OutErrId:=0;
+				iState:=22;
+			ELSE
+				n_OutErrId:=339;
+			END_IF
+		// Ha lejárt az idő, vége a folyamatnak
+		22:	IF (bIdoLejart=TRUE) THEN
+				bStartWait:=FALSE;
+				iState:=0;
+				HIMBA.s_InCommand:='';
+			END_IF
+		END_CASE
+	END_IF	
+
+WAIT(IN:=bStartWait,PT:=tDelay,Q=>bIdoLejart,ET=>);]]></ST>
+    </Implementation>
+    <LineIds Name="HIMBA">
+      <LineId Id="3" Count="0" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="5" Count="2" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="480" Count="2" />
+      <LineId Id="709" Count="0" />
+      <LineId Id="483" Count="8" />
+      <LineId Id="495" Count="0" />
+      <LineId Id="497" Count="0" />
+      <LineId Id="499" Count="0" />
+      <LineId Id="636" Count="0" />
+      <LineId Id="639" Count="0" />
+      <LineId Id="664" Count="1" />
+      <LineId Id="667" Count="1" />
+      <LineId Id="509" Count="0" />
+      <LineId Id="734" Count="0" />
+      <LineId Id="635" Count="0" />
+      <LineId Id="519" Count="0" />
+      <LineId Id="670" Count="0" />
+      <LineId Id="657" Count="0" />
+      <LineId Id="537" Count="0" />
+      <LineId Id="673" Count="6" />
+      <LineId Id="689" Count="0" />
+      <LineId Id="671" Count="0" />
+      <LineId Id="538" Count="0" />
+      <LineId Id="680" Count="0" />
+      <LineId Id="688" Count="0" />
+      <LineId Id="686" Count="0" />
+      <LineId Id="543" Count="0" />
+      <LineId Id="573" Count="1" />
+      <LineId Id="710" Count="0" />
+      <LineId Id="575" Count="0" />
+      <LineId Id="577" Count="2" />
+      <LineId Id="691" Count="6" />
+      <LineId Id="597" Count="1" />
+      <LineId Id="704" Count="3" />
+      <LineId Id="608" Count="1" />
+      <LineId Id="479" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
