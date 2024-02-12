@@ -667,9 +667,21 @@ navigálnak:"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"4888"</v>
+              <v n="TextDefault">"Csatlakozó
+fedél csukva"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"491"</v>
               <v n="TextDefault">"Csatlakozó
 fedél nyitva"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"6459"</v>
+              <v n="TextDefault">"Csatlakozó
+fedél zárva"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>

@@ -80,7 +80,7 @@
                     </o>
                     <o>
                       <v n="Id">743958181L</v>
-                      <v n="Value">"GVL.bFedelOK"</v>
+                      <v n="Value">"VEGMERO.bFedelNyitva"</v>
                     </o>
                     <o>
                       <v n="Id">3719097617L</v>
@@ -167,7 +167,7 @@
                     <o>
                       <v n="Id">390574330L</v>
                       <v n="Value">"Csatlakozó
-fedél nyitva"</v>
+fedél zárva"</v>
                     </o>
                     <o>
                       <v n="Id">3729828405L</v>
@@ -214,7 +214,7 @@ fedél nyitva"</v>
                     </o>
                     <o>
                       <v n="Id">823443203L</v>
-                      <v n="Value">"491"</v>
+                      <v n="Value">"6459"</v>
                     </o>
                   </l>
                 </o>
@@ -2034,10 +2034,10 @@ fedél nyitva"</v>
                                     <v>TL_ElementProperties.Points</v>
                                     <v>DescriptionUseFromParent</v>
                                     <v></v>
-                                    <v>''NORMAL__COMMENT</v>
-                                    <v> There is no more information than the parent provides</v>
                                     <v>DefaultArraySize</v>
                                     <v>500</v>
+                                    <v>''NORMAL__COMMENT</v>
+                                    <v> There is no more information than the parent provides</v>
                                   </d>
                                   <v n="ConvDone">true</v>
                                 </o>
@@ -2090,6 +2090,8 @@ fedél nyitva"</v>
                             <o n="TypeNodeAttributes" t="TypeNodeAttributes2">
                               <v n="AttrFlags">81920UL</v>
                               <d n="TypeNodeAttributesData" t="CaseInsensitiveHashtable" ckt="String" cvt="String">
+                                <v>PolygonPoints</v>
+                                <v></v>
                                 <v>DescriptionTextId</v>
                                 <v>TL_ElementProperties.Desc_StaticLinePos</v>
                                 <v>DisplayTextId</v>
@@ -2104,8 +2106,6 @@ fedél nyitva"</v>
                                 <v>visu_elemdev</v>
                                 <v>Storable</v>
                                 <v>True</v>
-                                <v>PolygonPoints</v>
-                                <v></v>
                               </d>
                               <v n="ConvDone">true</v>
                             </o>
@@ -4473,16 +4473,16 @@ mérötük lent"</v>
                                             <v></v>
                                             <v>DisplayTextId</v>
                                             <v>TL_ElementProperties.Heading</v>
-                                            <v>ieccodeconversion_character_array</v>
+                                            <v>Visu_TypeString</v>
                                             <v></v>
-                                            <v>AllocateText</v>
+                                            <v>ieccodeconversion_character_array</v>
                                             <v></v>
                                             <v>''DOCU__COMMENT</v>
                                             <v> The text, the user entered resp. can modify. Therefore this is the
  only visible member of the structure</v>
                                             <v>DirectlyAssignable</v>
                                             <v></v>
-                                            <v>Visu_TypeString</v>
+                                            <v>AllocateText</v>
                                             <v></v>
                                             <v>ieccodeconversion_gettersetter_norecursion</v>
                                             <v></v>
@@ -4674,16 +4674,16 @@ mérötük lent"</v>
                                             <v></v>
                                             <v>DisplayTextId</v>
                                             <v>TL_ElementProperties.Heading</v>
-                                            <v>ieccodeconversion_character_array</v>
+                                            <v>Visu_TypeString</v>
                                             <v></v>
-                                            <v>AllocateText</v>
+                                            <v>ieccodeconversion_character_array</v>
                                             <v></v>
                                             <v>''DOCU__COMMENT</v>
                                             <v> The text, the user entered resp. can modify. Therefore this is the
  only visible member of the structure</v>
                                             <v>DirectlyAssignable</v>
                                             <v></v>
-                                            <v>Visu_TypeString</v>
+                                            <v>AllocateText</v>
                                             <v></v>
                                             <v>ieccodeconversion_gettersetter_norecursion</v>
                                             <v></v>
@@ -4851,12 +4851,12 @@ mérötük lent"</v>
                               <d n="TypeNodeAttributesData" t="CaseInsensitiveHashtable" ckt="String" cvt="String">
                                 <v>Visible</v>
                                 <v>False</v>
-                                <v>DefaultArraySize</v>
-                                <v>5</v>
-                                <v>VisibleChildren</v>
-                                <v>True</v>
                                 <v>ieccodeconversion_array</v>
                                 <v></v>
+                                <v>VisibleChildren</v>
+                                <v>True</v>
+                                <v>DefaultArraySize</v>
+                                <v>5</v>
                                 <v>''NORMAL__COMMENT</v>
                                 <v> We hide this node to prevent having two References nodes
  Nevertheless we want to make sure that the children are displayed</v>
@@ -4912,8 +4912,8 @@ mérötük lent"</v>
                         <o n="TypeNodeAttributes" t="TypeNodeAttributes2">
                           <v n="AttrFlags">81920UL</v>
                           <d n="TypeNodeAttributesData" t="CaseInsensitiveHashtable" ckt="String" cvt="String">
-                            <v>DisplayFrameReferencesConfiguration</v>
-                            <v></v>
+                            <v>conditionalshow</v>
+                            <v>visu_elemdev</v>
                             <v>DescriptionTextId</v>
                             <v>TL_ElementProperties.Desc_ReferencedVisus</v>
                             <v>SortFlag</v>
@@ -4924,14 +4924,14 @@ mérötük lent"</v>
                             <v>Simple|Standard</v>
                             <v>DynamicArray</v>
                             <v></v>
-                            <v>conditionalshow</v>
-                            <v>visu_elemdev</v>
+                            <v>DisplayFrameReferencesConfiguration</v>
+                            <v></v>
                             <v>FrameReferences</v>
                             <v></v>
-                            <v>DisplayTextId</v>
-                            <v>TL_ElementProperties.References</v>
                             <v>Storable</v>
                             <v>True</v>
+                            <v>DisplayTextId</v>
+                            <v>TL_ElementProperties.References</v>
                           </d>
                           <v n="ConvDone">true</v>
                         </o>
@@ -5015,16 +5015,16 @@ mérötük lent"</v>
                                       <v></v>
                                       <v>DisplayTextId</v>
                                       <v>TL_ElementProperties.Heading</v>
-                                      <v>ieccodeconversion_character_array</v>
+                                      <v>Visu_TypeString</v>
                                       <v></v>
-                                      <v>AllocateText</v>
+                                      <v>ieccodeconversion_character_array</v>
                                       <v></v>
                                       <v>''DOCU__COMMENT</v>
                                       <v> The text, the user entered resp. can modify. Therefore this is the
  only visible member of the structure</v>
                                       <v>DirectlyAssignable</v>
                                       <v></v>
-                                      <v>Visu_TypeString</v>
+                                      <v>AllocateText</v>
                                       <v></v>
                                       <v>ieccodeconversion_gettersetter_norecursion</v>
                                       <v></v>
@@ -5184,16 +5184,16 @@ mérötük lent"</v>
                                         <v></v>
                                         <v>DisplayTextId</v>
                                         <v>TL_ElementProperties.Heading</v>
-                                        <v>ieccodeconversion_character_array</v>
+                                        <v>Visu_TypeString</v>
                                         <v></v>
-                                        <v>AllocateText</v>
+                                        <v>ieccodeconversion_character_array</v>
                                         <v></v>
                                         <v>''DOCU__COMMENT</v>
                                         <v> The text, the user entered resp. can modify. Therefore this is the
  only visible member of the structure</v>
                                         <v>DirectlyAssignable</v>
                                         <v></v>
-                                        <v>Visu_TypeString</v>
+                                        <v>AllocateText</v>
                                         <v></v>
                                         <v>ieccodeconversion_gettersetter_norecursion</v>
                                         <v></v>
@@ -5354,16 +5354,16 @@ mérötük lent"</v>
                                         <v></v>
                                         <v>DisplayTextId</v>
                                         <v>TL_ElementProperties.Heading</v>
-                                        <v>ieccodeconversion_character_array</v>
+                                        <v>Visu_TypeString</v>
                                         <v></v>
-                                        <v>AllocateText</v>
+                                        <v>ieccodeconversion_character_array</v>
                                         <v></v>
                                         <v>''DOCU__COMMENT</v>
                                         <v> The text, the user entered resp. can modify. Therefore this is the
  only visible member of the structure</v>
                                         <v>DirectlyAssignable</v>
                                         <v></v>
-                                        <v>Visu_TypeString</v>
+                                        <v>AllocateText</v>
                                         <v></v>
                                         <v>ieccodeconversion_gettersetter_norecursion</v>
                                         <v></v>
@@ -5700,16 +5700,16 @@ mérötük lent"</v>
                                     <v></v>
                                     <v>DisplayTextId</v>
                                     <v>TL_ElementProperties.Heading</v>
-                                    <v>ieccodeconversion_character_array</v>
+                                    <v>Visu_TypeString</v>
                                     <v></v>
-                                    <v>AllocateText</v>
+                                    <v>ieccodeconversion_character_array</v>
                                     <v></v>
                                     <v>''DOCU__COMMENT</v>
                                     <v> The text, the user entered resp. can modify. Therefore this is the
  only visible member of the structure</v>
                                     <v>DirectlyAssignable</v>
                                     <v></v>
-                                    <v>Visu_TypeString</v>
+                                    <v>AllocateText</v>
                                     <v></v>
                                     <v>ieccodeconversion_gettersetter_norecursion</v>
                                     <v></v>
@@ -5904,16 +5904,16 @@ mérötük lent"</v>
                                     <v></v>
                                     <v>DisplayTextId</v>
                                     <v>TL_ElementProperties.Heading</v>
-                                    <v>ieccodeconversion_character_array</v>
+                                    <v>Visu_TypeString</v>
                                     <v></v>
-                                    <v>AllocateText</v>
+                                    <v>ieccodeconversion_character_array</v>
                                     <v></v>
                                     <v>''DOCU__COMMENT</v>
                                     <v> The text, the user entered resp. can modify. Therefore this is the
  only visible member of the structure</v>
                                     <v>DirectlyAssignable</v>
                                     <v></v>
-                                    <v>Visu_TypeString</v>
+                                    <v>AllocateText</v>
                                     <v></v>
                                     <v>ieccodeconversion_gettersetter_norecursion</v>
                                     <v></v>
@@ -8323,16 +8323,18 @@ tiltása"</v>
           <o n="GeneratedLMMDescriptions" t="GeneratedLanguageModelEntriesData">
             <o n="GeneratedVisuFbDescription" t="GenericFbDescription">
               <d n="FbMethods" t="CaseInsensitiveHashtable_1" ckt="String" cvt="Guid">
-                <v>GetUpdateRects</v>
-                <v>47b9b6f9-9f61-4dda-abc9-766ca6ef84cb</v>
+                <v>HasVisibilityAccess</v>
+                <v>955e75b5-9713-413d-b07f-c0f9cb29a243</v>
                 <v>ContainsPoint</v>
                 <v>6609936c-d579-4987-8829-b3bc172a989b</v>
-                <v>SetStaticState</v>
-                <v>33f4608b-1292-450e-a55b-bc6e6aef27f2</v>
+                <v>HasInputAccess</v>
+                <v>41c32052-64c6-4612-8f7c-989861dcdc12</v>
                 <v>HasInputAccessIntern</v>
                 <v>d5fcacf9-3241-5e5c-8907-4b0967df0614</v>
                 <v>GetTooltip</v>
                 <v>4838da5d-0003-4293-a3ca-5a740ee5b76e</v>
+                <v>GetUpdateRects</v>
+                <v>47b9b6f9-9f61-4dda-abc9-766ca6ef84cb</v>
                 <v>GetNamespace</v>
                 <v>46123687-51ab-4bab-8241-88cae81e615e</v>
                 <v>GetTranslator</v>
@@ -8345,8 +8347,6 @@ tiltása"</v>
                 <v>66828fb6-d50b-4f32-9026-28d397786806</v>
                 <v>Paint</v>
                 <v>8866af5c-fe09-4934-8178-1cde7851375a</v>
-                <v>HasVisibilityAccess</v>
-                <v>955e75b5-9713-413d-b07f-c0f9cb29a243</v>
                 <v>GetElementArray</v>
                 <v>e23e2eb8-ffb2-46d4-bdba-4b876725ad2e</v>
                 <v>SetVisuFlagsInternal</v>
@@ -8359,14 +8359,14 @@ tiltása"</v>
                 <v>236ec3fe-1f88-4009-a7e1-cec0761d4c02</v>
                 <v>Initialize</v>
                 <v>3e167890-beaa-410d-a101-42e429246b6d</v>
-                <v>HasInputAccess</v>
-                <v>41c32052-64c6-4612-8f7c-989861dcdc12</v>
                 <v>HasVisibilityAccessIntern</v>
                 <v>bad8d202-db61-5f86-95cc-70f2633b2d3d</v>
                 <v>GetSurroundingRect</v>
                 <v>48c37a5e-5e29-470a-b890-3e9e5a46283c</v>
                 <v>ElementInfo</v>
                 <v>db29132b-584d-4621-9192-9913c4c84583</v>
+                <v>SetStaticState</v>
+                <v>33f4608b-1292-450e-a55b-bc6e6aef27f2</v>
                 <v>GetLocalUsergroup</v>
                 <v>644feeb2-4569-416a-852a-33d6a3df61d8</v>
                 <v>GetName</v>
@@ -8397,10 +8397,10 @@ tiltása"</v>
               <d n="FbMethods" t="CaseInsensitiveHashtable_1" ckt="String" cvt="Guid">
                 <v>FB_Init</v>
                 <v>b4285c83-c6a3-4b73-9573-e270e685ebb7</v>
-                <v>FB_Reinit</v>
-                <v>a70b92ab-ecb2-4935-9faf-b2d723a58828</v>
                 <v>FB_Exit</v>
                 <v>1022b1d0-b739-42f7-b88b-ae082cae2593</v>
+                <v>FB_Reinit</v>
+                <v>a70b92ab-ecb2-4935-9faf-b2d723a58828</v>
               </d>
               <v n="FbName">"NotImportant"</v>
               <v n="FbGuid">{4e808d49-11ef-434e-8985-37e56e0bddcb}</v>
@@ -8490,7 +8490,7 @@ tiltása"</v>
                 <v n="Height">585</v>
               </o>
             </d2>
-            <v n="Version">0</v>
+            <v n="Version">1</v>
           </o>
         </o>
       </Data>
