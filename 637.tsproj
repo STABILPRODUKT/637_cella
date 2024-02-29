@@ -2558,7 +2558,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{A200721C-C6D1-4ED6-BB06-14A0BBB567A3}" Name="P637_teljes" PrjFilePath="P637_teljes\P637_teljes.plcProj" TmcFilePath="P637_teljes\P637_teljes.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="P637_teljes\P637_teljes.tmc" TmcHash="{222A2407-0065-9926-86F7-4F150A1ED3DB}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="P637_teljes\P637_teljes.tmc" TmcHash="{07DD9127-E75E-C283-B28E-55848CCCADF4}">
 					<Name>P637_teljes Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
@@ -2709,11 +2709,6 @@ External Setpoint Generation:
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>VEGMERO.bFedelNyitva</Name>
-							<Comment><![CDATA[FedelLecsukásÉrzékelő]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>VEGMERO.U12V</Name>
 							<Type>INT</Type>
 						</Var>
@@ -2744,6 +2739,11 @@ External Setpoint Generation:
 						<Var>
 							<Name>VEGMERO.U48V</Name>
 							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>VEGMERO.bFedelNyitva</Name>
+							<Comment><![CDATA[FedelLecsukásÉrzékelő]]></Comment>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>VEGMERO.iHorzekelo</Name>
@@ -3127,16 +3127,16 @@ External Setpoint Generation:
 							<Type>LREAL</Type>
 						</Var>
 						<Var>
-							<Name>GVL.axisPistiTengely.NcToPlc</Name>
-							<Type GUID="{10036166-C9D3-404B-BDD3-323034AAA7F4}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
-						</Var>
-						<Var>
 							<Name>GVL.bPistiPosSwitch</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>GVL.bPistiNegSwitch</Name>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>GVL.axisPistiTengely.NcToPlc</Name>
+							<Type GUID="{10036166-C9D3-404B-BDD3-323034AAA7F4}" Namespace="MC">NCTOPLC_AXIS_REF</Type>
 						</Var>
 					</Vars>
 					<Vars VarGrpType="2" ContextId="2" AreaNo="33">

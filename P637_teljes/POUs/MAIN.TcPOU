@@ -92,15 +92,30 @@ VAR
 	
 	F_TRIG_BiztZar: F_TRIG;
 	TON_Biztzar: TON;
+	TON_Biztzar_Start: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[IF bZoliGomb=TRUE THEN
+      <ST><![CDATA[GVL.fbWritePersistentData(
+						NETID:='10.0.0.31.1.1',
+						PORT:=851,
+						START:=GVL.bStart_WrPer,
+						TMOUT:=T#1S,
+						BUSY=>GVL.bBusy_WrPer,
+						ERR=>GVL.bError_WrPer);
+
+
+IF (NOT GVL.bBusy_WrPer OR GVL.bError_WrPer) AND GVL.bStart_WrPer THEN
+	GVL.bStart_WrPer:=FALSE;
+END_IF
+
+
+IF bZoliGomb=TRUE THEN
 	bZoliSzelep := TRUE;
 ELSE
 	bZoliSzelep := FALSE;
 END_IF
 
-//TON_Biztzar(IN:=GVL.bBiztonsagiZarGomb, PT:=T#200MS);
+TON_Biztzar(IN:=TON_Biztzar_Start, PT:=T#200MS);
 R_TRIG_BiztZar(CLK:=GVL.bBiztonsagiZarGomb);
 F_TRIG_BiztZar(CLK:=GVL.bBiztonsagiZarGomb);
 
@@ -119,9 +134,16 @@ IF R_TRIG_BiztZar.Q THEN
 //		;
 //	END_WHILE
 	GVL.bBiztonsagiZarBe:=TRUE;
+	TON_Biztzar_Start:=TRUE;
+//	ROBOTREMOTE.sRobotCommand := 'Continue';
+//	ROBOTREMOTE.bRobotCommandSend := TRUE;
+END_IF
+IF TON_Biztzar.Q THEN
 	ROBOTREMOTE.sRobotCommand := 'Continue';
 	ROBOTREMOTE.bRobotCommandSend := TRUE;
+	TON_Biztzar_Start:=FALSE;
 END_IF
+
 
 CASE iState OF
 	2:	// Alkatrészváltozás figyelése
@@ -1046,23 +1068,5 @@ SettingsClose(
 		);
 ]]></ST>
     </Implementation>
-    <LineIds Name="MAIN">
-      <LineId Id="3" Count="4" />
-      <LineId Id="1488" Count="0" />
-      <LineId Id="1388" Count="0" />
-      <LineId Id="1019" Count="0" />
-      <LineId Id="1490" Count="0" />
-      <LineId Id="1387" Count="0" />
-      <LineId Id="1020" Count="5" />
-      <LineId Id="1491" Count="0" />
-      <LineId Id="1583" Count="0" />
-      <LineId Id="1391" Count="0" />
-      <LineId Id="1393" Count="0" />
-      <LineId Id="1026" Count="3" />
-      <LineId Id="1489" Count="0" />
-      <LineId Id="1030" Count="1" />
-      <LineId Id="8" Count="922" />
-      <LineId Id="2" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>

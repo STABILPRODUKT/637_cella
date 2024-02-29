@@ -1119,6 +1119,47 @@ IF iState<>0 THEN
 				END_IF
 				bStartWatchDog:=FALSE;
 				iState:=0;
+				//Visszaállnak a funkciók
+				IF NOT(GVL.iSelectedProductType=8) THEN
+					GVL.bKameraBe := TRUE;
+					GVL.bHajlitasBe := TRUE;
+					GVL.bHegesztes1Be := TRUE;
+					GVL.bHegesztes2Be := TRUE;
+					GVL.bHegesztes3Be := TRUE;
+					GVL.bHegesztes4Be := TRUE;
+					GVL.bHegesztes5Be := TRUE;
+					GVL.bKameraVegBe := FALSE;
+					GVL.bHegesztes6Be := TRUE;
+					GVL.bHegesztes7Be := TRUE;
+					GVL.bPtKameraBe := TRUE;
+					GVL.bRobotKappeBe := FALSE;
+					GVL.bKappeBe := TRUE;
+					GVL.bMeresBe := TRUE;
+					IF (GVL.iSelectedProductType>8) THEN
+						GVL.bHimbaBe := TRUE;
+					ELSE
+						GVL.bHimbaBe := FALSE;
+					END_IF
+					GVL.bJelolesBe := TRUE;	
+
+				ELSIF GVL.iSelectedProductType=8 THEN
+					GVL.bKameraBe := FALSE;
+					GVL.bHajlitasBe := FALSE;
+					GVL.bHegesztes1Be := FALSE;
+					GVL.bHegesztes2Be := FALSE;
+					GVL.bHegesztes3Be := FALSE;
+					GVL.bHegesztes4Be := FALSE;
+					GVL.bHegesztes5Be := FALSE;
+					GVL.bKameraVegBe := FALSE;
+					GVL.bHegesztes6Be := FALSE;
+					GVL.bHegesztes7Be := FALSE;
+					GVL.bPtKameraBe := FALSE;
+					GVL.bRobotKappeBe := FALSE;
+					GVL.bKappeBe := FALSE;
+					GVL.bMeresBe := FALSE;
+					GVL.bHimbaBe := FALSE;
+					GVL.bJelolesBe := TRUE;	
+				END_IF
 			ELSE
 				GVL.nHibaKodNTC:=308;
 				bStartWatchDog:=TRUE;
@@ -1128,14 +1169,51 @@ IF iState<>0 THEN
 		// Szervizboxhoz
 		100:JOZSITENGELY.lrJozsiPosition:=GVL.lrNTCSzervizbox;
 			JOZSITENGELY.sJozsiAxisCommand:='MOVE';
-			IF NOT GVL.bNTCInditasFenysorompoval THEN
-				iState:=101;
-			ELSE
-				iState:=101;
-			END_IF
+			iState:=101;
 		101: IF JOZSITENGELY.sJozsiAxisCommand='' THEN
 				IF NOT GVL.bNTCInditasFenysorompoval THEN
 					iState:=0;
+					//Visszaállnak a funkciók
+					IF NOT(GVL.iSelectedProductType=8) THEN
+						GVL.bKameraBe := TRUE;
+						GVL.bHajlitasBe := TRUE;
+						GVL.bHegesztes1Be := TRUE;
+						GVL.bHegesztes2Be := TRUE;
+						GVL.bHegesztes3Be := TRUE;
+						GVL.bHegesztes4Be := TRUE;
+						GVL.bHegesztes5Be := TRUE;
+						GVL.bKameraVegBe := FALSE;
+						GVL.bHegesztes6Be := TRUE;
+						GVL.bHegesztes7Be := TRUE;
+						GVL.bPtKameraBe := TRUE;
+						GVL.bRobotKappeBe := FALSE;
+						GVL.bKappeBe := TRUE;
+						GVL.bMeresBe := TRUE;
+						IF (GVL.iSelectedProductType>8) THEN
+							GVL.bHimbaBe := TRUE;
+						ELSE
+							GVL.bHimbaBe := FALSE;
+						END_IF
+						GVL.bJelolesBe := TRUE;	
+	
+					ELSIF GVL.iSelectedProductType=8 THEN
+						GVL.bKameraBe := FALSE;
+						GVL.bHajlitasBe := FALSE;
+						GVL.bHegesztes1Be := FALSE;
+						GVL.bHegesztes2Be := FALSE;
+						GVL.bHegesztes3Be := FALSE;
+						GVL.bHegesztes4Be := FALSE;
+						GVL.bHegesztes5Be := FALSE;
+						GVL.bKameraVegBe := FALSE;
+						GVL.bHegesztes6Be := FALSE;
+						GVL.bHegesztes7Be := FALSE;
+						GVL.bPtKameraBe := FALSE;
+						GVL.bRobotKappeBe := FALSE;
+						GVL.bKappeBe := FALSE;
+						GVL.bMeresBe := FALSE;
+						GVL.bHimbaBe := FALSE;
+						GVL.bJelolesBe := TRUE;	
+					END_IF
 					sStart1GombFelirat:='START';
 					sStop1GombFelirat:='Szervízboxhoz';
 					bStart1GombTiltva:=FALSE;
@@ -1152,12 +1230,53 @@ IF iState<>0 THEN
 		102: IF GVL.bNTCAdapterErzekelo=FALSE THEN
 				iState:=103;
 				bStartWait:=TRUE;
-				tWaitTime:=T#3000MS;
+				tWaitTime:=T#1000MS;
 			 END_IF;
 		// Várakozás az adapter kivétele után
 		103: IF bIdoLejart=TRUE THEN
 				bStartWait:=FALSE;
 				iState:=0;
+				//Visszaállnak a funkciók
+				IF NOT(GVL.iSelectedProductType=8) THEN
+					GVL.bKameraBe := TRUE;
+					GVL.bHajlitasBe := TRUE;
+					GVL.bHegesztes1Be := TRUE;
+					GVL.bHegesztes2Be := TRUE;
+					GVL.bHegesztes3Be := TRUE;
+					GVL.bHegesztes4Be := TRUE;
+					GVL.bHegesztes5Be := TRUE;
+					GVL.bKameraVegBe := FALSE;
+					GVL.bHegesztes6Be := TRUE;
+					GVL.bHegesztes7Be := TRUE;
+					GVL.bPtKameraBe := TRUE;
+					GVL.bRobotKappeBe := FALSE;
+					GVL.bKappeBe := TRUE;
+					GVL.bMeresBe := TRUE;
+					IF (GVL.iSelectedProductType>8) THEN
+						GVL.bHimbaBe := TRUE;
+					ELSE
+						GVL.bHimbaBe := FALSE;
+					END_IF
+					GVL.bJelolesBe := TRUE;	
+
+				ELSIF GVL.iSelectedProductType=8 THEN
+					GVL.bKameraBe := FALSE;
+					GVL.bHajlitasBe := FALSE;
+					GVL.bHegesztes1Be := FALSE;
+					GVL.bHegesztes2Be := FALSE;
+					GVL.bHegesztes3Be := FALSE;
+					GVL.bHegesztes4Be := FALSE;
+					GVL.bHegesztes5Be := FALSE;
+					GVL.bKameraVegBe := FALSE;
+					GVL.bHegesztes6Be := FALSE;
+					GVL.bHegesztes7Be := FALSE;
+					GVL.bPtKameraBe := FALSE;
+					GVL.bRobotKappeBe := FALSE;
+					GVL.bKappeBe := FALSE;
+					GVL.bMeresBe := FALSE;
+					GVL.bHimbaBe := FALSE;
+					GVL.bJelolesBe := TRUE;	
+				END_IF
 				sStart1GombFelirat:='START';
 				bStart1GombTiltva:=FALSE;
 				sStop1GombFelirat:='Szervízboxhoz';
@@ -2971,100 +3090,5 @@ END_IF
 WATCHDOG3(IN:=bStartWatchDog3,PT:=tTimeOut3,Q=>bTimeOut3,ET=>);
 ]]></ST>
     </Implementation>
-    <LineIds Name="AUTOMATA">
-      <LineId Id="10200" Count="55" />
-      <LineId Id="13506" Count="1" />
-      <LineId Id="10256" Count="4" />
-      <LineId Id="13141" Count="0" />
-      <LineId Id="10261" Count="2" />
-      <LineId Id="13142" Count="0" />
-      <LineId Id="10264" Count="4" />
-      <LineId Id="13514" Count="1" />
-      <LineId Id="13517" Count="1" />
-      <LineId Id="13516" Count="0" />
-      <LineId Id="13509" Count="0" />
-      <LineId Id="13512" Count="1" />
-      <LineId Id="13510" Count="1" />
-      <LineId Id="10269" Count="64" />
-      <LineId Id="10339" Count="0" />
-      <LineId Id="13041" Count="0" />
-      <LineId Id="13046" Count="0" />
-      <LineId Id="10340" Count="1" />
-      <LineId Id="13043" Count="0" />
-      <LineId Id="13039" Count="0" />
-      <LineId Id="13044" Count="1" />
-      <LineId Id="13040" Count="0" />
-      <LineId Id="13036" Count="0" />
-      <LineId Id="10345" Count="489" />
-      <LineId Id="13274" Count="0" />
-      <LineId Id="10835" Count="57" />
-      <LineId Id="13275" Count="0" />
-      <LineId Id="10893" Count="0" />
-      <LineId Id="13277" Count="0" />
-      <LineId Id="10894" Count="9" />
-      <LineId Id="13276" Count="0" />
-      <LineId Id="10904" Count="1" />
-      <LineId Id="13286" Count="2" />
-      <LineId Id="10906" Count="3" />
-      <LineId Id="13278" Count="0" />
-      <LineId Id="10910" Count="9" />
-      <LineId Id="13279" Count="0" />
-      <LineId Id="10920" Count="11" />
-      <LineId Id="10934" Count="80" />
-      <LineId Id="13280" Count="0" />
-      <LineId Id="11015" Count="361" />
-      <LineId Id="11378" Count="3" />
-      <LineId Id="11384" Count="0" />
-      <LineId Id="13403" Count="0" />
-      <LineId Id="13401" Count="0" />
-      <LineId Id="11385" Count="8" />
-      <LineId Id="13272" Count="0" />
-      <LineId Id="11394" Count="8" />
-      <LineId Id="13407" Count="0" />
-      <LineId Id="11403" Count="0" />
-      <LineId Id="13408" Count="0" />
-      <LineId Id="11404" Count="1463" />
-      <LineId Id="13273" Count="0" />
-      <LineId Id="12868" Count="59" />
-      <LineId Id="13133" Count="1" />
-      <LineId Id="13137" Count="0" />
-      <LineId Id="13143" Count="0" />
-      <LineId Id="13157" Count="0" />
-      <LineId Id="13144" Count="0" />
-      <LineId Id="13146" Count="0" />
-      <LineId Id="13152" Count="0" />
-      <LineId Id="13138" Count="0" />
-      <LineId Id="13390" Count="10" />
-      <LineId Id="13140" Count="0" />
-      <LineId Id="13387" Count="0" />
-      <LineId Id="13167" Count="2" />
-      <LineId Id="13206" Count="0" />
-      <LineId Id="13166" Count="0" />
-      <LineId Id="13171" Count="0" />
-      <LineId Id="13174" Count="13" />
-      <LineId Id="13173" Count="0" />
-      <LineId Id="13223" Count="0" />
-      <LineId Id="13238" Count="0" />
-      <LineId Id="13224" Count="0" />
-      <LineId Id="13226" Count="1" />
-      <LineId Id="13229" Count="8" />
-      <LineId Id="13207" Count="0" />
-      <LineId Id="13239" Count="0" />
-      <LineId Id="13241" Count="0" />
-      <LineId Id="13245" Count="6" />
-      <LineId Id="13253" Count="5" />
-      <LineId Id="13265" Count="1" />
-      <LineId Id="13240" Count="0" />
-      <LineId Id="13267" Count="1" />
-      <LineId Id="13281" Count="4" />
-      <LineId Id="13139" Count="0" />
-      <LineId Id="13135" Count="0" />
-      <LineId Id="12928" Count="2" />
-      <LineId Id="13188" Count="0" />
-      <LineId Id="12931" Count="18" />
-      <LineId Id="13194" Count="6" />
-      <LineId Id="13193" Count="0" />
-      <LineId Id="2" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>

@@ -3,6 +3,31 @@
   <GVL Name="GVL" Id="{9f5b7e00-dd11-402e-90d0-3bef99a08028}">
     <Declaration><![CDATA[{attribute 'qualified_only'}
 VAR_GLOBAL
+	
+	//Felhasználók beállítása
+	AddDelButtonDis: BOOL;
+	LogButtonsDis: BOOL;
+	Logout_Button: BOOL;
+	AddDeleteEnabled: BOOL;
+	LoginEnabled: BOOL;
+	
+	UserID_Elozo: INT;
+	UserID_Temp: INT;
+	UserTemp: User;
+	UserActual: User;
+	UserNotFound: BOOL;
+	UserModify: BOOL;
+	UserDelete: BOOL;
+
+	Biztos: BOOL;
+	
+	//Persistent data változói
+	bStart_WrPer: BOOL;
+	bError_WrPer: BOOL;
+	fbWritePersistentData: WritePersistentData;
+	bBusy_WrPer: BOOL;
+	
+	//System
 	EngineExecuteList : ARRAY[1..5] OF STRING;
 	bSettingsAutoSaveElozo: BOOL;
 	bSettingsAutoSave: BOOL;
@@ -449,9 +474,12 @@ VAR_GLOBAL CONSTANT
 	VEGMERO_FUL: INT := 8;
 	LEZER_FUL: INT := 9;
 	KODOLVASO_FUL: INT := 10;
+	
+	UserLevels: ARRAY[0..3] OF STRING := ['N/A', 'Operátor', 'Csoportvezető', 'Admin'];
+	
 END_VAR
-VAR_GLOBAL
-
+VAR_GLOBAL PERSISTENT
+	Users: ARRAY[0..99] OF User;
 END_VAR
 ]]></Declaration>
   </GVL>

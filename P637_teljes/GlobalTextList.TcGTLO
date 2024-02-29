@@ -112,6 +112,11 @@ Piros gomb: NTC vágófej le-fel"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"2499"</v>
+              <v n="TextDefault">"1. elektróda pár"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"807"</v>
               <v n="TextDefault">"1. elektródapár"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -157,6 +162,11 @@ Piros gomb: NTC vágófej le-fel"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"7390"</v>
+              <v n="TextDefault">"2. elektróda pár"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"809"</v>
               <v n="TextDefault">"2. elektródapár"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -184,6 +194,11 @@ Piros gomb: NTC vágófej le-fel"</v>
             <o>
               <v n="TextID">"801"</v>
               <v n="TextDefault">"2. VÉGPOZÍCIÓHOZ"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"5960"</v>
+              <v n="TextDefault">"3. elektróda pár"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -317,8 +332,23 @@ Piros gomb: NTC vágófej le-fel"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"6089"</v>
+              <v n="TextDefault">"637900"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"730"</v>
               <v n="TextDefault">"7. hegesztés program"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"9321"</v>
+              <v n="TextDefault">"745900"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"7231"</v>
+              <v n="TextDefault">"745910"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -452,6 +482,11 @@ navigálnak:"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"917"</v>
+              <v n="TextDefault">"ADD/DELETE USER"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"300"</v>
               <v n="TextDefault">"Admin"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -459,6 +494,12 @@ navigálnak:"</v>
             <o>
               <v n="TextID">"79"</v>
               <v n="TextDefault">"AEH"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"1962"</v>
+              <v n="TextDefault">"AJTÓ
+ZÁR"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -627,6 +668,11 @@ navigálnak:"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"4978"</v>
+              <v n="TextDefault">"Biztos?"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"876"</v>
               <v n="TextDefault">"Busy"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -722,6 +768,11 @@ fedél zárva"</v>
             <o>
               <v n="TextID">"707"</v>
               <v n="TextDefault">"Deformációalapú hegesztés-leállítás"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"4104"</v>
+              <v n="TextDefault">"Dolgozói szám"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -1832,6 +1883,11 @@ felsö határa:"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"4983"</v>
+              <v n="TextDefault">"IGEN"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"789"</v>
               <v n="TextDefault">"In-Sight Explorer indítása"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -1969,6 +2025,11 @@ felsö határa:"</v>
             <o>
               <v n="TextID">"56"</v>
               <v n="TextDefault">"JOG -"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"4109"</v>
+              <v n="TextDefault">"Jogosultság"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -2290,6 +2351,11 @@ záshoz"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"3792"</v>
+              <v n="TextDefault">"Kilépés"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"108"</v>
               <v n="TextDefault">"Kint"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -2608,6 +2674,11 @@ majd nyomja meg a START gombot!"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"7482"</v>
+              <v n="TextDefault">"Létezik"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"270"</v>
               <v n="TextDefault">"Lézer"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -2804,6 +2875,16 @@ idöállandó (s)"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"5238"</v>
+              <v n="TextDefault">"MOZOG"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"8518"</v>
+              <v n="TextDefault">"Mégse"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"331"</v>
               <v n="TextDefault">"MÉRT"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -2896,6 +2977,11 @@ mérötük lent"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"4989"</v>
+              <v n="TextDefault">"NEM"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"908"</v>
               <v n="TextDefault">"NEM JÓ"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -2913,6 +2999,11 @@ mérötük lent"</v>
             <o>
               <v n="TextID">"100"</v>
               <v n="TextDefault">"NichtBereit"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"8527"</v>
+              <v n="TextDefault">"Nincs ilyen felhasználó, olvassa be mégegyszer!"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -3162,6 +3253,11 @@ tiltása"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"2495"</v>
+              <v n="TextDefault">"NTC vágó Servo"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"326"</v>
               <v n="TextDefault">"NTC [Ohm]"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -3237,13 +3333,28 @@ tiltása"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"4100"</v>
+              <v n="TextDefault">"Név"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"447"</v>
               <v n="TextDefault">"OK"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"916"</v>
+              <v n="TextDefault">"OLVAS"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"468"</v>
               <v n="TextDefault">"OLVASOTT:"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"8509"</v>
+              <v n="TextDefault">"Olvassa be vonalkódját!"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -3760,6 +3871,11 @@ kihagyása"</v>
             <o>
               <v n="TextID">"462"</v>
               <v n="TextDefault">"ROBOT"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"3364"</v>
+              <v n="TextDefault">"ROBOT HOME"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -4299,6 +4415,11 @@ müvelet"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"918"</v>
+              <v n="TextDefault">"TERMÉKVÁLTÁS"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"248"</v>
               <v n="TextDefault">"Ticker"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -4311,6 +4432,11 @@ müvelet"</v>
             <o>
               <v n="TextID">"281"</v>
               <v n="TextDefault">"TÍPUSVÁLASZTÁS"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"5626"</v>
+              <v n="TextDefault">"Töröl"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
@@ -4530,6 +4656,26 @@ LÉZEROSZTÁLY: 4"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"8896"</v>
+              <v n="TextDefault">"Válassza ki a gyártani kívánt terméktípust!
+Ügyeljen rá, hogy a megfelelő NTC és Pt1000
+alkatrészek legyenek betárazva, felhasználva!"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"3674"</v>
+              <v n="TextDefault">"Válassza ki a gyártani kívánt terméktípust!
+Ügyeljen rá, hogy a megfelelő NTC és Pt1000
+alkatrészek legyenek betárazva, felhasználva!
+Ha kell, ezek vonalkódját is be lehet olvastatni."</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"3788"</v>
+              <v n="TextDefault">"Válasszon felhasználót a módosításhoz / törléshez vagy adjon meg újat!"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"84"</v>
               <v n="TextDefault">"VÉGHAJLITASHOZ"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -4714,6 +4860,11 @@ Piros gomb: NTC elengedés"</v>
               <v n="TextID">"848"</v>
               <v n="TextDefault">"ÚJ
 PANEL"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"5620"</v>
+              <v n="TextDefault">"Új / Módosít"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>

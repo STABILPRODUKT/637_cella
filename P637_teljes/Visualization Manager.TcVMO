@@ -19,7 +19,7 @@
             <v n="VisuInternal">false</v>
             <v n="CurrentVisuGlobal">false</v>
             <v n="FileTransferMode">true</v>
-            <v n="VisuStyle">"Default, 3.1.2.0 (Beckhoff Automation GmbH)"</v>
+            <v n="VisuStyle">"Default, 3.1.6.0 (Beckhoff Automation GmbH)"</v>
             <v n="MaxNumOfClients">100</v>
             <v n="Language">""</v>
             <v n="NumpadDialog">"VisuDialogs.Numpad"</v>
@@ -37,7 +37,11 @@
             <v n="GuidShowChangeConfigDialogFunction">{00000000-0000-0000-0000-000000000000}</v>
             <v n="UseStandardKeyboardHandling">true</v>
             <v n="PaintDeactiveElementsGrayedOut">true</v>
-            <n n="GlobalOpenNumpadKeypadSettings" />
+            <o n="GlobalOpenNumpadKeypadSettings" t="VisualManagerGlobalOpenNumpadKeypadSettings">
+              <v n="GlobalOpenNumpadKeypadType" t="GlobalOpenNumpadKeypadType">OpenCentered</v>
+              <n n="PositionX" />
+              <n n="PositionY" />
+            </o>
             <v n="ConvertImages">false</v>
             <v n="ConversionType">""</v>
           </o>
@@ -45,10 +49,10 @@
             <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
               <v>FB_Init</v>
               <v>d10ca0cd-046c-49e9-96b9-284922daffc3</v>
-              <v>FB_Reinit</v>
-              <v>24ae4c72-baac-499c-970c-ff06306ecda5</v>
               <v>FB_Exit</v>
               <v>09850bb9-fe8b-4364-b19e-5f563582363b</v>
+              <v>FB_Reinit</v>
+              <v>24ae4c72-baac-499c-970c-ff06306ecda5</v>
             </d>
             <v n="FbName">"__VisuInitInstantiation_Fb"</v>
             <v n="FbGuid">{bf32be04-8598-4942-86c7-37750a681ca1}</v>
@@ -466,34 +470,34 @@
             <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
               <v>ExecuteLooseCapture</v>
               <v>a0f53f40-dcb2-424b-9a3f-aee23fafc124</v>
-              <v>ExecuteMouseUp</v>
-              <v>f39cac70-6014-4595-8e13-cde364f7622f</v>
               <v>Init</v>
               <v>4c2e9fd5-a69d-4012-8ccc-70053ccbd79a</v>
               <v>FB_Exit</v>
               <v>792d02ab-b8e1-4c22-ab9d-a84dc43e2657</v>
               <v>ExecuteMouseDblClick</v>
               <v>f0f87acb-529f-4f5a-a890-4a91a1765602</v>
-              <v>GetElementInfo</v>
-              <v>08328cff-c05f-4594-95eb-9c7b2e4b0227</v>
               <v>ExecuteMouseDown</v>
               <v>f717e194-8927-433e-9a7f-d53dcf7dafc1</v>
+              <v>ExecuteMouseUp</v>
+              <v>f39cac70-6014-4595-8e13-cde364f7622f</v>
+              <v>ExecuteMouseEnter</v>
+              <v>484cb522-f4f1-4b30-8cb6-a090d36032a0</v>
               <v>FB_Reinit</v>
               <v>c2add104-098d-4070-8a63-178849ec1a33</v>
-              <v>Initialize</v>
-              <v>df0cfcf8-112e-44f5-86f2-6743df20ac72</v>
-              <v>ExecuteMouseMove</v>
-              <v>4105476e-0197-4a91-a7e0-6ae250862bc6</v>
+              <v>GetElementInfo</v>
+              <v>08328cff-c05f-4594-95eb-9c7b2e4b0227</v>
+              <v>abstrGetDefaultCursor</v>
+              <v>2bdcbbaf-ff3b-4daa-bd3d-6541b5152335</v>
               <v>ExecuteDialogClosed</v>
               <v>d4b20315-0b57-4680-9dca-e83504fa49d6</v>
               <v>ExecuteKeyUp</v>
               <v>7adff35e-810d-458a-9d25-0397134724fe</v>
               <v>ExecuteKeyDown</v>
               <v>d5b5aac9-1f96-4514-b3da-c277e628c403</v>
-              <v>abstrGetDefaultCursor</v>
-              <v>2bdcbbaf-ff3b-4daa-bd3d-6541b5152335</v>
-              <v>ExecuteMouseEnter</v>
-              <v>484cb522-f4f1-4b30-8cb6-a090d36032a0</v>
+              <v>ExecuteMouseMove</v>
+              <v>4105476e-0197-4a91-a7e0-6ae250862bc6</v>
+              <v>Initialize</v>
+              <v>df0cfcf8-112e-44f5-86f2-6743df20ac72</v>
               <v>ExecuteMouseLeave</v>
               <v>f5585445-2dcd-4caf-a16f-081955495f7e</v>
               <v>FB_Init</v>
@@ -542,7 +546,7 @@
                         <v>6f01d2b1-dfc6-473a-84e9-3cdbd8dec818</v>
                       </a>
                     </o>
-                    <v>UseDefault</v>
+                    <v>Activated</v>
                   </d2>
                 </o>
               </o>
@@ -595,7 +599,7 @@
                   <v n="Id">2</v>
                   <v n="Name">"KEZELÖ"</v>
                   <v n="FullName">"Operator"</v>
-                  <v n="Password">"E5C4E2206C3F2AF4500D664463DEE32A"</v>
+                  <v n="Password">"0F037584C99E7FD4F4F8C59550F8F507"</v>
                   <v n="Group">"Operator"</v>
                   <v n="IsDeactivated">false</v>
                   <v n="Description">""</v>
@@ -709,6 +713,7 @@
         <Type n="DeviceBasedHotkeyItem">{11a86981-4b02-4f98-b432-96e385cb41b7}</Type>
         <Type n="DeviceBasedHotkeysProvider">{c91fc5aa-1e38-43b2-9a05-c52cc5d7f5b6}</Type>
         <Type n="GenericFbDescription">{40d6dd8d-dfd0-493a-8e29-c9a35e1e6539}</Type>
+        <Type n="GlobalOpenNumpadKeypadType">{550f8ee0-c42e-42f0-b253-4fadf0c12bdf}</Type>
         <Type n="Guid">System.Guid</Type>
         <Type n="HotkeyConfiguration">{6b108d46-58af-4e41-a3f4-174d8f160cc4}</Type>
         <Type n="IdCalculationHelper">{2e25ebe8-bd76-4922-82a8-9e4b7ca5f741}</Type>
@@ -725,6 +730,7 @@
         <Type n="VisualizationInstantiationStorage">{c09fe9ce-40ed-4120-834d-355161aee99b}</Type>
         <Type n="VisualizationMainApplicationDownloadClientsReference">{e559c373-06c0-4fb4-b835-72326b331748}</Type>
         <Type n="VisualizationTargetProperties">{997fedbb-1888-4256-b61c-2933d8056bfd}</Type>
+        <Type n="VisualManagerGlobalOpenNumpadKeypadSettings">{422ed780-41e9-4352-8132-b322b16154c1}</Type>
         <Type n="VisualManagerObject">{4d3fdb8f-ab50-4c35-9d3a-d4bb9bb9a628}</Type>
         <Type n="VisualManagerViewSettings">{ec9b2ec6-92a2-4856-be72-7866fb274c64}</Type>
         <Type n="VisualObjectIdentification">{393e8279-4352-49c8-bc4c-3007620081da}</Type>
@@ -740,7 +746,7 @@
         <Data>
           <o xml:space="preserve" t="TargetVisualizationObject">
             <o n="ViewSettings" t="TargetVisualizationViewSettings">
-              <v n="StartVisu">"Visualization"</v>
+              <v n="StartVisu">"Visualization_new"</v>
               <n n="HtmFileName" />
               <v n="UpdateRate">200</v>
               <v n="CommBufferSize">50000</v>

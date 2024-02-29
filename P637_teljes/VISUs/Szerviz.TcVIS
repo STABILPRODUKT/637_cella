@@ -8210,6 +8210,10 @@
                         <v n="DescriptionUseParent">false</v>
                       </o>
                     </o>
+                    <o>
+                      <v n="Id">2880254039L</v>
+                      <v n="Value">"GVL.UserActual.UserLevel&lt;2"</v>
+                    </o>
                   </l>
                 </o>
                 <v n="VisualElementName">"TabControl"</v>
@@ -8242,28 +8246,7 @@
                 <a n="LMGuids" et="Guid" />
                 <d n="SubElements" t="Hashtable" />
                 <v n="VisualElementId">0</v>
-                <l n="UserManagementAccessRights" t="ArrayList" cet="VisuAccessRightInfo">
-                  <o>
-                    <v n="GroupName">"Admin"</v>
-                    <v n="GroupId">1</v>
-                    <v n="AccessRight" t="VisuAccessRightType">Operable</v>
-                  </o>
-                  <o>
-                    <v n="GroupName">"Service"</v>
-                    <v n="GroupId">2</v>
-                    <v n="AccessRight" t="VisuAccessRightType">Operable</v>
-                  </o>
-                  <o>
-                    <v n="GroupName">"Operator"</v>
-                    <v n="GroupId">3</v>
-                    <v n="AccessRight" t="VisuAccessRightType">Invisible</v>
-                  </o>
-                  <o>
-                    <v n="GroupName">"None"</v>
-                    <v n="GroupId">0</v>
-                    <v n="AccessRight" t="VisuAccessRightType">Invisible</v>
-                  </o>
-                </l>
+                <l n="UserManagementAccessRights" t="ArrayList" />
               </o>
             </l>
             <v n="BackgroundBitmapId">""</v>
@@ -8285,18 +8268,18 @@
                 <v>51b54a33-9bfc-4380-8782-71677472b95b</v>
                 <v>ContainsPoint</v>
                 <v>fdb25d92-d61a-443e-a262-5b20379dc37d</v>
-                <v>FB_Reinit</v>
-                <v>42ec54ac-b5ad-418f-8819-9ac06ef5d05b</v>
                 <v>SetStaticState</v>
                 <v>d328cd58-c2bc-4eef-98c0-425281475cd9</v>
-                <v>Update</v>
-                <v>033ef098-4188-44ac-a056-2d767f70ad69</v>
+                <v>HasInputAccessIntern</v>
+                <v>0aa5a439-3d14-5915-a8c2-1ee80c57457b</v>
                 <v>GetTooltip</v>
                 <v>1c636b1f-d1d1-4535-9b21-a2cc7ba2743a</v>
                 <v>GetNamespace</v>
                 <v>f147cede-94b1-45d7-8293-90696c8099e3</v>
                 <v>GetTranslator</v>
                 <v>c4f32e37-ef81-43ae-8ddb-86c6c932fdb5</v>
+                <v>Update</v>
+                <v>033ef098-4188-44ac-a056-2d767f70ad69</v>
                 <v>SetClientData</v>
                 <v>cd93f6ed-aa85-498e-b31e-ad1d581b0cd0</v>
                 <v>GetClientData</v>
@@ -8315,8 +8298,6 @@
                 <v>77f6c465-3cf7-4422-9cb5-a2949f66dd18</v>
                 <v>IsAntialiasingInactive</v>
                 <v>9ca0f3c8-4c36-4763-9eae-0e1c8df2dee3</v>
-                <v>HasInputAccessIntern</v>
-                <v>0aa5a439-3d14-5915-a8c2-1ee80c57457b</v>
                 <v>Initialize</v>
                 <v>0dc07b4c-f554-46d2-9840-a63c63d278cc</v>
                 <v>HasInputAccess</v>
@@ -8325,14 +8306,16 @@
                 <v>4e11ff48-5087-5853-9b73-ca2182ccbe8f</v>
                 <v>GetSurroundingRect</v>
                 <v>7fd6afcf-4d79-4137-a584-21d24a01934f</v>
+                <v>ElementInfo</v>
+                <v>d4fe7282-7776-40b4-801a-c2a8e5913a32</v>
                 <v>GetLocalUsergroup</v>
                 <v>04c4041c-cef1-4554-bfd2-977a27b0b4fe</v>
                 <v>GetName</v>
                 <v>215df6d7-6875-4dc5-a23b-033d3e154681</v>
                 <v>GetSize</v>
                 <v>a7ee2951-01a9-4343-ac58-1925e0346e9c</v>
-                <v>Destruct</v>
-                <v>1a024404-fd4a-4bc0-b8e4-ad79044e0d1b</v>
+                <v>FB_Reinit</v>
+                <v>42ec54ac-b5ad-418f-8819-9ac06ef5d05b</v>
                 <v>FB_Exit</v>
                 <v>496d380a-c34f-48f6-8c3f-11882554050e</v>
                 <v>GetInitializeVersion</v>
@@ -8341,8 +8324,8 @@
                 <v>1c9c1300-db70-48c4-a016-674c753370f4</v>
                 <v>HandleInput</v>
                 <v>72a5917e-5d3e-406a-8079-4b93eeca30a8</v>
-                <v>ElementInfo</v>
-                <v>d4fe7282-7776-40b4-801a-c2a8e5913a32</v>
+                <v>Destruct</v>
+                <v>1a024404-fd4a-4bc0-b8e4-ad79044e0d1b</v>
               </d>
               <v n="FbName">"NotImportant"</v>
               <v n="FbGuid">{cd407fe5-0495-4eaa-83db-1d105dd36867}</v>
@@ -8436,8 +8419,19 @@
             <l2 n="Inputs" />
           </o>
           <o n="VisuSizeManager" t="VisualObjectSizeManager">
-            <n n="Size" />
-            <v n="Version">0</v>
+            <d2 n="Size" ckt="Int32" cvt="VisualObjectSize">
+              <v>0</v>
+              <o>
+                <v n="Width">1040</v>
+                <v n="Height">620</v>
+              </o>
+              <v>1</v>
+              <o>
+                <v n="Width">1041</v>
+                <v n="Height">621</v>
+              </o>
+            </d2>
+            <v n="Version">1</v>
           </o>
         </o>
       </Data>
@@ -8468,8 +8462,6 @@
         <Type n="TypeNodeType">{b12a9636-e818-4598-ae0d-fb6a2446102c}</Type>
         <Type n="UInt32">System.UInt32</Type>
         <Type n="UInt64">System.UInt64</Type>
-        <Type n="VisuAccessRightInfo">{dda8fb5a-e974-4696-9c31-85aed5b08e18}</Type>
-        <Type n="VisuAccessRightType">{9b75d857-9b00-480d-869d-45426a67bc56}</Type>
         <Type n="VisualElemCollection">{ef9d0b20-c96e-48db-b361-2ded4063150e}</Type>
         <Type n="VisualElemList">{f285c9a3-7019-446b-b98c-ccec3a0af8fa}</Type>
         <Type n="VisualElemMember">{c694e3a2-5c0b-4177-ab35-cb06bd5a6a02}</Type>
@@ -8478,6 +8470,7 @@
         <Type n="VisualFrameInfo">{7fd6515d-f891-4717-b53f-b14197c6706c}</Type>
         <Type n="VisualizationNode">{f8db32ff-bdd5-49e9-9014-6d9a6dea5d8c}</Type>
         <Type n="VisualObject">{f18bec89-9fef-401d-9953-2f11739a6808}</Type>
+        <Type n="VisualObjectSize">{6ad3e88f-aee2-4766-a7ea-a8790037ef51}</Type>
         <Type n="VisualObjectSizeManager">{5f612b0e-b404-455f-8177-27864e9f5332}</Type>
       </TypeList>
     </XmlArchive>

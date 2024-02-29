@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
+  <POU Name="BARCODE_SCANNER" Id="{e11977d2-8b7b-4d7f-a737-804c53599c82}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM BARCODE_SCANNER
+VAR
+	iState: INT := 0;
+	iInd: DINT;
+	iInd2: INT;
+
+	TxBufferPcCom: COMbuffer;
+	RxBufferPcCom: COMbuffer;
+	fbPCComCtrl: SerialLineControlADS;
+	bConnect: BOOL := TRUE;
+	stSerialCfgZebra: ComSerialConfig := (ComPort := 5, DTR := COMDTRCTRL_T.DTR_CTRL_DISABLE, RTS := COMRTSCTRL_T.RTS_CTRL_ENABLE);
+	bPortOpened: BOOL;
+	bPcComCtrlError: BOOL;
+	ePcComCtrlErrorId: UDINT;
+	bPCComCtrlBusy: BOOL;
+	uiTxBufferCount: UDINT;
+	uiRxBufferCount: UDINT;
+	baReceivedBytes: ARRAY[0..255] OF BYTE;
+	ZebraReceiveBytes: ReceiveByte;
+	ClearComBuffer: ClearComBuffer;
+	sReceivedString255: T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbPCComCtrl(
+	Connect:=bConnect,
+	SerialCfg:=stSerialCfgZebra,
+	NetId:='',
+	Timeout:=T#2S,
+	PortOpened=>bPortOpened,
+	Error=>bPCComCtrlError,
+	ErrorId=>ePCComCtrlErrorId,
+	Busy=>bPCComCtrlBusy,
+	TxBufCount=>uiTxBufferCount,
+	RxBufCount=>uiRxBufferCount,
+	TxBuffer:=TxBufferPcCom,
+	RxBuffer:=RxBufferPcCom);
+
+
+REPEAT
+	ZebraReceiveBytes(Rxbuffer:=RxBufferPcCom);
+UNTIL NOT ZebraReceiveBytes.ByteReceived
+END_REPEAT;
+
+GVL.LogButtonsDis:=GVL.LoginEnabled OR GVL.AddDeleteEnabled;
+GVL.AddDelButtonDis:=GVL.LoginEnabled OR GVL.AddDeleteEnabled;
+
+IF RxBufferPcCom.RdIdx > 0 THEN
+	FOR iInd:=0 TO 255 DO
+		baReceivedBytes[iInd]:=0;
+	END_FOR
+	FOR iInd:= 0 TO RxBufferPcCom.RdIdx-1 DO
+		baReceivedBytes[iInd]:=RxBufferPcCom.Buffer[iInd];
+	END_FOR
+	sReceivedString255:='';
+	sReceivedString255:=BYTEARR_TO_MAXSTRING(baReceivedBytes);
+	ClearComBuffer(Buffer:=RxBufferPcCom);
+	iState:=1;
+END_IF
+
+IF NOT GVL.LoginEnabled THEN
+	GVL.UserNotFound:=FALSE;	
+END_IF
+
+IF GVL.Biztos THEN
+	IF GVL.AddDeleteEnabled THEN
+		GVL.UserDelete:=TRUE;
+	END_IF
+	GVL.Biztos:=FALSE;
+END_IF
+
+IF GVL.Logout_Button THEN
+	GVL.UserActual := GVL.Users[0];
+	GVL.Logout_Button:=FALSE;
+	GVL.AddDeleteEnabled:=FALSE;
+END_IF
+
+IF GVL.AddDeleteEnabled THEN
+	IF GVL.UserID_Temp <> GVL.UserID_Elozo THEN
+		GVL.UserTemp:=GVL.Users[GVL.UserID_Temp];
+		GVL.UserTemp.UserID:=GVL.UserID_Temp;
+		GVL.UserID_Elozo:=GVL.UserID_Temp;
+	END_IF
+ELSE
+	GVL.UserID_Temp:=0;
+	GVL.UserID_Elozo:=GVL.UserID_Temp;
+	GVL.UserTemp:=GVL.Users[GVL.UserID_Temp];
+END_IF
+
+IF GVL.UserModify THEN
+	IF GVL.UserTemp.UserID <> 0 THEN
+		GVL.Users[GVL.UserID_Temp]:=GVL.UserTemp;
+		GVL.Users[GVL.UserID_Temp].UserExist:=TRUE;
+		GVL.bStart_WrPer:=TRUE;
+	END_IF
+	GVL.UserModify:=FALSE;
+END_IF
+
+IF GVL.UserDelete THEN
+	IF GVL.UserTemp.UserID <> 0 AND GVL.UserTemp.UserID <> GVL.UserActual.UserID THEN
+		GVL.Users[GVL.UserID_Temp].UserLevel:=0;
+		GVL.Users[GVL.UserID_Temp].UserName:='';
+		GVL.Users[GVL.UserID_Temp].UserNumber:='';
+		GVL.Users[GVL.UserID_Temp].UserExist:=FALSE;
+		GVL.Users[GVL.UserID_Temp].UserID:=0;
+		GVL.UserID_Temp:=0;
+		GVL.UserID_Elozo:=GVL.UserID_Temp;
+		GVL.UserTemp:=GVL.Users[GVL.UserID_Temp];
+	END_IF
+	GVL.UserDelete:=FALSE;
+END_IF
+
+IF iState>0 THEN
+	CASE iState OF
+		1:	
+			IF GVL.LoginEnabled THEN
+				GVL.UserNotFound := FALSE;
+				IF GVL.UserActual.UserNumber <> sReceivedString255 THEN
+					FOR iInd2 := 0 TO 99 DO
+						IF sReceivedString255 = GVL.Users[iInd2].UserNumber THEN
+							GVL.UserActual := GVL.Users[iInd2];
+							GVL.UserNotFound := FALSE;
+							EXIT;							
+						END_IF
+						GVL.UserNotFound := TRUE;
+					END_FOR					
+				END_IF
+				IF NOT GVL.UserNotFound THEN
+					GVL.LoginEnabled := FALSE;
+				END_IF
+				iState:=0;
+			ELSE
+				iState:=10;
+			END_IF
+		10:	
+			IF GVL.AddDeleteEnabled THEN
+				IF GVL.UserTemp.UserID>0 THEN
+					GVL.UserTemp.UserNumber:=sReceivedString255;
+				END_IF
+				iState:=0;
+			ELSE
+				iState:=20;
+			END_IF
+		20:
+			iState:=0;
+	END_CASE;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

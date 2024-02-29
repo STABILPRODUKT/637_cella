@@ -4,7 +4,7 @@
     <XmlArchive>
       <Data>
         <o xml:space="preserve" t="ImagePoolObject">
-          <v n="UniqueIdGenerator">"21"</v>
+          <v n="UniqueIdGenerator">"22"</v>
           <l n="BitmapPool" t="ArrayList" cet="ImagePoolItem">
             <o>
               <v n="BitmapID">"stabil-logo"</v>
@@ -18,7 +18,7 @@
             </o>
             <o>
               <v n="BitmapID">"NTCKamera_NG_Image"</v>
-              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\TwinCAT\3.1\Boot\Plc\Port_851\Visu\Image1.bmp"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\TwinCAT\3.1\Boot\Plc\Port_851\Visu\Image2.bmp"</v>
               <v n="ItemID">7</v>
             </o>
             <o>
@@ -43,5 +43,20 @@
         <Type n="String">System.String</Type>
       </TypeList>
     </XmlArchive>
+    <ObjectProperties>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="ImagePoolPropertiesObject">
+            <v n="DownloadOnlyUsedImages">false</v>
+            <v n="Internal">false</v>
+            <n n="SymbolTextList" />
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="ImagePoolPropertiesObject">{a67e96c6-3fd3-4d25-a9ff-723c6b2f78cb}</Type>
+        </TypeList>
+      </XmlArchive>
+    </ObjectProperties>
   </ImagePool>
 </TcPlcObject>
