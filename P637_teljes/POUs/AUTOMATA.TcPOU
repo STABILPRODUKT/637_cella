@@ -2977,8 +2977,14 @@ IF iStateRobot<>0 THEN
 	CASE iStateRobot OF
 		1:
 			IF (NTCProcess.s_InCommand = '') THEN
-				IF ((*(JOZSITENGELY.bNTC_OK=*)TRUE) THEN
+				bStartWatchDog3:=TRUE;
+				tTimeOut3:=T#2S;
+				IF JOZSITENGELY.bNTC_OK THEN
+					bStartWatchDog3:=FALSE;
 					iStateRobot:=3;
+				ELSE
+					iStateRobot:=100;
+					GVL.nHibaKodNTC:=297;
 				END_IF
 			END_IF
 		3:	IF (bRobotReservedBy1=FALSE) AND (bRobotReservedBy2=FALSE) THEN
@@ -3055,6 +3061,15 @@ IF iStateRobot<>0 THEN
 			IF bRobotNTCReady=FALSE THEN
 				iStateRobot:=0;
 			END_IF
+		100:
+			IF bTimeOut3 THEN
+				iStateRobot:=110;
+			ELSIF JOZSITENGELY.bNTC_OK THEN
+				iStateRobot:=3;
+			END_IF
+			bStartWatchDog3:=FALSE;
+		110:
+			iStateRobot:=0;
 	END_CASE
 END_IF
 
@@ -3069,7 +3084,7 @@ IF GVL.nHibaKodNTC=0 THEN
 	bStartWatchDog:=FALSE;
 END_IF
 WATCHDOG(IN:=bStartWatchDog,PT:=tTimeOut,Q=>bTimeOut,ET=>);
-GVL.bHibauzenetNTCRejtve := NOT bTimeOut;// AND NOT bTimeOut3;
+GVL.bHibauzenetNTCRejtve := NOT bTimeOut AND NOT bTimeOut3;
 IF bWatchDogOK2=TRUE THEN
 	bWatchDogOK2:=FALSE;
 	bStartWatchDog2:=FALSE;

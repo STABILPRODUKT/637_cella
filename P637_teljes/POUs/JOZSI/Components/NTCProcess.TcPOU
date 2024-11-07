@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <POU Name="NTCProcess" Id="{1ad92c24-1a7a-412a-9a4b-071650cf8afd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM NTCProcess
 VAR_INPUT
@@ -145,7 +145,7 @@ IF s_InLCommand <> '' THEN
 		13:
 			IF bVagoHajlitoLent = FALSE AND bVagoHajlitoFent = TRUE THEN
 				n_OutErrId := 0;
-				tTickerTime:=T#1S;
+				tTickerTime:=T#3S;
 				bTickerEnable := FALSE;
 				iState := 14;
 			ELSIF MAIN.bLevegoOK = FALSE THEN
