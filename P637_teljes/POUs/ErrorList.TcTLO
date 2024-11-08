@@ -1188,6 +1188,12 @@ Ellenőrizze a terméket!"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"296"</v>
+              <v n="TextDefault">"Nincs NTC a hegesztésnél!
+'Tovább' az újra vágáshoz, vagy 'STOP'!"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">""</v>
               <v n="TextDefault">""</v>
               <l n="LanguageTexts" t="ArrayList" />

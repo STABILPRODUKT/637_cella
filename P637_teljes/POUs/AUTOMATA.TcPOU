@@ -98,6 +98,9 @@ END_VAR
 VAR_INPUT
 	bKameraTrig: BOOL;
 END_VAR
+VAR
+	bNTC_OK_bit: BOOL;
+END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[// Logikai kényszerkapcsolatok
@@ -105,6 +108,8 @@ GVL.bElszivasBe:=NOT((GVL.bHegeszto1BalFent=TRUE)
 				AND (GVL.bHegeszto1JobbFent=TRUE)) AND (MAIN.bLevegoOK=TRUE)
 				OR bElszivasBe OR VEGMERO.bLezertakaro;
 
+bNTC_OK_bit:=JOZSITENGELY.bNTC_OK AND NTCProcess.bKiszedoKint AND NOT NTCProcess.bKiszedoBent;
+				
 // 521950-es termék esetén csak lézerezés megengedett!!!				
 IF (GVL.iSelectedProductType=8) THEN
 	GVL.bKameraBe := FALSE;
@@ -159,12 +164,12 @@ IF iState<>0 THEN
 					IF RobotProcess.baStatus[9]=TRUE THEN
 						IF bRobotNTCReady=FALSE THEN
 							IF (NTCProcess.s_InCommand='') 
-								AND (JOZSITENGELY.bNTC_OK=FALSE) THEN
+								AND (bNTC_OK_bit=FALSE) THEN
 								NTCProcess.s_InCommand:='VAGAS';
 								iState:=2;
 								bStartWatchDog:=FALSE;
 								iStateRobot:=1;
-							ELSIF (JOZSITENGELY.bNTC_OK=TRUE) THEN
+							ELSIF (bNTC_OK_bit=TRUE) THEN
 								iState:=2;
 								bStartWatchDog:=FALSE;
 								iStateRobot:=1;
@@ -758,7 +763,7 @@ IF iState<>0 THEN
 			END_IF;
 		// NTC ellenőrzés
 		29:	IF (NTCProcess.s_InCommand = '') THEN
-				IF ((*JOZSITENGELY.bNTC_OK=*)TRUE) THEN
+				IF ((*bNTC_OK_bit=*)TRUE) THEN
 					tTimeOut:=T#100MS;				
 					iState:=30;
 				ELSE
@@ -813,17 +818,25 @@ IF iState<>0 THEN
 				RobotProcess.s_InRobotTCPCommand := 'NTCHEG2';
 //				RobotProcess.s_InRobotTCPCommand := 'NTCLAB_HEG';
 //				RobotProcess.s_InRobotTCPCommand := 'NTCHEG';
-				tTimeOut:=T#3S;				
+				tTimeOut:=T#1S;				
 				iState:=34;
 (*				bStart1GombTiltva:=FALSE;*)
 				sStart1GombFelirat:='Tovább';
 				bStartWatchDog:=FALSE;
+			ELSIF bRobotNTCReady=FALSE AND (NTCProcess.s_InCommand='') AND iStateRobot=100 AND (ROBOTCOMMAND.sRobotResult='NTCHEGTOL' OR ROBOTCOMMAND.sRobotResult='HOME') THEN
+				GVL.nHibaKodNTC:=296;
+				bStart1GombTiltva:=FALSE;
+				iState:=110;
+				tTimeOut:=T#10S;
+				bStartWatchDog:=TRUE;
 			ELSE
 				IF (MAIN.bLevegoOK=FALSE) THEN
 					GVL.nHibaKodNTC:=5;
-				ELSIF bRobotNTCReady=FALSE THEN
+//				ELSIF bRobotNTCReady=FALSE AND bTimeOut=TRUE THEN
 //				ELSIF (NTCProcess.bMegfogoNyitva=FALSE) THEN
-					GVL.nHibaKodNTC:=299;
+//					GVL.nHibaKodNTC:=299;
+//					bStart1GombTiltva:=FALSE;
+//					iState:=110;
 				ELSIF bRobotNTCReady=TRUE AND (NOT (ROBOTCOMMAND.sRobotResult='NTCLAB_HEG') OR (ROBOTCOMMAND.sRobotResult='')) THEN
 					bRobotNTCReady:=FALSE;
 					GVL.nHibaKodNTC:=299;
@@ -1291,7 +1304,6 @@ IF iState<>0 THEN
 		110: IF (bContinue=TRUE) AND (NTCProcess.s_InCommand='') THEN
 				bContinue:=FALSE;
 				bStart1GombTiltva:=TRUE;
-				NTC.bVagasGombbal:=FALSE;	// Visszaváltás normál NTC gombfunkcióra
 				iState:=111;
 				bStartWatchDog:=FALSE;
 			 ELSIF (bContinue=TRUE) THEN
@@ -1299,9 +1311,9 @@ IF iState<>0 THEN
 				bStartWatchDog:=TRUE;
 			 END_IF
 		// Vágott-hajlított NTC meglétének ellenőrzése
-		111: IF (JOZSITENGELY.bNTC_OK=TRUE) THEN
+		111: IF (bNTC_OK_bit=TRUE) THEN
 				 tTimeOut:=T#100MS;			
-				 iState:=30; // Ha van NTC, folytassa tovább a folyamatot.
+				 iState:=33; // Ha van NTC, folytassa tovább a folyamatot.
 			 ELSE
 				 tTimeOut:=T#100MS;			
 				 iState:=112;
@@ -1321,7 +1333,7 @@ IF iState<>0 THEN
 				AND (NTCProcess.bMegfogoNyitva=TRUE) THEN
 				NTCProcess.s_InCommand:='VAGAS';
 				tTimeOut:=T#1S;			
-				iState:=29;
+				iState:=33;
 				bStartWatchDog:=FALSE;
 			 ELSE
 				IF NOT (NTCProcess.s_InCommand='') THEN
@@ -2979,7 +2991,7 @@ IF iStateRobot<>0 THEN
 			IF (NTCProcess.s_InCommand = '') THEN
 				bStartWatchDog3:=TRUE;
 				tTimeOut3:=T#2S;
-				IF JOZSITENGELY.bNTC_OK THEN
+				IF bNTC_OK_bit THEN
 					bStartWatchDog3:=FALSE;
 					iStateRobot:=3;
 				ELSE
@@ -3064,7 +3076,7 @@ IF iStateRobot<>0 THEN
 		100:
 			IF bTimeOut3 THEN
 				iStateRobot:=110;
-			ELSIF JOZSITENGELY.bNTC_OK THEN
+			ELSIF bNTC_OK_bit THEN
 				iStateRobot:=3;
 			END_IF
 			bStartWatchDog3:=FALSE;
