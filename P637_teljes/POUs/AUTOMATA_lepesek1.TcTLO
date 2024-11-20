@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4020.3">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.11">
   <TextList Name="AUTOMATA_lepesek1" Id="{173280f2-ebd2-4baa-9cbb-3710d3f7135d}">
     <XmlArchive>
       <Data>
@@ -486,6 +486,26 @@ visszahúzódására"</v>
             <o>
               <v n="TextID">"300"</v>
               <v n="TextDefault">"NTC oldali folyamat felfüggesztve"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"200"</v>
+              <v n="TextDefault">"Adapter vissza kezelőhöz sorja vágás miatt!"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"201"</v>
+              <v n="TextDefault">"Vegye ki az adaptert és vágja le a sorját!"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"203"</v>
+              <v n="TextDefault">"Tegye vissza az adaptert sorja vágás után!"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"204"</v>
+              <v n="TextDefault">"Nyomja meg a 'Tovább' gombot!"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>

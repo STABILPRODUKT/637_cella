@@ -452,6 +452,12 @@ navigálnak:"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"4111"</v>
+              <v n="TextDefault">"Adapter
+érzékelö"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"8"</v>
               <v n="TextDefault">"AdapterLefogó"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -1123,6 +1129,12 @@ Piros gomb: NTC vágófej le-fel"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>
+              <v n="TextID">"919"</v>
+              <v n="TextDefault">"FÉNY
+SOROMPÓ"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
               <v n="TextID">"3"</v>
               <v n="TextDefault">"Fénykapu"</v>
               <l n="LanguageTexts" t="ArrayList" />
@@ -1191,6 +1203,24 @@ hömérséklete [C]:"</v>
             <o>
               <v n="TextID">"291"</v>
               <v n="TextDefault">"Hajlítás"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"1674"</v>
+              <v n="TextDefault">"HAJLÍTÁS
+UTÁN
+VISSZA"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"9498"</v>
+              <v n="TextDefault">"HAJLÍTÁS UTÁN
+VISSZA"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"7943"</v>
+              <v n="TextDefault">"HAJLÍTÁS UTÁN VISSZA"</v>
               <l n="LanguageTexts" t="ArrayList" />
             </o>
             <o>

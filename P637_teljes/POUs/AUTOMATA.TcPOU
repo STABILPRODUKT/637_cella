@@ -100,6 +100,7 @@ VAR_INPUT
 END_VAR
 VAR
 	bNTC_OK_bit: BOOL;
+	bHajlitasUtanVissza: BOOL := FALSE;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -353,12 +354,48 @@ IF iState<>0 THEN
 				bStartWatchDog:=TRUE;
 			END_IF
 		8:	IF HAJLITOK.s_InCommand='' THEN
-				iState:=9;
-				bStartWatchDog:=FALSE;
+				IF NOT bHajlitasUtanVissza THEN
+					iState:=9; //Folyamatos
+				ELSE
+					JOZSITENGELY.lrJozsiPosition:=GVL.lrNTCSzervizbox;
+					iState:=200;
+					tTimeOut:=T#3S;
+					bStartWatchDog:=FALSE;
+					JOZSITENGELY.sJozsiAxisCommand:='MOVE';
+				END_IF;
 			ELSE
 				GVL.nHibaKodNTC:=HAJLITOK.n_OutErrId;
 				bStartWatchDog:=TRUE;
 			END_IF;
+		//Megszakítja a folyamatot, visszahozza sorjavágáshoz
+		200: IF (JOZSITENGELY.sJozsiAxisCommand='') THEN
+				bStartWatchDog:=FALSE;
+				iState:=201;
+			ELSE
+				GVL.nHibaKodNTC:=JOZSITENGELY.n_OutErrId;
+				bStartWatchDog:=TRUE;
+			END_IF
+		201: IF GVL.bNTCAdaptererzekelo=FALSE THEN
+				iState:=202;
+				bStartWait:=TRUE;
+				tWaitTime:=T#2000MS;
+			 END_IF
+		202: IF bIdoLejart=TRUE THEN
+				bStartWait:=FALSE;
+				iState:=203;
+			 ELSIF GVL.bNTCAdaptererzekelo=TRUE THEN
+			 	bStartWait:=FALSE;
+				iState:=201;
+			 END_IF
+		203: IF GVL.bNTCAdaptererzekelo=TRUE THEN
+				iState:=204;
+				bStart1GombTiltva:=FALSE;
+			 END_IF
+		204: IF GVL.bFenysorompoNTC=TRUE THEN
+				bStart1GombTiltva:=TRUE;
+				bContinue:=FALSE;
+				iState:=9;
+			 END_IF
 		// A következő bekapcsolt művelethez
 		9:	IF (GVL.bHegesztes1Be=TRUE) THEN
 				JOZSITENGELY.lrJozsiPosition:=GVL.lrHegesztoPosition1;

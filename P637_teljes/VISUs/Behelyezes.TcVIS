@@ -4372,11 +4372,11 @@ PISTITENGELY.sPistiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">1649127785L</v>
-                          <v n="Value">34</v>
+                          <v n="Value">30</v>
                         </o>
                         <o>
                           <v n="Id">357335551L</v>
-                          <v n="Value">137</v>
+                          <v n="Value">140</v>
                         </o>
                         <o>
                           <v n="Id">2422045748L</v>
@@ -4427,11 +4427,11 @@ PISTITENGELY.sPistiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">550940142L</v>
-                          <v n="Value">167</v>
+                          <v n="Value">163</v>
                         </o>
                         <o>
                           <v n="Id">1473355128L</v>
-                          <v n="Value">305</v>
+                          <v n="Value">308</v>
                         </o>
                         <o>
                           <v n="Id">493260384L</v>
@@ -5141,11 +5141,11 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">1649127785L</v>
-                          <v n="Value" t="Int16">41</v>
+                          <v n="Value" t="Int16">30</v>
                         </o>
                         <o>
                           <v n="Id">357335551L</v>
-                          <v n="Value">62</v>
+                          <v n="Value">70</v>
                         </o>
                         <o>
                           <v n="Id">2422045748L</v>
@@ -5267,11 +5267,11 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">1649127785L</v>
-                          <v n="Value">22</v>
+                          <v n="Value">10</v>
                         </o>
                         <o>
                           <v n="Id">357335551L</v>
-                          <v n="Value">35</v>
+                          <v n="Value">30</v>
                         </o>
                         <o>
                           <v n="Id">2422045748L</v>
@@ -5279,11 +5279,12 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">2134141914L</v>
-                          <v n="Value" t="Int16">20</v>
+                          <v n="Value" t="Int16">31</v>
                         </o>
                         <o>
                           <v n="Id">390574330L</v>
-                          <v n="Value">"FÉNYSOROMPÓ"</v>
+                          <v n="Value">"FÉNY
+SOROMPÓ"</v>
                         </o>
                         <o>
                           <v n="Id">3729828405L</v>
@@ -5330,7 +5331,7 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">823443203L</v>
-                          <v n="Value">"674"</v>
+                          <v n="Value">"919"</v>
                         </o>
                       </l>
                     </o>
@@ -6048,11 +6049,11 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">1649127785L</v>
-                          <v n="Value" t="Int16">186</v>
+                          <v n="Value" t="Int16">110</v>
                         </o>
                         <o>
                           <v n="Id">357335551L</v>
-                          <v n="Value">33</v>
+                          <v n="Value">30</v>
                         </o>
                         <o>
                           <v n="Id">2422045748L</v>
@@ -6060,11 +6061,12 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">2134141914L</v>
-                          <v n="Value">20</v>
+                          <v n="Value">31</v>
                         </o>
                         <o>
                           <v n="Id">390574330L</v>
-                          <v n="Value">"Adapterérzékelö"</v>
+                          <v n="Value">"Adapter
+érzékelö"</v>
                         </o>
                         <o>
                           <v n="Id">3729828405L</v>
@@ -6111,7 +6113,7 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                         </o>
                         <o>
                           <v n="Id">823443203L</v>
-                          <v n="Value">"818"</v>
+                          <v n="Value">"4111"</v>
                         </o>
                       </l>
                     </o>
@@ -6127,6 +6129,137 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                     <a n="LMGuids" et="Guid" />
                     <d n="SubElements" t="Hashtable" />
                     <v n="VisualElementId">130</v>
+                    <l n="UserManagementAccessRights" t="ArrayList" />
+                  </o>
+                  <o>
+                    <a n="ConfiguredComplexInputs" et="ComplexInput" />
+                    <l n="Elements" t="ArrayList" />
+                    <n n="VisualElementDescription" />
+                    <o n="VisualElemMemberList" t="VisualElemMemberList">
+                      <l n="VisualElemMemberList" t="VisualElemMemberCollection" cet="VisualElemMember">
+                        <o>
+                          <v n="Id">2340015797L</v>
+                          <v n="Value">"HCENTER"</v>
+                        </o>
+                        <o>
+                          <v n="Id">2565699834L</v>
+                          <v n="Value">"VCENTER"</v>
+                        </o>
+                        <o>
+                          <v n="Id">4134387352L</v>
+                          <v n="Value">"NONE"</v>
+                        </o>
+                        <o>
+                          <v n="Id">1603690730L</v>
+                          <v n="Value">"Arial"</v>
+                        </o>
+                        <o>
+                          <v n="Id">4253639993L</v>
+                          <v n="Value" t="Int16">12</v>
+                        </o>
+                        <o>
+                          <v n="Id">2729990903L</v>
+                          <v n="Value">0U</v>
+                        </o>
+                        <o>
+                          <v n="Id">1213979116L</v>
+                          <v n="Value">0U</v>
+                        </o>
+                        <o>
+                          <v n="Id">3488306084L</v>
+                          <v n="Value">4278190080U</v>
+                        </o>
+                        <o>
+                          <v n="Id">2812299069L</v>
+                          <v n="Value">4294967295U</v>
+                        </o>
+                        <o>
+                          <v n="Id">494569607L</v>
+                          <v n="Value">4278190080U</v>
+                        </o>
+                        <o>
+                          <v n="Id">1649127785L</v>
+                          <v n="Value">220</v>
+                        </o>
+                        <o>
+                          <v n="Id">357335551L</v>
+                          <v n="Value">20</v>
+                        </o>
+                        <o>
+                          <v n="Id">2422045748L</v>
+                          <v n="Value">79</v>
+                        </o>
+                        <o>
+                          <v n="Id">2134141914L</v>
+                          <v n="Value" t="Int16">50</v>
+                        </o>
+                        <o>
+                          <v n="Id">390574330L</v>
+                          <v n="Value">"HAJLÍTÁS
+UTÁN
+VISSZA"</v>
+                        </o>
+                        <o>
+                          <v n="Id">3729828405L</v>
+                          <l n="Value" t="ArrayList" cet="NamedStyleFont">
+                            <o>
+                              <v n="FontStyle">0</v>
+                              <v n="AdditionalFontStyle" t="UInt16">0</v>
+                              <v n="ExplicitColor">-16777216</v>
+                              <v n="CanonicalName">"Font-Standard"</v>
+                              <v n="FontName">"Arial"</v>
+                              <v n="FontSize">12</v>
+                              <v n="ScriptIdentification">0</v>
+                              <v n="DoubleFontSize" t="Double">0</v>
+                              <o n="NamedColor" t="NamedStyleColor">
+                                <v n="Color">-16777216</v>
+                                <v n="CanonicalName">"Font-Default-Color"</v>
+                              </o>
+                            </o>
+                          </l>
+                        </o>
+                        <o>
+                          <v n="Id">493260384L</v>
+                          <v n="Value">4294967295U</v>
+                        </o>
+                        <o>
+                          <v n="Id">135947015L</v>
+                          <v n="Value">4278190080U</v>
+                        </o>
+                        <o>
+                          <v n="Id">2678395525L</v>
+                          <v n="Value">1U</v>
+                        </o>
+                        <o>
+                          <v n="Id">571893170L</v>
+                          <v n="Value">""</v>
+                        </o>
+                        <o>
+                          <v n="Id">2597686782L</v>
+                          <v n="Value">true</v>
+                        </o>
+                        <o>
+                          <v n="Id">3719097617L</v>
+                          <v n="Value">0</v>
+                        </o>
+                        <o>
+                          <v n="Id">823443203L</v>
+                          <v n="Value">"1674"</v>
+                        </o>
+                      </l>
+                    </o>
+                    <v n="VisualElementName">"Label"</v>
+                    <v n="VisualElementTypeName">"VisuFbLabel"</v>
+                    <v n="VisualElementIsRectangle">true</v>
+                    <v n="VisualElementIdentifier">"GenElemInst_137"</v>
+                    <n n="VisualElementOfflinePaintCommands" />
+                    <n n="VisualElementFrameInformation" />
+                    <d n="VisualElementInputActions" t="Hashtable" />
+                    <v n="VisualElementIdentification">{d52887bc-7b58-4814-9413-db93b2f75acb}</v>
+                    <v n="VisualElementOwningObjectGuid">{e3baf030-60e8-4581-988d-75b2896a3e91}</v>
+                    <a n="LMGuids" et="Guid" />
+                    <d n="SubElements" t="Hashtable" />
+                    <v n="VisualElementId">135</v>
                     <l n="UserManagementAccessRights" t="ArrayList" />
                   </o>
                 </l>
@@ -6354,11 +6487,11 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
-                      <v n="Value">55</v>
+                      <v n="Value">51</v>
                     </o>
                     <o>
                       <v n="Id">357335551L</v>
-                      <v n="Value">74</v>
+                      <v n="Value">70</v>
                     </o>
                     <o>
                       <v n="Id">2422045748L</v>
@@ -6459,11 +6592,11 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
-                      <v n="Value">54</v>
+                      <v n="Value">50</v>
                     </o>
                     <o>
                       <v n="Id">357335551L</v>
-                      <v n="Value">100</v>
+                      <v n="Value">96</v>
                     </o>
                     <o>
                       <v n="Id">2422045748L</v>
@@ -6553,11 +6686,11 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
-                      <v n="Value" t="Int16">388</v>
+                      <v n="Value" t="Int16">310</v>
                     </o>
                     <o>
                       <v n="Id">357335551L</v>
-                      <v n="Value">60</v>
+                      <v n="Value">70</v>
                     </o>
                     <o>
                       <v n="Id">2422045748L</v>
@@ -6631,6 +6764,108 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                 <v n="VisualElementId">128</v>
                 <l n="UserManagementAccessRights" t="ArrayList" />
               </o>
+              <o>
+                <a n="ConfiguredComplexInputs" et="ComplexInput" />
+                <l n="Elements" t="ArrayList" />
+                <n n="VisualElementDescription" />
+                <o n="VisualElemMemberList" t="VisualElemMemberList">
+                  <l n="VisualElemMemberList" t="VisualElemMemberCollection" cet="VisualElemMember">
+                    <o>
+                      <v n="Id">1931512087L</v>
+                      <v n="Value">"TOGGLE"</v>
+                    </o>
+                    <o>
+                      <v n="Id">300685745L</v>
+                      <v n="Value">false</v>
+                    </o>
+                    <o>
+                      <v n="Id">2812299069L</v>
+                      <v n="Value">4294967295U</v>
+                    </o>
+                    <o>
+                      <v n="Id">494569607L</v>
+                      <v n="Value">4278190080U</v>
+                    </o>
+                    <o>
+                      <v n="Id">1649127785L</v>
+                      <v n="Value">410</v>
+                    </o>
+                    <o>
+                      <v n="Id">357335551L</v>
+                      <v n="Value">70</v>
+                    </o>
+                    <o>
+                      <v n="Id">2422045748L</v>
+                      <v n="Value">70</v>
+                    </o>
+                    <o>
+                      <v n="Id">2134141914L</v>
+                      <v n="Value">70</v>
+                    </o>
+                    <o>
+                      <v n="Id">4062784938L</v>
+                      <v n="Value">"Element-Switch-PushSwitch-Red"</v>
+                    </o>
+                    <o>
+                      <v n="Id">493260384L</v>
+                      <v n="Value">4294967295U</v>
+                    </o>
+                    <o>
+                      <v n="Id">135947015L</v>
+                      <v n="Value">4278190080U</v>
+                    </o>
+                    <o>
+                      <v n="Id">2678395525L</v>
+                      <v n="Value">1U</v>
+                    </o>
+                    <o>
+                      <v n="Id">2340015797L</v>
+                      <v n="Value">"HCENTER"</v>
+                    </o>
+                    <o>
+                      <v n="Id">2565699834L</v>
+                      <v n="Value">"VCENTER"</v>
+                    </o>
+                    <o>
+                      <v n="Id">296037572L</v>
+                      <v n="Value">""</v>
+                    </o>
+                    <o>
+                      <v n="Id">390574330L</v>
+                      <v n="Value">""</v>
+                    </o>
+                    <o>
+                      <v n="Id">571893170L</v>
+                      <v n="Value">""</v>
+                    </o>
+                    <o>
+                      <v n="Id">743958181L</v>
+                      <v n="Value">"AUTOMATA.bHajlitasUtanVissza"</v>
+                    </o>
+                    <o>
+                      <v n="Id">2597686782L</v>
+                      <v n="Value">false</v>
+                    </o>
+                    <o>
+                      <v n="Id">3719097617L</v>
+                      <v n="Value">0</v>
+                    </o>
+                  </l>
+                </o>
+                <v n="VisualElementName">"PushSwitch"</v>
+                <v n="VisualElementTypeName">"VisuFbElemPushSwitch"</v>
+                <v n="VisualElementIsRectangle">true</v>
+                <v n="VisualElementIdentifier">"GenElemInst_135"</v>
+                <n n="VisualElementOfflinePaintCommands" />
+                <n n="VisualElementFrameInformation" />
+                <d n="VisualElementInputActions" t="Hashtable" />
+                <v n="VisualElementIdentification">{e8c1c879-16bd-4a32-ad10-19e515d412c1}</v>
+                <v n="VisualElementOwningObjectGuid">{e3baf030-60e8-4581-988d-75b2896a3e91}</v>
+                <a n="LMGuids" et="Guid" />
+                <d n="SubElements" t="Hashtable" />
+                <v n="VisualElementId">133</v>
+                <l n="UserManagementAccessRights" t="ArrayList" />
+              </o>
             </l>
             <v n="BackgroundBitmapId">""</v>
             <v n="BackgroundColor">16777215</v>
@@ -6647,30 +6882,30 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
           <o n="GeneratedLMMDescriptions" t="GeneratedLanguageModelEntriesData">
             <o n="GeneratedVisuFbDescription" t="GenericFbDescription">
               <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
-                <v>GetUpdateRects</v>
-                <v>3975d76e-0066-43ca-9d0c-1188e9c691f8</v>
+                <v>HasVisibilityAccess</v>
+                <v>509e01f2-8ad9-4cf7-a4bc-d166ce7719c8</v>
                 <v>ContainsPoint</v>
                 <v>d9a53d5f-abe5-4a46-824c-6769fa5a6f50</v>
-                <v>FB_Reinit</v>
-                <v>cb615913-6a94-4c3e-a4b9-3c572d7d06ea</v>
-                <v>SetStaticState</v>
-                <v>8e4a00e8-b487-4e8e-b15a-a8ee62f47489</v>
-                <v>Update</v>
-                <v>32ebafb9-59a3-485e-aa53-51da203f801c</v>
+                <v>HasInputAccess</v>
+                <v>28272795-49d5-404d-ae50-3339ee441415</v>
+                <v>HasInputAccessIntern</v>
+                <v>540a98b3-4a56-523f-97a6-fe3e05984ac8</v>
                 <v>GetTooltip</v>
                 <v>8c0da131-8ee4-4172-b611-6de01450e606</v>
+                <v>GetUpdateRects</v>
+                <v>3975d76e-0066-43ca-9d0c-1188e9c691f8</v>
                 <v>GetNamespace</v>
                 <v>80740d31-b2cf-4a26-a0fd-543e56650091</v>
                 <v>GetTranslator</v>
                 <v>8ee7ae34-9e4a-4435-9ce9-412dd50e4ab7</v>
+                <v>Update</v>
+                <v>32ebafb9-59a3-485e-aa53-51da203f801c</v>
                 <v>SetClientData</v>
                 <v>5b03f494-27c9-4443-b1b9-4b94d5856598</v>
                 <v>GetClientData</v>
                 <v>ec5a7287-7ba3-490c-87f0-e5274bd80328</v>
                 <v>Paint</v>
                 <v>2db6299e-bbf4-4d35-9588-2b408d749c69</v>
-                <v>HasVisibilityAccess</v>
-                <v>509e01f2-8ad9-4cf7-a4bc-d166ce7719c8</v>
                 <v>GetElementArray</v>
                 <v>4a6bb0ec-b3c9-48d8-bb84-15ea314477a6</v>
                 <v>SetVisuFlagsInternal</v>
@@ -6681,24 +6916,24 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                 <v>96d52ddd-ffa4-4001-b6e3-69281408c75c</v>
                 <v>IsAntialiasingInactive</v>
                 <v>537e1cbf-514c-473b-93b9-97a75bd9d853</v>
-                <v>HasInputAccessIntern</v>
-                <v>540a98b3-4a56-523f-97a6-fe3e05984ac8</v>
                 <v>Initialize</v>
                 <v>0318b164-894f-4c01-84f7-159789ff4ae5</v>
-                <v>HasInputAccess</v>
-                <v>28272795-49d5-404d-ae50-3339ee441415</v>
                 <v>HasVisibilityAccessIntern</v>
                 <v>acba775c-221c-5ddd-9dc6-bb7d1e48b240</v>
                 <v>GetSurroundingRect</v>
                 <v>526c244f-e99b-4167-92d8-6c9f69e20906</v>
+                <v>ElementInfo</v>
+                <v>755926c6-5374-44ba-9fa6-ffb38d66bdc2</v>
+                <v>SetStaticState</v>
+                <v>8e4a00e8-b487-4e8e-b15a-a8ee62f47489</v>
                 <v>GetLocalUsergroup</v>
                 <v>39336e92-dcac-4567-a7fc-dc2fefdfd53f</v>
                 <v>GetName</v>
                 <v>188f2c5a-2420-4838-965c-f8d623054f5b</v>
                 <v>GetSize</v>
                 <v>0fb0f6f4-66ad-485f-8c6c-d65e57485626</v>
-                <v>Destruct</v>
-                <v>778c601c-b3ec-4e8c-aab1-33b6d21ce95e</v>
+                <v>FB_Reinit</v>
+                <v>cb615913-6a94-4c3e-a4b9-3c572d7d06ea</v>
                 <v>FB_Exit</v>
                 <v>c8f69aa9-f5d1-4f36-9eab-9712f6347594</v>
                 <v>GetInitializeVersion</v>
@@ -6707,8 +6942,8 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
                 <v>79516ae7-7046-4692-8a43-2f09a93c5e40</v>
                 <v>HandleInput</v>
                 <v>b8b821d8-8eb0-4be5-8cb2-3dce30326baf</v>
-                <v>ElementInfo</v>
-                <v>755926c6-5374-44ba-9fa6-ffb38d66bdc2</v>
+                <v>Destruct</v>
+                <v>778c601c-b3ec-4e8c-aab1-33b6d21ce95e</v>
               </d>
               <v n="FbName">"NotImportant"</v>
               <v n="FbGuid">{e3baf030-60e8-4581-988d-75b2896a3e91}</v>
@@ -6721,10 +6956,10 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
               <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
                 <v>FB_Init</v>
                 <v>fdcf2914-22c4-4a8a-8b42-b85cdd86b1bb</v>
-                <v>FB_Exit</v>
-                <v>8ac2d65e-7000-4dec-b9b7-84b31174cc05</v>
                 <v>FB_Reinit</v>
                 <v>8ab878e1-4abe-4cbb-af19-9f18456dca1c</v>
+                <v>FB_Exit</v>
+                <v>8ac2d65e-7000-4dec-b9b7-84b31174cc05</v>
               </d>
               <v n="FbName">"NotImportant"</v>
               <v n="FbGuid">{2eeba0e6-92f3-4754-bb52-30272ff8cd89}</v>
@@ -6768,7 +7003,7 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
             </o>
             <v n="DialogDut">{33a880a5-6d2e-49aa-8ea5-027f551aeec7}</v>
           </o>
-          <v n="LastUsedIdForIdentifier">133</v>
+          <v n="LastUsedIdForIdentifier">137</v>
           <o n="TextDocument" t="TextDocument">
             <a n="TextLines" cet="TextLine">
               <o>
@@ -6802,8 +7037,19 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
             <l2 n="Inputs" />
           </o>
           <o n="VisuSizeManager" t="VisualObjectSizeManager">
-            <n n="Size" />
-            <v n="Version">0</v>
+            <d2 n="Size" ckt="Int32" cvt="VisualObjectSize">
+              <v>0</v>
+              <o>
+                <v n="Width">762</v>
+                <v n="Height">588</v>
+              </o>
+              <v>1</v>
+              <o>
+                <v n="Width">763</v>
+                <v n="Height">589</v>
+              </o>
+            </d2>
+            <v n="Version">1</v>
           </o>
         </o>
       </Data>
@@ -6841,6 +7087,7 @@ JOZSITENGELY.sJozsiAxisCommand:='MOVE';"</v>
         <Type n="VisualElemMemberCollection">{a4b83bea-3742-489c-9fe8-d96d68dba7ab}</Type>
         <Type n="VisualElemMemberList">{17e26cd1-bb9b-47fe-a3d5-18fcd63b9c96}</Type>
         <Type n="VisualObject">{f18bec89-9fef-401d-9953-2f11739a6808}</Type>
+        <Type n="VisualObjectSize">{6ad3e88f-aee2-4766-a7ea-a8790037ef51}</Type>
         <Type n="VisualObjectSizeManager">{5f612b0e-b404-455f-8177-27864e9f5332}</Type>
       </TypeList>
     </XmlArchive>
