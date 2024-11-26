@@ -864,7 +864,7 @@ IF iState<>0 THEN
 				GVL.nHibaKodNTC:=296;
 				bStart1GombTiltva:=FALSE;
 				iState:=110;
-				tTimeOut:=T#10S;
+				tTimeOut:=T#5S;
 				bStartWatchDog:=TRUE;
 			ELSE
 				IF (MAIN.bLevegoOK=FALSE) THEN
@@ -3024,19 +3024,22 @@ END_IF
 
 IF iStateRobot<>0 THEN
 	CASE iStateRobot OF
-		1:
-			IF (NTCProcess.s_InCommand = '') THEN
-				bStartWatchDog3:=TRUE;
-				tTimeOut3:=T#2S;
-				IF bNTC_OK_bit THEN
-					bStartWatchDog3:=FALSE;
-					iStateRobot:=3;
-				ELSE
-					iStateRobot:=100;
-					GVL.nHibaKodNTC:=297;
-				END_IF
+		1:	IF (NTCProcess.s_InCommand = '') THEN
+				bStartWait3:=TRUE;
+				tWaitTime3:=T#300MS;
+				iStateRobot:=2;
 			END_IF
-		3:	IF (bRobotReservedBy1=FALSE) AND (bRobotReservedBy2=FALSE) THEN
+		2:	IF bIdoLejart3 THEN
+				bStartWait3:=FALSE;
+				iStateRobot:=3;
+			END_IF
+		3:	IF bNTC_OK_bit THEN
+				iStateRobot:=4;
+			ELSE
+				iStateRobot:=100;
+				GVL.nHibaKodNTC:=297;
+			END_IF
+		4:	IF (bRobotReservedBy1=FALSE) AND (bRobotReservedBy2=FALSE) THEN
 				bRobotReservedBy1:=TRUE;
 				iStateRobot:=5;
 				bStartWatchDog3:=FALSE;
