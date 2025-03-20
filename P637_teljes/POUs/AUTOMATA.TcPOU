@@ -2382,7 +2382,7 @@ IF iState2<>0 THEN
 		30: IF VEGMERO.s_InCommand='' OR VEGMERO.s_InCommand='_SZAKADAS' THEN
 				bStartWatchDog2:=FALSE;
 				IF GVL.iCurrentProductType>=0 THEN
-					IF (GVL.bJelolesBe=TRUE) AND GVL.bPTResOK AND GVL.bNTCResOK
+					IF (GVL.bJelolesBe=TRUE) AND GVL.bPTResOK AND GVL.bNTCResOK AND ((GVL.iSelectedProductType<9) OR GVL.bNTCRes2OK)
 						AND GVL.bIsolOK AND GVL.bTimeConstOK AND GVL.bShockOK THEN
 //						iState2:=31;
 						VEGMERO.bLezertakaro:=TRUE;

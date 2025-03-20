@@ -2558,7 +2558,7 @@ External Setpoint Generation:
 		</Motion>
 		<Plc>
 			<Project GUID="{A200721C-C6D1-4ED6-BB06-14A0BBB567A3}" Name="P637_teljes" PrjFilePath="P637_teljes\P637_teljes.plcProj" TmcFilePath="P637_teljes\P637_teljes.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="P637_teljes\P637_teljes.tmc" TmcHash="{9A9ACF6E-31FA-EECA-69A4-BB89331DBF33}">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="2" TmcPath="P637_teljes\P637_teljes.tmc" TmcHash="{44FEAB02-B385-1864-6BA4-F9629D101A61}">
 					<Name>P637_teljes Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="1">
