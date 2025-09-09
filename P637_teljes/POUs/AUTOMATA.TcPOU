@@ -101,10 +101,12 @@ END_VAR
 VAR
 	bNTC_OK_bit: BOOL;
 	bHajlitasUtanVissza: BOOL := FALSE;
-	bElektrodaTiltasNTC: BOOL;
+	bElektrodaTiltasNTC1: BOOL;
 	bElektrodaTiltasPT: BOOL;
-	bElektrodaNullNTC: BOOL;
+	bElektrodaNullNTC1: BOOL;
 	bElektrodaNullPT: BOOL;
+	bElektrodaTiltasNTC2: BOOL;
+	bElektrodaNullNTC2: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -115,12 +117,12 @@ GVL.bElszivasBe:=NOT((GVL.bHegeszto1BalFent=TRUE)
 
 bNTC_OK_bit:=JOZSITENGELY.bNTC_OK AND NTCProcess.bKiszedoKint AND NOT NTCProcess.bKiszedoBent;
 
-bElektrodaTiltasNTC:=GVL.nElectrode1Usage>GVL.nElectrode1UsageWarn OR GVL.nElectrode2Usage>GVL.nElectrode2UsageWarn;
+bElektrodaTiltasNTC1:=GVL.nElectrode1Usage>GVL.nElectrode1UsageMax;
+bElektrodaTiltasNTC2:=GVL.nElectrode2Usage>GVL.nElectrode2UsageMax;
+bElektrodaTiltasPT:=GVL.nElectrode3Usage>GVL.nElectrode3UsageMax;
 
-bElektrodaTiltasPT:=GVL.nElectrode3Usage>GVL.nElectrode3UsageWarn;
-
-bElektrodaNullNTC:=bElektrodaTiltasNTC AND NOT init.bRobotKesz;
-
+bElektrodaNullNTC1:=bElektrodaTiltasNTC1 AND NOT init.bRobotKesz;
+bElektrodaNullNTC2:=bElektrodaTiltasNTC2 AND NOT init.bRobotKesz;
 bElektrodaNullPT:=bElektrodaTiltasPT AND NOT init.bRobotKesz;
 				
 // 521950-es termék esetén csak lézerezés megengedett!!!				
@@ -172,7 +174,7 @@ IF iState<>0 THEN
 			sStart1GombFelirat:='Tovább';
 			bStart1GombTiltva:=TRUE;
 			bStart1GombTiltva:=TRUE;
-			IF NOT bElektrodaTiltasNTC THEN
+			IF NOT bElektrodaTiltasNTC1 AND NOT bElektrodaTiltasNTC2 THEN
 				IF GVL.bNTCAdaptererzekelo=TRUE THEN
 					IF GVL.bHegesztes4Be=TRUE THEN
 						IF RobotProcess.baStatus[9]=TRUE THEN
@@ -3182,28 +3184,9 @@ WATCHDOG3(IN:=bStartWatchDog3,PT:=tTimeOut3,Q=>bTimeOut3,ET=>);
 ]]></ST>
     </Implementation>
     <LineIds Name="AUTOMATA">
-      <LineId Id="3" Count="5" />
-      <LineId Id="3157" Count="0" />
-      <LineId Id="3156" Count="0" />
-      <LineId Id="3363" Count="0" />
-      <LineId Id="3362" Count="0" />
-      <LineId Id="3586" Count="0" />
-      <LineId Id="3585" Count="0" />
-      <LineId Id="3796" Count="0" />
-      <LineId Id="3795" Count="0" />
-      <LineId Id="9" Count="50" />
-      <LineId Id="3155" Count="0" />
-      <LineId Id="60" Count="36" />
-      <LineId Id="3570" Count="0" />
-      <LineId Id="3572" Count="1" />
-      <LineId Id="3571" Count="0" />
-      <LineId Id="3574" Count="0" />
-      <LineId Id="97" Count="1545" />
-      <LineId Id="3584" Count="0" />
-      <LineId Id="1643" Count="25" />
-      <LineId Id="3580" Count="3" />
-      <LineId Id="3575" Count="0" />
-      <LineId Id="1669" Count="1384" />
+      <LineId Id="7396" Count="7" />
+      <LineId Id="10681" Count="0" />
+      <LineId Id="7405" Count="3061" />
       <LineId Id="2" Count="0" />
     </LineIds>
   </POU>

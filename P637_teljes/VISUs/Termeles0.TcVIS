@@ -7785,19 +7785,19 @@ END_IF"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
-                      <v n="Value">210</v>
+                      <v n="Value">180</v>
                     </o>
                     <o>
                       <v n="Id">357335551L</v>
-                      <v n="Value">310</v>
+                      <v n="Value">298</v>
                     </o>
                     <o>
                       <v n="Id">2422045748L</v>
-                      <v n="Value">150</v>
+                      <v n="Value">131</v>
                     </o>
                     <o>
                       <v n="Id">2134141914L</v>
-                      <v n="Value" t="Int16">50</v>
+                      <v n="Value" t="Int16">68</v>
                     </o>
                     <o>
                       <v n="Id">1651471674L</v>
@@ -7823,14 +7823,13 @@ END_IF"</v>
                     </o>
                     <o>
                       <v n="Id">3729828405L</v>
-                      <l n="Value" t="ArrayList" cet="NamedStyleFont">
+                      <l n="Value" t="ArrayList" cet="FontDescription">
                         <o>
                           <v n="FontStyle">0</v>
                           <v n="AdditionalFontStyle" t="UInt16">0</v>
                           <v n="ExplicitColor">-16777216</v>
-                          <v n="CanonicalName">"Font-Heading"</v>
                           <v n="FontName">"Arial"</v>
-                          <v n="FontSize">20</v>
+                          <v n="FontSize">16</v>
                           <v n="ScriptIdentification">0</v>
                           <v n="DoubleFontSize" t="Double">0</v>
                           <o n="NamedColor" t="NamedStyleColor">
@@ -7842,11 +7841,11 @@ END_IF"</v>
                     </o>
                     <o>
                       <v n="Id">550940142L</v>
-                      <v n="Value">285</v>
+                      <v n="Value">245</v>
                     </o>
                     <o>
                       <v n="Id">1473355128L</v>
-                      <v n="Value">335</v>
+                      <v n="Value">332</v>
                     </o>
                     <o>
                       <v n="Id">493260384L</v>
@@ -9751,15 +9750,15 @@ majd nyomja meg a START gombot!"</v>
                     </o>
                     <o>
                       <v n="Id">1999528970L</v>
-                      <v n="Value">"GVL.nElectrode1Usage&gt;GVL.nElectrode1UsageWarn"</v>
+                      <v n="Value">"GVL.nElectrode1Usage&gt;GVL.nElectrode1UsageMax"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
-                      <v n="Value">390</v>
+                      <v n="Value">400</v>
                     </o>
                     <o>
                       <v n="Id">357335551L</v>
-                      <v n="Value">283</v>
+                      <v n="Value">298</v>
                     </o>
                     <o>
                       <v n="Id">2422045748L</v>
@@ -9920,15 +9919,15 @@ majd nyomja meg a START gombot!"</v>
                     </o>
                     <o>
                       <v n="Id">1999528970L</v>
-                      <v n="Value">"GVL.nElectrode2Usage&gt;GVL.nElectrode2UsageWarn"</v>
+                      <v n="Value">"GVL.nElectrode2Usage&gt;GVL.nElectrode2UsageMax"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
-                      <v n="Value">390</v>
+                      <v n="Value">400</v>
                     </o>
                     <o>
                       <v n="Id">357335551L</v>
-                      <v n="Value">314</v>
+                      <v n="Value">335</v>
                     </o>
                     <o>
                       <v n="Id">2422045748L</v>
@@ -10268,7 +10267,7 @@ AUTOMATA.bWatchDogOK2:=TRUE;"</v>
                     </o>
                     <o>
                       <v n="Id">1999528970L</v>
-                      <v n="Value">"GVL.nElectrode3Usage&gt;GVL.nElectrode3UsageWarn"</v>
+                      <v n="Value">"GVL.nElectrode3Usage&gt;GVL.nElectrode3UsageMax"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
@@ -11190,11 +11189,11 @@ AUTOMATA.bWatchDogOK2:=TRUE;"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
-                      <v n="Value">390</v>
+                      <v n="Value">327</v>
                     </o>
                     <o>
                       <v n="Id">357335551L</v>
-                      <v n="Value">346</v>
+                      <v n="Value">298</v>
                     </o>
                     <o>
                       <v n="Id">2422045748L</v>
@@ -11247,11 +11246,11 @@ AUTOMATA.bWatchDogOK2:=TRUE;"</v>
                     </o>
                     <o>
                       <v n="Id">550940142L</v>
-                      <v n="Value">425</v>
+                      <v n="Value">362</v>
                     </o>
                     <o>
                       <v n="Id">1473355128L</v>
-                      <v n="Value">361</v>
+                      <v n="Value">313</v>
                     </o>
                     <o>
                       <v n="Id">493260384L</v>
@@ -11283,7 +11282,7 @@ AUTOMATA.bWatchDogOK2:=TRUE;"</v>
                     </o>
                     <o>
                       <v n="Id">2496894244L</v>
-                      <v n="Value">"NOT AUTOMATA.bElektrodaNullNTC"</v>
+                      <v n="Value">"NOT AUTOMATA.bElektrodaNullNTC1"</v>
                     </o>
                     <o>
                       <v n="Id">823443203L</v>
@@ -11314,6 +11313,186 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
                 <v n="VisualElementId">393</v>
                 <l n="UserManagementAccessRights" t="ArrayList" />
               </o>
+              <o>
+                <a n="ConfiguredComplexInputs" et="ComplexInput" />
+                <l n="Elements" t="ArrayList" />
+                <n n="VisualElementDescription" />
+                <o n="VisualElemMemberList" t="VisualElemMemberList">
+                  <l n="VisualElemMemberList" t="VisualElemMemberCollection" cet="VisualElemMember">
+                    <o>
+                      <v n="Id">571893170L</v>
+                      <v n="Value">""</v>
+                    </o>
+                    <o>
+                      <v n="Id">2340015797L</v>
+                      <v n="Value">"HCENTER"</v>
+                    </o>
+                    <o>
+                      <v n="Id">2565699834L</v>
+                      <v n="Value">"VCENTER"</v>
+                    </o>
+                    <o>
+                      <v n="Id">4134387352L</v>
+                      <v n="Value">"NONE"</v>
+                    </o>
+                    <o>
+                      <v n="Id">1603690730L</v>
+                      <v n="Value">"Arial"</v>
+                    </o>
+                    <o>
+                      <v n="Id">4253639993L</v>
+                      <v n="Value" t="Int16">12</v>
+                    </o>
+                    <o>
+                      <v n="Id">2729990903L</v>
+                      <v n="Value">0U</v>
+                    </o>
+                    <o>
+                      <v n="Id">1213979116L</v>
+                      <v n="Value">0U</v>
+                    </o>
+                    <o>
+                      <v n="Id">3488306084L</v>
+                      <v n="Value">4278190080U</v>
+                    </o>
+                    <o>
+                      <v n="Id">1647042231L</v>
+                      <v n="Value">"&lt;toggle/tap variable&gt;"</v>
+                    </o>
+                    <o>
+                      <v n="Id">2812299069L</v>
+                      <v n="Value">4294967295U</v>
+                    </o>
+                    <o>
+                      <v n="Id">494569607L</v>
+                      <v n="Value">4278190080U</v>
+                    </o>
+                    <o>
+                      <v n="Id">1649127785L</v>
+                      <v n="Value">327</v>
+                    </o>
+                    <o>
+                      <v n="Id">357335551L</v>
+                      <v n="Value">335</v>
+                    </o>
+                    <o>
+                      <v n="Id">2422045748L</v>
+                      <v n="Value" t="Int16">71</v>
+                    </o>
+                    <o>
+                      <v n="Id">2134141914L</v>
+                      <v n="Value">31</v>
+                    </o>
+                    <o>
+                      <v n="Id">1651471674L</v>
+                      <v n="Value">true</v>
+                    </o>
+                    <o>
+                      <v n="Id">2341735680L</v>
+                      <l n="Value" t="ArrayList" cet="NamedStyleColor">
+                        <o>
+                          <v n="Color">-2830136</v>
+                          <v n="CanonicalName">"Element-Control-Color"</v>
+                        </o>
+                      </l>
+                    </o>
+                    <o>
+                      <v n="Id">438423234L</v>
+                      <l n="Value" t="ArrayList" cet="NamedStyleColor">
+                        <o>
+                          <v n="Color">-2830136</v>
+                          <v n="CanonicalName">"Element-Alarm-Fill-Color"</v>
+                        </o>
+                      </l>
+                    </o>
+                    <o>
+                      <v n="Id">3729828405L</v>
+                      <l n="Value" t="ArrayList" cet="NamedStyleFont">
+                        <o>
+                          <v n="FontStyle">0</v>
+                          <v n="AdditionalFontStyle" t="UInt16">0</v>
+                          <v n="ExplicitColor">-16777216</v>
+                          <v n="CanonicalName">"Font-Standard"</v>
+                          <v n="FontName">"Arial"</v>
+                          <v n="FontSize">12</v>
+                          <v n="ScriptIdentification">0</v>
+                          <v n="DoubleFontSize" t="Double">0</v>
+                          <o n="NamedColor" t="NamedStyleColor">
+                            <v n="Color">-16777216</v>
+                            <v n="CanonicalName">"Element-Button-FontColor"</v>
+                          </o>
+                        </o>
+                      </l>
+                    </o>
+                    <o>
+                      <v n="Id">550940142L</v>
+                      <v n="Value">362</v>
+                    </o>
+                    <o>
+                      <v n="Id">1473355128L</v>
+                      <v n="Value">350</v>
+                    </o>
+                    <o>
+                      <v n="Id">493260384L</v>
+                      <v n="Value">4294967295U</v>
+                    </o>
+                    <o>
+                      <v n="Id">135947015L</v>
+                      <v n="Value">4278190080U</v>
+                    </o>
+                    <o>
+                      <v n="Id">2678395525L</v>
+                      <v n="Value">1U</v>
+                    </o>
+                    <o>
+                      <v n="Id">2478807622L</v>
+                      <v n="Value">""</v>
+                    </o>
+                    <o>
+                      <v n="Id">390574330L</v>
+                      <v n="Value">"NULLÁZÁS"</v>
+                    </o>
+                    <o>
+                      <v n="Id">2597686782L</v>
+                      <v n="Value">false</v>
+                    </o>
+                    <o>
+                      <v n="Id">3719097617L</v>
+                      <v n="Value">0</v>
+                    </o>
+                    <o>
+                      <v n="Id">2496894244L</v>
+                      <v n="Value">"NOT AUTOMATA.bElektrodaNullNTC2"</v>
+                    </o>
+                    <o>
+                      <v n="Id">823443203L</v>
+                      <v n="Value">"810"</v>
+                    </o>
+                  </l>
+                </o>
+                <v n="VisualElementName">"Button"</v>
+                <v n="VisualElementTypeName">"VisuFbElemButton"</v>
+                <v n="VisualElementIsRectangle">true</v>
+                <v n="VisualElementIdentifier">"GenElemInst_378"</v>
+                <n n="VisualElementOfflinePaintCommands" />
+                <n n="VisualElementFrameInformation" />
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
+                  <v>OnMouseUp</v>
+                  <a cet="STSnippetInputAction">
+                    <o>
+                      <v n="STSnippet">"GVL.nElectrode1Usage:=0;
+GVL.nElectrode2Usage:=0;
+AUTOMATA.bWatchDogOK:=TRUE;"</v>
+                    </o>
+                  </a>
+                </d>
+                <v n="VisualElementIdentification">{5267a75b-7a5c-4003-971d-450a93a0c3d8}</v>
+                <v n="VisualElementOwningObjectGuid">{50c48183-5e17-49bb-8d14-651d4ecfe0e5}</v>
+                <a n="LMGuids" et="Guid" />
+                <d n="SubElements" t="Hashtable" />
+                <v n="VisualElementId">396</v>
+                <l n="UserManagementAccessRights" t="ArrayList" />
+              </o>
             </l>
             <v n="BackgroundBitmapId">""</v>
             <v n="BackgroundColor">16777215</v>
@@ -11330,16 +11509,18 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
           <o n="GeneratedLMMDescriptions" t="GeneratedLanguageModelEntriesData">
             <o n="GeneratedVisuFbDescription" t="GenericFbDescription">
               <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
-                <v>GetUpdateRects</v>
-                <v>481288de-0956-4254-9c2e-118094903130</v>
+                <v>HasVisibilityAccess</v>
+                <v>34d51dbe-6bf7-4d27-8a0b-93006dcceccb</v>
                 <v>ContainsPoint</v>
                 <v>6dfa0d27-26d0-42f2-9c90-92ff5e2c8636</v>
-                <v>SetStaticState</v>
-                <v>4ac23e85-3577-44d5-b188-8e4257dd80ac</v>
+                <v>HasInputAccess</v>
+                <v>e3b722ea-8287-4495-bc3f-acba1dd8ed4d</v>
                 <v>HasInputAccessIntern</v>
                 <v>5afe115f-18ac-576d-8a00-b37e1accdd59</v>
                 <v>GetTooltip</v>
                 <v>e8f006a7-ee4a-4e1c-a64f-e3ead313c4c8</v>
+                <v>GetUpdateRects</v>
+                <v>481288de-0956-4254-9c2e-118094903130</v>
                 <v>GetNamespace</v>
                 <v>2b6d6362-212d-4e7b-b56c-f8ad58128526</v>
                 <v>GetTranslator</v>
@@ -11352,8 +11533,6 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
                 <v>2a08fc94-d150-47ce-906f-5eec285c3ee9</v>
                 <v>Paint</v>
                 <v>86219b08-34be-4a8d-b885-291883f499dc</v>
-                <v>HasVisibilityAccess</v>
-                <v>34d51dbe-6bf7-4d27-8a0b-93006dcceccb</v>
                 <v>GetElementArray</v>
                 <v>ae4d4a4a-bb6c-4fb2-8edd-5737a0ee1544</v>
                 <v>SetVisuFlagsInternal</v>
@@ -11366,14 +11545,14 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
                 <v>2666ec4e-f46d-4405-81c8-f0b31cf56957</v>
                 <v>Initialize</v>
                 <v>0dabf6e4-1313-420f-8575-82cbaed34fd4</v>
-                <v>HasInputAccess</v>
-                <v>e3b722ea-8287-4495-bc3f-acba1dd8ed4d</v>
                 <v>HasVisibilityAccessIntern</v>
                 <v>fec4599c-1d90-5c0e-9e38-e4bd28c402d9</v>
                 <v>GetSurroundingRect</v>
                 <v>59b640c3-4994-49f5-b3ba-8630d324b374</v>
                 <v>ElementInfo</v>
                 <v>ac7fdc3e-3288-4e7d-a388-bb98d08575aa</v>
+                <v>SetStaticState</v>
+                <v>4ac23e85-3577-44d5-b188-8e4257dd80ac</v>
                 <v>GetLocalUsergroup</v>
                 <v>f57bd341-dbe7-4a2f-a358-3760792f220b</v>
                 <v>GetName</v>
@@ -11451,7 +11630,7 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
             </o>
             <v n="DialogDut">{bf26033e-eb68-4751-87e6-cdd1c1607971}</v>
           </o>
-          <v n="LastUsedIdForIdentifier">376</v>
+          <v n="LastUsedIdForIdentifier">378</v>
           <o n="TextDocument" t="TextDocument">
             <a n="TextLines" cet="TextLine">
               <o>
