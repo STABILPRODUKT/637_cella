@@ -101,6 +101,10 @@ END_VAR
 VAR
 	bNTC_OK_bit: BOOL;
 	bHajlitasUtanVissza: BOOL := FALSE;
+	bElektrodaTiltasNTC: BOOL;
+	bElektrodaTiltasPT: BOOL;
+	bElektrodaNullNTC: BOOL;
+	bElektrodaNullPT: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -110,6 +114,14 @@ GVL.bElszivasBe:=NOT((GVL.bHegeszto1BalFent=TRUE)
 				OR bElszivasBe OR VEGMERO.bLezertakaro;
 
 bNTC_OK_bit:=JOZSITENGELY.bNTC_OK AND NTCProcess.bKiszedoKint AND NOT NTCProcess.bKiszedoBent;
+
+bElektrodaTiltasNTC:=GVL.nElectrode1Usage>GVL.nElectrode1UsageWarn OR GVL.nElectrode2Usage>GVL.nElectrode2UsageWarn;
+
+bElektrodaTiltasPT:=GVL.nElectrode3Usage>GVL.nElectrode3UsageWarn;
+
+bElektrodaNullNTC:=bElektrodaTiltasNTC AND NOT init.bRobotKesz;
+
+bElektrodaNullPT:=bElektrodaTiltasPT AND NOT init.bRobotKesz;
 				
 // 521950-es termék esetén csak lézerezés megengedett!!!				
 IF (GVL.iSelectedProductType=8) THEN
@@ -160,43 +172,49 @@ IF iState<>0 THEN
 			sStart1GombFelirat:='Tovább';
 			bStart1GombTiltva:=TRUE;
 			bStart1GombTiltva:=TRUE;
-			IF GVL.bNTCAdaptererzekelo=TRUE THEN
-				IF GVL.bHegesztes4Be=TRUE THEN
-					IF RobotProcess.baStatus[9]=TRUE THEN
-						IF bRobotNTCReady=FALSE THEN
-							IF (NTCProcess.s_InCommand='') 
-								AND (bNTC_OK_bit=FALSE) THEN
-								NTCProcess.s_InCommand:='VAGAS';
-								iState:=2;
-								bStartWatchDog:=FALSE;
-								iStateRobot:=1;
-							ELSIF (bNTC_OK_bit=TRUE) THEN
-								iState:=2;
-								bStartWatchDog:=FALSE;
-								iStateRobot:=1;
+			IF NOT bElektrodaTiltasNTC THEN
+				IF GVL.bNTCAdaptererzekelo=TRUE THEN
+					IF GVL.bHegesztes4Be=TRUE THEN
+						IF RobotProcess.baStatus[9]=TRUE THEN
+							IF bRobotNTCReady=FALSE THEN
+								IF (NTCProcess.s_InCommand='') 
+									AND (bNTC_OK_bit=FALSE) THEN
+									NTCProcess.s_InCommand:='VAGAS';
+									iState:=2;
+									bStartWatchDog:=FALSE;
+									iStateRobot:=1;
+								ELSIF (bNTC_OK_bit=TRUE) THEN
+									iState:=2;
+									bStartWatchDog:=FALSE;
+									iStateRobot:=1;
+								ELSE
+									GVL.nHibaKodNTC:=NTCProcess.n_OutErrId;
+									bStartWatchDog:=TRUE;
+									tTimeOut:=T#100MS;
+								END_IF;
 							ELSE
-								GVL.nHibaKodNTC:=NTCProcess.n_OutErrId;
-								bStartWatchDog:=TRUE;
-								tTimeOut:=T#100MS;
-							END_IF;
+								GVL.bProduct1OK := FALSE;
+								GVL.bProduct1NOK := FALSE;
+								iState:=2;
+							END_IF
 						ELSE
-							GVL.bProduct1OK := FALSE;
-							GVL.bProduct1NOK := FALSE;
-							iState:=2;
+							GVL.nHibaKodNTC:=298;
+							bStartWatchDog:=TRUE;
+							tTimeOut:=T#100MS;
 						END_IF
 					ELSE
-						GVL.nHibaKodNTC:=298;
-						bStartWatchDog:=TRUE;
-						tTimeOut:=T#100MS;
+						GVL.bProduct1OK := FALSE;
+						GVL.bProduct1NOK := FALSE;
+						iState:=2;
 					END_IF
 				ELSE
-					GVL.bProduct1OK := FALSE;
-					GVL.bProduct1NOK := FALSE;
-					iState:=2;
+					bStart1GombTiltva:=FALSE;
+					iState:=190;
 				END_IF
 			ELSE
-				bStart1GombTiltva:=FALSE;
-				iState:=190;
+				GVL.nHibaKodNTC:=295;
+				bStartWatchDog:=TRUE;
+				tTimeOut:=T#100MS;
 			END_IF
 		// Első folyamatlépéshez
 		2:	IF (GVL.bKameraBe=TRUE) THEN
@@ -1743,32 +1761,38 @@ IF iState2<>0 THEN
 			bStart2GombTiltva:=TRUE;
 			bFolyamatBeallitas2Tiltva:=TRUE;
 			iProductTypeUnderTest:=GVL.iCurrentProductType;
-			IF (GVL.bAdaptererzekelo=TRUE) THEN
-				GVL.bPTResOK:=FALSE;
-				GVL.iPTResQ:=0;
-				GVL.bNTCResOK:=FALSE;
-				GVL.iNTCResQ:=0;
-				GVL.rTimeConst:=0;
-				GVL.bIsolOK:=FALSE;
-				GVL.iIsolQ:=0;
-				GVL.bTimeConstOK:=FALSE;
-				GVL.iTimeConstQ:=0;
-				GVL.bShockOK:=FALSE;
-				GVL.iShockQ:=0;
-				GVL.bMarkingOK:=FALSE;
-				GVL.iMarkingQ:=0;
-				gvl.bHimbaOK:=FALSE;
-				GVL.bProductOK:=FALSE;
-				GVL.bProductNOK:=FALSE;
-				GVL.bMarking_ellenorizve:=FALSE;
-				IF GVL.bPtKameraBe=TRUE THEN
-					iState2:=400;
+			IF NOT bElektrodaTiltasPT THEN
+				IF (GVL.bAdaptererzekelo=TRUE) THEN
+					GVL.bPTResOK:=FALSE;
+					GVL.iPTResQ:=0;
+					GVL.bNTCResOK:=FALSE;
+					GVL.iNTCResQ:=0;
+					GVL.rTimeConst:=0;
+					GVL.bIsolOK:=FALSE;
+					GVL.iIsolQ:=0;
+					GVL.bTimeConstOK:=FALSE;
+					GVL.iTimeConstQ:=0;
+					GVL.bShockOK:=FALSE;
+					GVL.iShockQ:=0;
+					GVL.bMarkingOK:=FALSE;
+					GVL.iMarkingQ:=0;
+					gvl.bHimbaOK:=FALSE;
+					GVL.bProductOK:=FALSE;
+					GVL.bProductNOK:=FALSE;
+					GVL.bMarking_ellenorizve:=FALSE;
+					IF GVL.bPtKameraBe=TRUE THEN
+						iState2:=400;
+					ELSE
+						iState2:=415;
+					END_IF
 				ELSE
-					iState2:=415;
+					bStart2GombTiltva:=FALSE;
+					iState2:=120;
 				END_IF
 			ELSE
-				bStart2GombTiltva:=FALSE;
-				iState2:=120;
+				GVL.nHibaKodPt:=295;
+				bStartWatchDog2:=TRUE;
+				tTimeOut2:=T#100MS;
 			END_IF
 		// Kamera indítása
 		400:
@@ -1778,7 +1802,7 @@ IF iState2<>0 THEN
 			IF KAMERAREMOTE.bKameraTriggerReady=TRUE THEN
 				iState2:=405;
 			ELSE
-				tTimeOut:=T#5S;
+				tTimeOut2:=T#5S;
 				iState2:=101;
 				GVL.nHibaKodPt:=KameraProcess.n_OutErrId;
 				bStartWatchDog2:=TRUE;
@@ -1795,7 +1819,7 @@ IF iState2<>0 THEN
 				;//	iState2:=415;
 				ELSE
 					//PISTITENGELY.lrPistiPosition:=GVL.lrPtSzervizbox;
-					tTimeOut:=T#5S;
+					tTimeOut2:=T#5S;
 					//iState2:=101;
 					GVL.nHibaKodPt:=KameraProcess.n_OutErrId;
 					//PISTITENGELY.sPistiAxisCommand:='MOVE';
@@ -1828,11 +1852,11 @@ IF iState2<>0 THEN
 //				ELS
 				IF (GVL.bHegesztes6Be=TRUE) THEN
 					PISTITENGELY.lrPistiPosition:=GVL.lrHegesztoPosition6;
-					tTimeOut:=T#1S;
+					tTimeOut2:=T#1S;
 					iState2:=3;
 				ELSIF (GVL.bHegesztes7Be=TRUE) THEN						
 					PISTITENGELY.lrPistiPosition:=GVL.lrHegesztoPosition7;
-					tTimeOut:=T#1S;
+					tTimeOut2:=T#1S;
 					iState2:=11;
 //				ELSIF (GVL.bPtKameraBe=TRUE) THEN						
 //					PISTITENGELY.lrPistiPosition:=GVL.lrPtKameraPosition;
@@ -1883,7 +1907,7 @@ IF iState2<>0 THEN
 				END_IF
 		// Himba ciklus START
 		501:	HIMBA.s_InCommand:='START';
-				tTimeOut:=T#6S;
+				tTimeOut2:=T#6S;
 				iState2:=502;
 		// Várjuk,  hogy a Himba megérkezzen pozícióba és kiértékeljük a jelet
 		502:	IF HIMBA.s_InCommand='' THEN
@@ -1896,7 +1920,7 @@ IF iState2<>0 THEN
 						END_IF
 					ELSE
 						PISTITENGELY.lrPistiPosition:=GVL.lrVegmeroPosition;
-						tTimeOut:=T#1500MS;
+						tTimeOut2:=T#1500MS;
 						iState2:=28;
 						PISTITENGELY.sPistiAxisCommand:='MOVE';						
 					END_IF
@@ -1926,15 +1950,15 @@ IF iState2<>0 THEN
 //				ELS
 				IF (GVL.bKappeBe=TRUE) THEN						
 					PISTITENGELY.lrPistiPosition:=GVL.lrKappePosition;
-					tTimeOut:=T#1500MS;				
+					tTimeOut2:=T#1500MS;				
 					iState2:=23;
 				ELSIF (GVL.bMeresBe=TRUE) OR (GVL.bJelolesBe=TRUE) THEN						
 					PISTITENGELY.lrPistiPosition:=GVL.lrVegmeroPosition;
-					tTimeOut:=T#1500MS;
+					tTimeOut2:=T#1500MS;
 					iState2:=28;
 				ELSE						
 					PISTITENGELY.lrPistiPosition:=GVL.lrPtSzervizbox;
-					tTimeOut:=T#1S;
+					tTimeOut2:=T#1S;
 					iState2:=101;
 				END_IF
 				PISTITENGELY.sPistiAxisCommand:='MOVE';
@@ -3157,5 +3181,30 @@ END_IF
 WATCHDOG3(IN:=bStartWatchDog3,PT:=tTimeOut3,Q=>bTimeOut3,ET=>);
 ]]></ST>
     </Implementation>
+    <LineIds Name="AUTOMATA">
+      <LineId Id="3" Count="5" />
+      <LineId Id="3157" Count="0" />
+      <LineId Id="3156" Count="0" />
+      <LineId Id="3363" Count="0" />
+      <LineId Id="3362" Count="0" />
+      <LineId Id="3586" Count="0" />
+      <LineId Id="3585" Count="0" />
+      <LineId Id="3796" Count="0" />
+      <LineId Id="3795" Count="0" />
+      <LineId Id="9" Count="50" />
+      <LineId Id="3155" Count="0" />
+      <LineId Id="60" Count="36" />
+      <LineId Id="3570" Count="0" />
+      <LineId Id="3572" Count="1" />
+      <LineId Id="3571" Count="0" />
+      <LineId Id="3574" Count="0" />
+      <LineId Id="97" Count="1545" />
+      <LineId Id="3584" Count="0" />
+      <LineId Id="1643" Count="25" />
+      <LineId Id="3580" Count="3" />
+      <LineId Id="3575" Count="0" />
+      <LineId Id="1669" Count="1384" />
+      <LineId Id="2" Count="0" />
+    </LineIds>
   </POU>
 </TcPlcObject>
