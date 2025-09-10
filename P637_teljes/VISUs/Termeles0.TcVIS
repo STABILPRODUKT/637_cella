@@ -9750,7 +9750,7 @@ majd nyomja meg a START gombot!"</v>
                     </o>
                     <o>
                       <v n="Id">1999528970L</v>
-                      <v n="Value">"GVL.nElectrode1Usage&gt;GVL.nElectrode1UsageMax"</v>
+                      <v n="Value">"GVL.nElectrode1Usage&gt;GVL.nElectrode1UsageWarn"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
@@ -10267,7 +10267,7 @@ AUTOMATA.bWatchDogOK2:=TRUE;"</v>
                     </o>
                     <o>
                       <v n="Id">1999528970L</v>
-                      <v n="Value">"GVL.nElectrode3Usage&gt;GVL.nElectrode3UsageMax"</v>
+                      <v n="Value">"GVL.nElectrode3Usage&gt;GVL.nElectrode3UsageWarn"</v>
                     </o>
                     <o>
                       <v n="Id">1649127785L</v>
@@ -11581,10 +11581,10 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
               <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
                 <v>FB_Init</v>
                 <v>ed7303a9-faec-4883-b661-86b1bfa8c562</v>
-                <v>FB_Reinit</v>
-                <v>0e2725a1-fd8e-434a-b867-8ca5ba41337b</v>
                 <v>FB_Exit</v>
                 <v>aab4766e-54fd-4167-aad1-de219e6c2274</v>
+                <v>FB_Reinit</v>
+                <v>0e2725a1-fd8e-434a-b867-8ca5ba41337b</v>
               </d>
               <v n="FbName">"NotImportant"</v>
               <v n="FbGuid">{43e7c76d-a4e8-4e97-80a8-d1815ecfd931}</v>

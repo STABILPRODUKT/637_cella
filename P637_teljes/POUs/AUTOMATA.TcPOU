@@ -121,9 +121,9 @@ bElektrodaTiltasNTC1:=GVL.nElectrode1Usage>GVL.nElectrode1UsageMax;
 bElektrodaTiltasNTC2:=GVL.nElectrode2Usage>GVL.nElectrode2UsageMax;
 bElektrodaTiltasPT:=GVL.nElectrode3Usage>GVL.nElectrode3UsageMax;
 
-bElektrodaNullNTC1:=bElektrodaTiltasNTC1 AND NOT init.bRobotKesz;
-bElektrodaNullNTC2:=bElektrodaTiltasNTC2 AND NOT init.bRobotKesz;
-bElektrodaNullPT:=bElektrodaTiltasPT AND NOT init.bRobotKesz;
+bElektrodaNullNTC1:=bElektrodaTiltasNTC1 AND NOT RobotProcess.baStatus[9];
+bElektrodaNullNTC2:=bElektrodaTiltasNTC2 AND NOT RobotProcess.baStatus[9];
+bElektrodaNullPT:=bElektrodaTiltasPT AND NOT RobotProcess.baStatus[9];
 				
 // 521950-es termék esetén csak lézerezés megengedett!!!				
 IF (GVL.iSelectedProductType=8) THEN
