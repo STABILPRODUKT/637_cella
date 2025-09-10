@@ -11301,7 +11301,6 @@ AUTOMATA.bWatchDogOK2:=TRUE;"</v>
                   <a cet="STSnippetInputAction">
                     <o>
                       <v n="STSnippet">"GVL.nElectrode1Usage:=0;
-GVL.nElectrode2Usage:=0;
 AUTOMATA.bWatchDogOK:=TRUE;"</v>
                     </o>
                   </a>
@@ -11480,8 +11479,7 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
                   <v>OnMouseUp</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.nElectrode1Usage:=0;
-GVL.nElectrode2Usage:=0;
+                      <v n="STSnippet">"GVL.nElectrode2Usage:=0;
 AUTOMATA.bWatchDogOK:=TRUE;"</v>
                     </o>
                   </a>
@@ -11583,10 +11581,10 @@ AUTOMATA.bWatchDogOK:=TRUE;"</v>
               <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
                 <v>FB_Init</v>
                 <v>ed7303a9-faec-4883-b661-86b1bfa8c562</v>
-                <v>FB_Exit</v>
-                <v>aab4766e-54fd-4167-aad1-de219e6c2274</v>
                 <v>FB_Reinit</v>
                 <v>0e2725a1-fd8e-434a-b867-8ca5ba41337b</v>
+                <v>FB_Exit</v>
+                <v>aab4766e-54fd-4167-aad1-de219e6c2274</v>
               </d>
               <v n="FbName">"NotImportant"</v>
               <v n="FbGuid">{43e7c76d-a4e8-4e97-80a8-d1815ecfd931}</v>

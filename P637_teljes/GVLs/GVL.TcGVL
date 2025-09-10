@@ -479,7 +479,7 @@ VAR_GLOBAL CONSTANT
 	
 END_VAR
 VAR_GLOBAL PERSISTENT
-	Users: ARRAY[0..99] OF User;
+	Users: ARRAY[0..99] OF User := [(), (UserID := 1, UserNumber := '69817', UserName := 'Bachstetter Balázs', UserLevel := 3, UserExist := TRUE), 98(())];
 END_VAR
 ]]></Declaration>
   </GVL>
